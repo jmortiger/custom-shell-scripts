@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+#########################region CONSTANTS#########################
+readonly NAME="decode"
+readonly ERROR_BAD_METHOD=4
+readonly ERROR_NO_INPUT=2
+readonly DECODE_METHOD_ESCAPE="escape"
+readonly DECODE_METHOD_URL="url"
+readonly DECODE_METHOD_UNDERSCORE="underscore"
+readonly TRUE="[ a = a ]"
+readonly FALSE="[ a = b ]"
+readonly DEFAULT_DECODE_METHOD=$DECODE_METHOD_ESCAPE
+#########################endregion CONSTANTS#########################
+
+#########################region HELP#########################
+show_help() {
+    # -d | --decode | --decode_method METHOD: The decoding method to use for values and labels.
+    cat << __EOF__
+$NAME VALUE [--escape|url|underscore] | $NAME VALUE [-e|u|_] | $NAME -h | $NAME --help
+
+Decodes the given value with the selected method. Defaults to $DEFAULT_DECODE_METHOD
+
+Parameters:
+	-u | --url: use url decoding
+	-e | --escape: use escape decoding (i.e. use "\\\\" to encode escape sequences)
+	-_ | --underscore: use underscore decoding (i.e. replaces all underscores with spaces)
+		Defaults to "$DEFAULT_DECODE_METHOD"
+    -h | --help: Display this help text.
+EXIT STATUS:
+	Error Level of $ERROR_BAD_METHOD if selection is invalid.
+__EOF__
+# Anything else will result in no decoding being used. If this is used, ensure there are no spaces in your values nor labels.
+#    -e | --error_on_fail: Set the error level on failure.
+}
+#########################endregion HELP#########################
+
+#########################region DECODE METHODS#########################
+url_decode() {
+    echo -e $(echo "$1" | sed -E "s/\\+/ /g" | sed -E "s/%([0-9a-fA-F][0-9a-fA-F])/\\\x\1/g")
+}
+
+escape_decode() {
+    echo -e $(echo "$1" | sed -E "s/\\\\/\\\/g")
+}
+
+# TODO: TEST
+underscore_decode() {
+    echo -e $(echo "$1" | sed -E "s/_/ /g")
+}
+#########################endregion DECODE METHODS#########################
+
+#########################region GET OPTIONS#########################
+decode_method=$DEFAULT_DECODE_METHOD
+encoded=""
+not_assigned=$TRUE
+while [ "$1" != "" ]; do
+    case $1 in
+        -h | --help )
+            show_help
+            exit
+            ;;
+        # #region Flags
+		-u | --url )
+		    decode_method=$DECODE_METHOD_URL
+		    ;;
+		-e | --escape )
+		    decode_method=$DECODE_METHOD_ESCAPE
+		    ;;
+		-_ | --underscore )
+		    decode_method=$DECODE_METHOD_UNDERSCORE
+		    ;;
+		# #endregion Flags
+        * )
+			# if [[ "$decode_method" == "" && $1 =~ ^--(.*)$ ]]; then
+			# 	decode_method=${BASH_REMATCH[1]}
+			# elif [ "$encoded" = "" ]; then
+			if $($not_assigned); then
+				encoded=$1
+				not_assigned="$FALSE"
+            else
+                encoded="$encoded $1"
+            # else
+            #     show_help
+            #     exit 1
+            fi
+            ;;
+    esac
+    shift
+done
+if $($not_assigned); then
+    show_help
+    exit 1
+fi
+#########################endregion GET OPTIONS#########################
+
+if [[ "$decode_method" = $DECODE_METHOD_URL ]]; then
+    echo $(url_decode $1)
+elif [[ "$decode_method" = $DECODE_METHOD_UNDERSCORE ]]; then
+    echo $(underscore_decode $1)
+elif [[ "$decode_method" = $DECODE_METHOD_ESCAPE ]]; then
+    echo $(escape_decode $1)
+else
+    echo $1
+	exit $ERROR_BAD_METHOD
+fi
+exit # $?
