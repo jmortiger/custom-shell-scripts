@@ -2,24 +2,115 @@
 
 # Opens VS Code w/ the recently opened files/folders/workspaces.
 
-declare -a RECENT=($(sqlite3 -readonly "/home/jmor/.config/Code/User/globalStorage/state.vscdb" "SELECT [value] FROM ItemTable WHERE [key] = 'history.recentlyOpenedPathsList'" | jq -r ".entries[] | if .folderUri != null then .folderUri else .fileUri end"))
-declare -a LABELS=($(sqlite3 -readonly "/home/jmor/.config/Code/User/globalStorage/state.vscdb" "SELECT [value] FROM ItemTable WHERE [key] = 'history.recentlyOpenedPathsList'" | jq -r '.entries[] | if .label != null then @uri "\(.label)" else false end'))
-CHOICE=$(~/Desktop/userchoice.sh ${RECENT[@]} -l ${LABELS[@]} -f 0 -b "false" -d url -c Recent%20Workspaces:%20~~#~~ -p Enter%201-${#RECENT[@]},%20or%20anything%20else%20for%20an%20empty%20workspace.-\>%20)
-if [ ${#CHOICE[@]} = 1 -a $CHOICE = 0 ]; then
-    #echo " OPEN CODE IN EMPTY WOKSPACE"
-    $(code --new-window)
+readonly MY_PATH=$(realpath $0)
+# echo "$MY_PATH"
+MY_DIR=""
+if [[ "$MY_PATH" =~ ^(.*)/[^/]+$ ]]; then
+	readonly MY_DIR="${BASH_REMATCH[1]}"
 else
-    if [[ "${CHOICE[@]}" =~ ^vscode://.+$ ]]; then
-    	# echo "code --new-window --open-url ${CHOICE[@]}"
-    	$(code --new-window --open-url ${CHOICE[@]})
-    elif [[ "${CHOICE[@]}" =~ ^(.*?):///?(.+)$ ]]; then
-        # echo "${BASH_REMATCH[1]}"
-        # echo "${BASH_REMATCH[2]}"
-        # echo "code --new-window --open-url vscode://${BASH_REMATCH[1]}/${BASH_REMATCH[2]} --log trace"
-        $(code --new-window --open-url vscode://${BASH_REMATCH[1]}/${BASH_REMATCH[2]} --log trace)
-	else
-		echo "${CHOICE[@]} isn't a proper uri."
-		exit 255
-	fi
+	MY_DIR="Failed to get dir"
 fi
-exit
+# echo "$MY_DIR"
+readonly TRUE="[ a = a ]"
+readonly FALSE="[ a = b ]"
+readonly HAS_HISTORY="[ -f $HOME/.config/Code/User/globalStorage/state.vscdb ]"
+readonly HAS_NO_HISTORY="[ ! -f $HOME/.config/Code/User/globalStorage/state.vscdb ]"
+readonly ERROR_NO_HISTORY=1
+readonly ERROR_BAD_HISTORY=2
+readonly ERROR_BAD_HISTORY_CHOICE=3
+readonly ERROR_INVALID_URL=255
+
+do_open() {
+	# echo "$@"
+	if [ $# = 1 -a $1 = 0 ]; then
+	    #echo " OPEN CODE IN EMPTY WOKSPACE"
+	    $(code --new-window)
+	else
+	    if [[ "$@" =~ ^vscode://.+$ ]]; then
+	    	# echo "code --new-window --open-url $@"
+	    	$(code --new-window --open-url $@)
+	    elif [[ "$@" =~ ^(.*?):///?(.+)$ ]]; then
+	        # echo "${BASH_REMATCH[1]}"
+	        # echo "${BASH_REMATCH[2]}"
+	        # echo "code --new-window --open-url vscode://${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+	        $(code --new-window --open-url vscode://${BASH_REMATCH[1]}/${BASH_REMATCH[2]})
+		else
+			echo "$@ isn't a proper uri."
+			return $ERROR_INVALID_URL
+		fi
+	fi
+	return
+}
+
+get_entries() {
+	echo $(sqlite3 -readonly "$HOME/.config/Code/User/globalStorage/state.vscdb" "SELECT [value] FROM ItemTable WHERE [key] = 'history.recentlyOpenedPathsList'" | jq -r ".entries[]$@")
+}
+
+did_launch="$FALSE"
+declare -a RECENT=()
+while [ "$1" != "" ]; do
+	if [[ "$1" =~ ^[0-9]+$ ]]; then
+		echo "$1"
+		did_launch="$TRUE"
+		if $($HAS_NO_HISTORY); then
+			exit $ERROR_NO_HISTORY
+		fi
+		if [ ${#RECENT[@]} -le 0 ]; then
+			RECENT=($(get_entries " | if .folderUri != null then .folderUri else .fileUri end"))
+			if [ $? -ne 0 ]; then
+				exit $ERROR_BAD_HISTORY
+			fi
+		fi
+		CHOICE=$1
+		let CHOICE-=1
+		echo "$CHOICE"
+		if [ $CHOICE -lt ${#RECENT[@]} -a $CHOICE -ge 0 ]; then
+			echo $(do_open ${RECENT[$CHOICE]})
+		else
+			exit $ERROR_BAD_HISTORY_CHOICE
+		fi
+		t_exit=$?
+		if [ $t_exit -ne 0 ]; then
+			exit $t_exit
+		fi
+	fi
+	shift
+done
+if $($did_launch); then 
+	exit
+fi
+if $($HAS_NO_HISTORY); then
+	if [ ${#toOpen[@]} -le 0 ]; then
+		exit $ERROR_NO_HISTORY
+	fi
+	read -p "Can't find Vs Code config (should be in '$HOME/.config/Code/User/globalStorage/state.vscdb').
+Launch empty window? [y/n] " CHOICE
+	if [ "$CHOICE" = "y" -o "$CHOICE" = "Y" ]; then
+		$(code --new-window)
+	fi
+	exit $?
+fi
+
+RECENT=($(get_entries " | if .folderUri != null then .folderUri else .fileUri end"))
+LABELS=($(get_entries ' | if .label != null then @uri "\(.label)" else false end'))
+
+CHOICE=$($MY_DIR/userchoice.sh ${RECENT[@]} -l ${LABELS[@]} -f 0 -b "false" -d url -c Recent%20Workspaces:%20~~#~~ -p Enter%201-${#RECENT[@]},%20or%20anything%20else%20for%20an%20empty%20workspace.-\>%20)
+exit $(do_open "${CHOICE[@]}")
+# if [ ${#CHOICE[@]} = 1 -a $CHOICE = 0 ]; then
+#     #echo " OPEN CODE IN EMPTY WOKSPACE"
+#     $(code --new-window)
+# else
+#     if [[ "${CHOICE[@]}" =~ ^vscode://.+$ ]]; then
+#     	# echo "code --new-window --open-url ${CHOICE[@]}"
+#     	$(code --new-window --open-url ${CHOICE[@]})
+#     elif [[ "${CHOICE[@]}" =~ ^(.*?):///?(.+)$ ]]; then
+#         # echo "${BASH_REMATCH[1]}"
+#         # echo "${BASH_REMATCH[2]}"
+#         # echo "code --new-window --open-url vscode://${BASH_REMATCH[1]}/${BASH_REMATCH[2]} --log trace"
+#         $(code --new-window --open-url vscode://${BASH_REMATCH[1]}/${BASH_REMATCH[2]} --log trace)
+# 	else
+# 		echo "${CHOICE[@]} isn't a proper uri."
+# 		exit 255
+# 	fi
+# fi
+# exit $?

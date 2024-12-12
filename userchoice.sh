@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+readonly MY_PATH=$(realpath $0)
+MY_DIR=""
+if [[ "$MY_PATH" =~ ^(.*)/[^/]+$ ]]; then
+	readonly MY_DIR="${BASH_REMATCH[1]}"
+else
+	MY_DIR="Failed to get dir"
+fi
 # #region Constants
 readonly NAME="userchoice"
 readonly ERROR_BAD_CHOICE=4
@@ -68,35 +75,12 @@ not_zero_based() {
     fi
 }
 
-# TODO: TEST
 replace_count() {
-    # echo -e "$(echo $option_count_format | sed -E "s/~~#~~/${#VALUES[@]}/g")"
     echo "$option_count_format" | sed -E "s/~~#~~/${#VALUES[@]}/g"
 }
 
-url_decode() {
-    echo -e $(echo "$1" | sed -E "s/\\+/ /g" | sed -E "s/%([0-9a-fA-F][0-9a-fA-F])/\\\x\1/g")
-}
-
-escape_decode() {
-    echo -e $(echo "$1" | sed -E "s/\\\\/\\\/g")
-}
-
-# TODO: TEST
-underscore_decode() {
-    echo -e $(echo "$1" | sed -E "s/_/ /g")
-}
-
 decode() {
-    if [[ "$decode_method" = $DECODE_METHOD_URL ]]; then
-        echo $(url_decode $1)
-    elif [[ "$decode_method" = $DECODE_METHOD_UNDERSCORE ]]; then
-        echo $(underscore_decode $1)
-    elif [[ "$decode_method" = $DECODE_METHOD_ESCAPE ]]; then
-        echo $(escape_decode $1)
-    else
-        echo $1
-    fi
+	echo $($MY_DIR/decode $1 --$decode_method)
 }
 
 #########################region GET OPTIONS#########################

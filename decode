@@ -94,13 +94,13 @@ fi
 #########################endregion GET OPTIONS#########################
 
 if [[ "$decode_method" = $DECODE_METHOD_URL ]]; then
-    echo $(url_decode $1)
+    echo $(url_decode $encoded)
 elif [[ "$decode_method" = $DECODE_METHOD_UNDERSCORE ]]; then
-    echo $(underscore_decode $1)
+    echo $(underscore_decode $encoded)
 elif [[ "$decode_method" = $DECODE_METHOD_ESCAPE ]]; then
-    echo $(escape_decode $1)
+    echo $(escape_decode $encoded)
 else
-    echo $1
+    echo $encoded
 	exit $ERROR_BAD_METHOD
 fi
 exit # $?
