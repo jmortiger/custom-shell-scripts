@@ -35,17 +35,18 @@ __EOF__
 #########################endregion HELP#########################
 
 #########################region DECODE METHODS#########################
+# https://www.gnu.org/software/sed/manual/html_node/Regular-Expressions.html
 url_decode() {
-    echo -e $(echo "$1" | sed -E "s/\\+/ /g" | sed -E "s/%([0-9a-fA-F][0-9a-fA-F])/\\\x\1/g")
+    echo -e $(echo "$1" | sed -z -E "s/\\+/ /g" | sed -z -E "s/%([0-9a-fA-F][0-9a-fA-F])/\\\x\1/g")
 }
 
 escape_decode() {
-    echo -e $(echo "$1" | sed -E "s/\\\\/\\\/g")
+    echo -e $(echo "$1" | sed -z -E "s/\\\\/\\\/g")
 }
 
 # TODO: TEST
 underscore_decode() {
-    echo -e $(echo "$1" | sed -E "s/_/ /g")
+    echo -e $(echo "$1" | sed -z -E "s/_/ /g")
 }
 #########################endregion DECODE METHODS#########################
 
@@ -54,7 +55,7 @@ decode_method=$DEFAULT_DECODE_METHOD
 encoded=""
 not_assigned=$TRUE
 while [ "$1" != "" ]; do
-    case $1 in
+    case "$1" in
         -h | --help )
             show_help
             exit
@@ -94,13 +95,13 @@ fi
 #########################endregion GET OPTIONS#########################
 
 if [[ "$decode_method" = $DECODE_METHOD_URL ]]; then
-    echo $(url_decode $encoded)
+    echo $(url_decode "$encoded")
 elif [[ "$decode_method" = $DECODE_METHOD_UNDERSCORE ]]; then
-    echo $(underscore_decode $encoded)
+    echo $(underscore_decode "$encoded")
 elif [[ "$decode_method" = $DECODE_METHOD_ESCAPE ]]; then
-    echo $(escape_decode $encoded)
+    echo $(escape_decode "$encoded")
 else
-    echo $encoded
+    echo "$encoded"
 	exit $ERROR_BAD_METHOD
 fi
 exit # $?

@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+
+#########################region CONSTANTS#########################
+readonly NAME="encode"
+readonly ERROR_BAD_METHOD=4
+readonly ERROR_NO_INPUT=2
+readonly ENCODE_METHOD_ESCAPE="escape"
+readonly ENCODE_METHOD_URL="url"
+readonly ENCODE_METHOD_URL_FULL="url_full"
+readonly ENCODE_METHOD_UNDERSCORE="underscore"
+readonly TRUE="[ a = a ]"
+readonly FALSE="[ a = b ]"
+readonly DEFAULT_ENCODE_METHOD=$ENCODE_METHOD_ESCAPE
+#########################endregion CONSTANTS#########################
+#########################region HELP#########################
+show_help() {
+    cat << __EOF__
+$NAME VALUE [--escape|url|underscore] [-s|--silent] | $NAME VALUE [-e|u|_] [-s|--silent] | $NAME -h | $NAME --help
+
+Encodes the given value(s) with the selected method. Defaults to $DEFAULT_ENCODE_METHOD. Currently only encodes spaces.
+
+Parameters:
+	-u | --url: use url decoding
+	-e | --escape: use escape decoding (i.e. uses "\\\\" to encode escape sequences)
+	-_ | --underscore: use underscore decoding (i.e. replaces all underscores with spaces)
+		Defaults to "$DEFAULT_ENCODE_METHOD"
+    -h | --help: Display this help text.
+EXIT STATUS:
+	Error Level of $ERROR_BAD_METHOD if selection is invalid.
+__EOF__
+	# -n | --preserve_newlines: encodes newlines separately from spaces
+# Anything else will result in no encoding being used. If this is used, ensure there are no spaces in your values nor labels.
+#    -e | --error_on_fail: Set the error level on failure.
+}
+#########################endregion HELP#########################
+
+#########################region ENCODE METHODS#########################
+root_encode() {
+	c="$1"
+	shift
+    echo $(echo -n "$@" | sed -z -E 's/%/'"$c"'25/g' | sed -z -E 's/\n/'"$c"'0A/g' | tr '\014' '\n'| sed -z -E 's/\n/'"$c"'0C/g' | tr '\015' '\n'| sed -z -E 's/\n/'"$c"'0D/g' | sed -E 's/\"/'"$c"'22/g' | sed -E 's/\|/'"$c"'7C/g' | sed -E 's/ /'"$c"'20/g' | sed -E 's/!/'"$c"'21/g' | sed -E 's/#/'"$c"'23/g' | sed -E 's/\$/'"$c"'24/g' | sed -E 's/&/'"$c"'26/g' | sed -E "s/'/$c""27/g" | sed -E 's/\(/'"$c"'28/g' | sed -E 's/\)/'"$c"'29/g' | sed -E 's/\*/'"$c"'2A/g' | sed -E 's/\+/'"$c"'2B/g' | sed -E 's/,/'"$c"'2C/g' | sed -E 's/:/'"$c"'3A/g' | sed -E 's/;/'"$c"'3B/g' | sed -E 's/=/'"$c"'3D/g' | sed -E 's/\?/'"$c"'3F/g' | sed -E 's/@/'"$c"'40/g' | sed -E 's/\[/'"$c"'5B/g' | sed -E 's/\]/'"$c"'5D/g')
+}
+# https://en.wikipedia.org/wiki/Percent-encoding#Reserved_characters
+# https://www.gnu.org/software/sed/manual/html_node/Regular-Expressions.html
+# https://superuser.com/questions/133780/in-bash-how-do-i-escape-an-exclamation-mark
+url_encode() {
+    echo $(root_encode '%' "$@")
+	# escape_char='%'
+    # echo -e $(echo -n "$@" | sed -z -E 's/%/'"$escape_char"'25/g' | sed -z -E 's/\n/'"$escape_char"'0A/g' | tr '\014' '\n'| sed -z -E 's/\n/'"$escape_char"'0C/g' | tr '\015' '\n'| sed -z -E 's/\n/'"$escape_char"'0D/g' | sed -E 's/\"/'"$escape_char"'22/g' | sed -E 's/\|/'"$escape_char"'7C/g' | sed -E 's/ /'"$escape_char"'20/g' | sed -E 's/!/'"$escape_char"'21/g' | sed -E 's/#/'"$escape_char"'23/g' | sed -E 's/\$/'"$escape_char"'24/g' | sed -E 's/&/'"$escape_char"'26/g' | sed -E "s/'/$escape_char""27/g" | sed -E 's/\(/'"$escape_char"'28/g' | sed -E 's/\)/'"$escape_char"'29/g' | sed -E 's/\*/'"$escape_char"'2A/g' | sed -E 's/\+/'"$escape_char"'2B/g' | sed -E 's/,/'"$escape_char"'2C/g' | sed -E 's/:/'"$escape_char"'3A/g' | sed -E 's/;/'"$escape_char"'3B/g' | sed -E 's/=/'"$escape_char"'3D/g' | sed -E 's/\?/'"$escape_char"'3F/g' | sed -E 's/@/'"$escape_char"'40/g' | sed -E 's/\[/'"$escape_char"'5B/g' | sed -E 's/\]/'"$escape_char"'5D/g')
+#  | sed -E 's/\//%2F/g'
+#  | sed -E 's/\n/%0A/g'
+}
+
+escape_encode() {
+    echo $(root_encode '\\x' "$@")
+#     echo -e $(echo "$@" | sed -E "s/ /\\\\x20/g" | sed -E "s/
+# /\\\\x0A/g")
+}
+
+underscore_encode() {
+    echo -e $(echo "$@" | sed -E "s/ /_/g")
+}
+#########################endregion ENCODE METHODS#########################
+
+#########################region GET OPTIONS#########################
+encode_method=$DEFAULT_ENCODE_METHOD
+decoded=()
+# preserve_newline=$FALSE
+not_assigned=$TRUE
+while [ "$1" != "" ]; do
+    case "$1" in
+        -h | --help )
+            show_help
+            exit
+            ;;
+        # #region Flags
+		-u | --url )
+		    encode_method=$ENCODE_METHOD_URL
+		    ;;
+		-e | --escape )
+		    encode_method=$ENCODE_METHOD_ESCAPE
+		    ;;
+		-_ | --underscore )
+		    encode_method=$ENCODE_METHOD_UNDERSCORE
+		    ;;
+		# #endregion Flags
+        * )
+			# if [[ "$encode_method" == "" && $1 =~ ^--(.*)$ ]]; then
+			# 	encode_method=${BASH_REMATCH[1]}
+			# elif [ "$decoded" = "" ]; then
+			if $($not_assigned); then
+				not_assigned="$FALSE"
+            # else
+            #     show_help
+            #     exit 1
+            fi
+            decoded+=("$1")
+            ;;
+    esac
+    shift
+done
+if $($not_assigned); then
+    show_help
+    exit 1
+fi
+#########################endregion GET OPTIONS#########################
+
+if [[ "$encode_method" = $ENCODE_METHOD_URL ]]; then
+    echo $(url_encode "${decoded[@]}")
+elif [[ "$encode_method" = $ENCODE_METHOD_UNDERSCORE ]]; then
+    echo $(underscore_encode "${decoded[@]}")
+elif [[ "$encode_method" = $ENCODE_METHOD_ESCAPE ]]; then
+    echo $(escape_encode "${decoded[@]}")
+else
+    echo $decoded
+	exit $ERROR_BAD_METHOD
+fi
+exit # $?
