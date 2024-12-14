@@ -175,9 +175,9 @@ for label in ${VALUES[@]}; do
         prompt_prefix="$prompt_prefix
 "
     fi
-    if [[ (( ${#LABELS[@]} > 0 )) && (( ${#LABELS[@]} > $count )) && $blank_label != ${LABELS[count]} ]]; then
+    if [[ $(( ${#LABELS[@]} > 0 )) && $(( ${#LABELS[@]} > $count )) && $blank_label != ${LABELS[count]} ]]; then
         label=${LABELS[count]}
-    elif [[ (( ${#LABELS[@]} > 0 )) && (( ${#LABELS[@]} > $count )) && $blank_label == ${LABELS[count]} && $replace_blank_label_with != "" ]]; then
+    elif [[ $(( ${#LABELS[@]} > 0 )) && $(( ${#LABELS[@]} > $count )) && $blank_label == ${LABELS[count]} && $replace_blank_label_with != "" ]]; then
         label=$replace_blank_label_with
     fi
     if $($(not_zero_based)); then
@@ -186,10 +186,9 @@ for label in ${VALUES[@]}; do
     valid_options[${#valid_options[@]}]=$count
     valid_labels[${#valid_labels[@]}]=$(decode $label)
     prompt_prefix="$prompt_prefix$count: $(decode $label)"
-    if $($(not_zero_based)); then
-        let count-=1
+    if $($zero_based); then
+    	let count+=1
     fi
-    let count+=1
 done
 # readonly count prompt
 if [[ !( "$option_count_format" = "" ) ]]; then

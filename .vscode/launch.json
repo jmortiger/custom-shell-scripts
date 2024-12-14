@@ -7,10 +7,18 @@
 		{
 			"type": "bashdb",
 			"request": "launch",
-			"name": "Bash-Debug (hardcoded script name)",
+			"name": "decode",
 			"cwd": "${workspaceFolder}",
 			"program": "${workspaceFolder}/decode",
 			"argsString": "some%20string%20with%20spaces --url",
+		},
+		{
+			"type": "bashdb",
+			"request": "launch",
+			"name": "userchoice",
+			"cwd": "${workspaceFolder}",
+			"program": "${workspaceFolder}/userchoice.sh",
+			"argsString": "file:///home/jmor/reposLocal/custom-shell-scripts file:///home/jmor/Desktop vscode-remote://dev-container%2B7b22686f737450617468223a222f686f6d652f6a6d6f722f7265706f732f6536207265706f2f653632316e67222c226c6f63616c446f636b6572223a66616c73652c22636f6e66696746696c65223a7b22246d6964223a312c22667350617468223a222f686f6d652f6a6d6f722f7265706f732f6536207265706f2f653632316e672f2e646576636f6e7461696e65722f646576636f6e7461696e65722e6a736f6e222c2265787465726e616c223a2266696c653a2f2f2f686f6d652f6a6d6f722f7265706f732f65362532307265706f2f653632316e672f2e646576636f6e7461696e65722f646576636f6e7461696e65722e6a736f6e222c2270617468223a222f686f6d652f6a6d6f722f7265706f732f6536207265706f2f653632316e672f2e646576636f6e7461696e65722f646576636f6e7461696e65722e6a736f6e222c22736368656d65223a2266696c65227d7d/app file:///home/jmor/Desktop/decode file:///home/jmor/Games/TOp/libraryfolder.vdf file:///home/jmor/Desktop/vscodeOpener.sh file:///home/jmor/vscode%3A/file/home/jmor/Desktop/userchoice.sh file:///home/jmor/vscode%3A/file/home/jmor/Games/TOp/libraryfolder.vdf file:///home/jmor/vscode%3A/file/home/jmor/Games/TOp/libraryfolders.vdf file:///home/jmor/Desktop/vscode%20launcher%20notes.md file:///home/jmor/Games/TOp/libraryfolders.vdf file:///home/jmor/Desktop/userchoice.sh file:///home/jmor/Desktop/file%3A/home/jmor/Games/TOp/libraryfolders.vdf file:///home/jmor/Desktop/%22file%3A/home/jmor/Games/TOp/libraryfolder.vdf%22 -l false false ~%2Frepos%2Fe6%20repo%2Fe621ng%20%5BDev%20Container%5D ~%2FDesktop%2Fdecode ~%2FGames%2FTOp%2Flibraryfolder.vdf false false false false false false false false false -f 0 -b false -d url -c Recent%20Workspaces:%20~~#~~ -p Enter%201-14,%20or%20anything%20else%20for%20an%20empty%20workspace.-\\>%20",
 		},
 		{
 			"type": "bashdb",
