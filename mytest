@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# term_size2 - Dynamically display terminal window size
+
+readonly ORIG_IFS=$IFS
+current_count=0
+
+# display_count() {
+# 	tput smcup
+# 	tput sc
+# 	tput 
+# }
+init_row_col=($(./cursor_pos))
+exec 3< <("$@")
+val="$(<(&3))"
+line=""
+out_pipe() {
+	echo -n "$(<(&3))"
+}
+while :;do
+	line=$(out_pipe)
+	let current_count+=1
+	echo -n $current_count
+	sleep 1
+done
+exit $?

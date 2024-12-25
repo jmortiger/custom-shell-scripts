@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+current_count=0
+
+trap exit INT
+trap exit QUIT
+trap exit TERM
+trap exit KILL
+echo -n $current_count
+while (( $current_count < 10 )); do
+	sleep 2
+	let current_count+=1
+	echo -n $current_count
+done
+# echo $current_count
+exit

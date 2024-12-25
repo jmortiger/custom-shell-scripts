@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+readonly MAX_INT=$(( 2**63 - 1 ))
+declare -r -i MAX_READ_INT=$(( 2**31 - 1))
+# https://man7.org/linux/man-pages/man7/signal.7.html
+readonly SIGHUP=1
+readonly SIGINT=2
+readonly SIGQUIT=3
+readonly SIGILL=4
+readonly SIGTRAP=5
+readonly SIGABRT=6
+readonly SIGIOT=6
+readonly SIGBUS=7
+# readonly SIGEMT=-
+readonly SIGFPE=8
+readonly SIGKILL=9
+readonly SIGUSR1=10
+readonly SIGSEGV=11
+readonly SIGUSR2=12
+readonly SIGPIPE=13
+readonly SIGALRM=14
+readonly SIGTERM=15
+readonly SIGSTKFLT=16
+readonly SIGCHLD=17
+# readonly SIGCLD=17
+readonly SIGCONT=18
+readonly SIGSTOP=19
+readonly SIGTSTP=20
+readonly SIGTTIN=21
+readonly SIGTTOU=22
+readonly SIGURG=23
+readonly SIGXCPU=24
+readonly SIGXFSZ=25
+readonly SIGVTALRM=26
+readonly SIGPROF=27
+readonly SIGWINCH=28
+readonly SIGIO=29
+readonly SIGPOLL=SIGIO
+readonly SIGPWR=30
+# readonly SIGINFO=-
+# readonly SIGLOST=-
+readonly SIGSYS=31
+readonly SIGUNUSED=31
+
+# readonly ORIG_IFS=$IFS
+
+# row() {
+#     local COL
+#     local ROW
+#     IFS=';' read -sdR -p $'\E[6n' ROW COL
+#     echo "${ROW#*[}"
+# 	IFS=$ORIG_IFS
+# 	return
+# }
+# col() {
+#     local COL
+#     local ROW
+#     IFS=';' read -sdR -p $'\E[6n' ROW COL
+#     echo "${COL}"
+# 	IFS=$ORIG_IFS
+# 	return
+# }
+
+# echo $(row)
+# echo $(col)
+# tput cuf 8
+# echo $(col)
+# exit $?

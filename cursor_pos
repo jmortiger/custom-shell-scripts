@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# cursor_pos - Find cursor position
+
+readonly ORIG_IFS=$IFS
+
+row() {
+    local COL
+    local ROW
+    IFS=';' read -sdR -p $'\E[6n' ROW COL
+    echo "${ROW#*[}"
+	IFS=$ORIG_IFS
+	return
+}
+col() {
+    local COL
+    local ROW
+    IFS=';' read -sdR -p $'\E[6n' ROW COL
+    echo "${COL}"
+	IFS=$ORIG_IFS
+	return
+}
+if [ "$1" = "-r" -o "$1" = "--row" ]; then
+	echo $(row)
+elif [ "$1" = "-c" -o "$1" = "--column" ]; then
+	echo $(col)
+else
+	echo "$(row) $(col)"
+fi
+# tput cuf 8
+# echo $(col)
+exit $?
