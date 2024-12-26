@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-readonly LOGFILE='/home/jmor/reposLocal/custom-shell-scripts/log.txt'
 declare -r -i MAX_INT=$(( 2**63 - 1 ))
 declare -r -i MAX_READ_INT=$(( 2**31 - 1))
 # https://man7.org/linux/man-pages/man7/signal.7.html
@@ -32,28 +31,12 @@ init_row_col=($(cursor_pos))
 cumulative=""
 line=""
 sub_pid=0
-# sub_command=""
-# for val in "$@"; do
-# 	if [ -n $sub_command ]; then sub_command+=$'\000'; fi
-# 	sub_command+="$val"
-# 	shift
-# done
-# IFS=$'\000'
-# echo -e $(echo "$@" | sed -z -E "s/\\\\/\\\/g")
 exec 3< <("$@")
-# exec 3<> <("$@")
 # exec 3< <("$@")
 sub_pid=$!
-# IFS=$' '
 # echo $sub_pid
 out_pipe() {
-	# exec `3&> $LOGFILE`
 	read -s -r -N 1 -u 3 line
-	# line=$(cat <3; ret=$?; echo && exit "$ret")
-	# line=$(cat <&3)
-	# line=$(echo `cat <&3`)
-	# line=$(echo `<&3`)
-	# line=$(3>&1 1>/dev/null | cat)
 }
 is_active="true"
 is_killing="false"
@@ -72,22 +55,14 @@ trap "do_stop $SIGQUIT" QUIT
 trap "do_stop $SIGTERM" TERM
 trap "do_stop $SIGKILL" KILL
 while `$is_active`; do
+	let current_count+=1
 	out_pipe
-	# IFS=$'\000'
 	if [ -n "$line" ]; then
 		line="$line"
-		# IFS=$ORIG_IFS
-		# echo -n "$line"
-		# cumulative="$cumulative$line"
 	elif kill -0 $sub_pid > /dev/null 2>&1; then
-		# IFS=$ORIG_IFS
-		# line=" "
-		# echo -n "$line"
-		# cumulative+="$line"
 		line=''
 		echo "(empty)"
 	else
-		# IFS=$ORIG_IFS
 		echo -e "\nDONE!"
 		is_active="false"
 	fi
@@ -97,6 +72,8 @@ while `$is_active`; do
 	fi
 done
 echo "Successfully completed!"
-echo "Cumulative output:
+echo "Iterations: $current_count
+Cumulative length: ${#cumulative}
+Cumulative output:
 $cumulative"
 exit $?
