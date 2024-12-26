@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+readonly LOGFILE='/home/jmor/reposLocal/custom-shell-scripts/log.txt'
 declare -r -i MAX_INT=$(( 2**63 - 1 ))
 declare -r -i MAX_READ_INT=$(( 2**31 - 1))
 # https://man7.org/linux/man-pages/man7/signal.7.html
@@ -40,12 +41,18 @@ sub_pid=0
 # IFS=$'\000'
 # echo -e $(echo "$@" | sed -z -E "s/\\\\/\\\/g")
 exec 3< <("$@")
+# exec 3<> <("$@")
 # exec 3< <("$@")
 sub_pid=$!
-IFS=$' '
+# IFS=$' '
 # echo $sub_pid
 out_pipe() {
+	# exec `3&> $LOGFILE`
 	read -s -r -N 1 -u 3 line
+	# line=$(cat <3; ret=$?; echo && exit "$ret")
+	# line=$(cat <&3)
+	# line=$(echo `cat <&3`)
+	# line=$(echo `<&3`)
 	# line=$(3>&1 1>/dev/null | cat)
 }
 is_active="true"
@@ -74,10 +81,11 @@ while `$is_active`; do
 		# cumulative="$cumulative$line"
 	elif kill -0 $sub_pid > /dev/null 2>&1; then
 		# IFS=$ORIG_IFS
-		line=" "
+		# line=" "
 		# echo -n "$line"
 		# cumulative+="$line"
-		# echo "(empty)"
+		line=''
+		echo "(empty)"
 	else
 		# IFS=$ORIG_IFS
 		echo -e "\nDONE!"
