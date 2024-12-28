@@ -2,3 +2,5 @@
 .vscode/
 automount
 log.txt
+.vscode/*
+.vscode/launch.json

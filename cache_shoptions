@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+condition() {
+	if [[ $(shopt "$1") =~ on$ ]]; then
+		if [ "$2" = "off" ]; then echo -n 'false'; else echo -n 'true'; fi
+	else
+		if [ "$2" = "off" ]; then echo -n 'true'; else echo -n 'false'; fi
+	fi
+}
+declare -A CACHED_SHOPTIONS=()
+# echo -n '( '
+# is_first='true'
+for opt in "$@"; do
+	CACHED_SHOPTIONS[$opt]=$(condition "$opt")
+	# if $($is_first); then
+	# 	is_first='false'
+	# else
+	# 	echo -n "${IFS:0:1}"
+	# fi
+	# echo -n "[${opt}]=$(condition "$opt")"
+	# echo -n " [${opt}_on]=$(condition "$opt")"
+	# echo -n " [${opt}_off]=$(condition "$opt" off)"
+done
+# echo ' )'
+declare -r CACHED_SHOPTIONS
+declare -p CACHED_SHOPTIONS
+# exit
+# readonly patsub_replacement_off=$( if [[ $(shopt patsub_replacement) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
+# readonly extglob_off=$( if [[ $(shopt extglob) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
