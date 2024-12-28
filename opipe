@@ -25,8 +25,14 @@ readonly SIGINT=2
 readonly SIGQUIT=3
 readonly SIGTERM=15
 # #endregion Signals
+readonly FAIL_TEXT="FAILURE"
 readonly STATUS_CHARACTERS='.FEWC'
-readonly PATTERN="^([$STATUS_CHARACTERS]+)(([^[:print:][:blank:]][^.][[:print:][:blank:]]*)+[^[:print:][:blank:]]*)(.*)$"
+readonly NL_STUB='[:print:][:blank:]'
+readonly NL_PATTERN='[^[:print:][:blank:]]'
+readonly NON_NL_PATTERN='[[:print:][:blank:]]'
+readonly NON_NL_NOR_STATUS_CHARACTERS="[ABDG-VXYZa-z!-,/[:digit:][:blank:]]"
+readonly PATTERN="^([$STATUS_CHARACTERS]+)((${NL_PATTERN}[^.]$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
+# readonly PATTERN="^([$STATUS_CHARACTERS]+)(($NL_PATTERN+[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
 readonly START_TEXT='
 
 # Running:
@@ -83,11 +89,70 @@ trap "do_stop $SIGQUIT" QUIT
 trap "do_stop $SIGTERM" TERM
 # trap "do_stop $SIGKILL" KILL
 declare -i start_int=0
-declare -i c_complete=0
-declare -i c_successful=0
-declare -i c_failure=0
+declare -i c_complete=0 c_successful=0 c_failure=0 c_error=0
+readonly sp="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"
 readonly patsub_replacement_off=$( if [[ $(shopt patsub_replacement) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
 readonly extglob_off=$( if [[ $(shopt extglob) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
+# #region modify_values
+function modify_values() {
+	local -r appended="$1"
+	local -i i
+	if [ "$2" = "-" ]; then
+		local -r operand="-"
+	else
+		local -r operand="+"
+	fi
+	local -I -n target=c_successful
+	for (( i=0; i < ${#appended}; i+=1 )); do
+		case "${appended:$i:1}" in
+			[.])
+				local -n target=c_successful
+				# (( c_successful-=1 ))
+				;;
+			F)
+				local -n target=c_failure
+				# (( c_failure-=1 ))
+				;;
+			E)
+				local -n target=c_error
+				# (( c_error-=1 ))
+				;;
+			*)
+				local -I -n target=FAIL_TEXT
+				# (( c_error-=1 ))
+				echo "Something's wrong"
+				;;
+		esac
+		if [ $target != $FAIL_TEXT ]; then
+			# shellcheck disable=SC2091 disable=SC2271 disable=SC1105
+			(( target$operand=1 ))
+			# shellcheck disable=SC2091 disable=SC2271 disable=SC1105
+			(( c_complete$operand=1 ))
+		fi
+	done
+	# # shellcheck disable=SC2091 disable=SC2271 disable=SC1105
+	# (( c_complete$operand=${#appended} ))
+	# case "$appended" in
+	# 	[.])
+	# 		# shellcheck disable=SC2091 disable=SC2271 disable=SC1105
+	# 		(( c_successful$operand=1 ))
+	# 		;;
+	# 	F)
+	# 		# shellcheck disable=SC2091 disable=SC2271 disable=SC1105
+	# 		(( c_failure+=1 ))
+	# 		;;
+	# 	E)
+	# 		# shellcheck disable=SC2091 disable=SC2271 disable=SC1105
+	# 		(( c_error+=1 ))
+	# 		;;
+	# 	*)
+	# 		# shellcheck disable=SC2091 disable=SC2271 disable=SC1105
+	# 		# (( c_error+=1 ))
+	# 		echo "Something's wrong"
+	# 		;;
+	# esac
+}
+# #endregion modify_values
 while eval $is_active; do
 	((current_count+=1))
 	out_pipe
@@ -105,33 +170,37 @@ while eval $is_active; do
 	if eval $is_active; then
 		echo -n "$line"
 		cumulative+="$line"
-		if (( start_int != 0 )); then
+		if (( start_int != 0 )) && [ -n "$line" ]; then
 			if eval "$extglob_off"; then shopt -s extglob; fi
 			if eval "$patsub_replacement_off"; then shopt -s patsub_replacement; fi
 			results_string="${cumulative:start_int}"
 			echo "$results_string" >> $LOGFILE
-			# while [[ "$results_string" =~ $'\n' ]]; do
-			while [[ "$results_string" =~ $PATTERN ]]; do
-				# echo "TO" >> $LOGFILE
-				# echo "${BASH_REMATCH[1]}${BASH_REMATCH[4]}" >> $LOGFILE
-				(cat <<- _EOF_
-				TO
-				${BASH_REMATCH[1]}${BASH_REMATCH[4]}
-
-				_EOF_
-				) >> $LOGFILE
-				results_string="${BASH_REMATCH[1]}${BASH_REMATCH[4]}"
-			done
-			# while [[ "$results_string" =~ ^(\.+)([[:print:][:blank:]]*)(([^[:print:][:blank:]][^.][[:print:][:blank:]]*)+[^[:print:][:blank:]]*)(.*)$ ]]; do results_string="${BASH_REMATCH[1]}${BASH_REMATCH[5]}";done
+			if [[ "$results_string" =~ $sp ]]; then
+				modify_values "$line"
+			elif [[ "${results_string:0:-1}" =~ $sp ]] && [ "${results_string: -1:1}" != $'\n' ]; then
+				modify_values "${BASH_REMATCH[2]}" '-'
+			fi
+			# while [[ "$results_string" =~ $PATTERN ]]; do
+			# 	# echo "TO" >> $LOGFILE
+			# 	# echo "${BASH_REMATCH[1]}${BASH_REMATCH[4]}" >> $LOGFILE
+			# 	(cat <<- _EOF_
+			# 	TO
+			# 	${BASH_REMATCH[1]}${BASH_REMATCH[4]}
+			#
+			# 	_EOF_
+			# 	) >> $LOGFILE
+			# 	results_string="${BASH_REMATCH[1]}${BASH_REMATCH[4]}"
 			# done
 			if eval "$extglob_off"; then shopt -u extglob; fi
 			if eval "$patsub_replacement_off"; then shopt -u patsub_replacement; fi
-			c_complete=${#results_string}
-			t_buffer=$(echo "$results_string" | sed -E "s/[^.]//g")
-			c_successful=${#t_buffer}
-			t_buffer=$(echo "$results_string" | sed -E "s/[^F]//g")
-			c_failure=${#t_buffer}
-			echo "Final: $results_string" >> $LOGFILE
+			# c_complete=${#results_string}
+			# t_buffer=$(echo "$results_string" | sed -E "s/[^.]//g")
+			# c_successful=${#t_buffer}
+			# t_buffer=$(echo "$results_string" | sed -E "s/[^F]//g")
+			# c_failure=${#t_buffer}
+			# t_buffer=$(echo "$results_string" | sed -E "s/[^E]//g")
+			# c_error=${#t_buffer}
+			# echo "Final: $results_string" >> $LOGFILE
 			echo "Completed: $c_complete, Successful: $c_successful, Failures: $c_failure" >> $LOGFILE
 			# display_text "Completed: $c_complete"
 			# tput rmso
