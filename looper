@@ -2,7 +2,7 @@
 
 readonly LOGFILE='/home/jmor/reposLocal/custom-shell-scripts/log.txt'
 current_count=0
-date +'%T %D' | echo >> $LOGFILE
+date +'%T %D' >> $LOGFILE
 trap exit INT
 trap exit QUIT
 trap exit TERM

@@ -9,6 +9,7 @@ row() {
     local ROW
     IFS=';' read -sdR -p $'\E[6n' ROW COL
     echo "${ROW#*[}"
+    # echo "${ROW#*}"
 	IFS=$ORIG_IFS
 	return
 }
@@ -21,9 +22,9 @@ col() {
 	return
 }
 if [ "$1" = "-r" -o "$1" = "--row" ]; then
-	echo $(row)
+	row
 elif [ "$1" = "-c" -o "$1" = "--column" ]; then
-	echo $(col)
+	col
 else
 	echo "$(row) $(col)"
 fi
