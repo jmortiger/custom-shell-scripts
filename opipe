@@ -3,9 +3,10 @@
 # https://www.kylheku.com/cgit/basta/tree/basta.sh?id=7fbdc5a088c37bd24da5954474a189cd4c890dce
 # https://www.kylheku.com/cgit/basta/about/
 
+readonly DO_LOG='false'
 readonly LOGFILE='/home/jmor/reposLocal/custom-shell-scripts/log.txt'
-echo -n $'\n' >> $LOGFILE
-date +'%T %D' >> $LOGFILE
+eval "$DO_LOG" && (echo -n $'\n' >> $LOGFILE)
+eval "$DO_LOG" && (date +'%T %D' >> $LOGFILE)
 # #region Signals
 # https://man7.org/linux/man-pages/man7/signal.7.html
 # readonly SIGHUP=1
@@ -38,21 +39,33 @@ readonly NON_NL_PATTERN='[[:print:][:blank:]]'
 readonly NON_NL_NOR_STATUS_CHARACTERS="[ABDG-VXYZa-z!-,/[:digit:][:blank:]]"
 readonly PATTERN="^([$STATUS_CHARACTERS]+)((${NL_PATTERN}[^.]$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
 # readonly PATTERN="^([$STATUS_CHARACTERS]+)(($NL_PATTERN+[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
+# display_text() {
+# 	local -r text="$1"
+# 	# tput smcup
+# 	# init_pos=($(cursor_pos))
+# 	# init_cols=$(tput cols)
+# 	# init_lines=$(tput lines)
+# 	tput sc
+# 	tput cup $(($(tput lines) - 1)) 0 # $(($(tput cols) - ${#text} - 1))
+# 	tput il1
+# 	tput smso
+# 	echo "$text"
+# 	# tput rmso
+# 	# tput rc
+# 	# exit
+# 	# tput rmcup
+# }
 display_text() {
 	local -r text="$1"
-	# tput smcup
-	# init_pos=($(cursor_pos))
-	# init_cols=$(tput cols)
-	# init_lines=$(tput lines)
-	tput sc
+	local -r whole_text="$2"
+	clear
+	echo "$whole_text"
 	tput cup $(($(tput lines) - 1)) 0 # $(($(tput cols) - ${#text} - 1))
-	tput il1
 	tput smso
-	echo "$text"
-	# tput rmso
-	# tput rc
-	# exit
-	# tput rmcup
+	# tput il1
+	echo -n "$text"
+	# PS1="$text"
+	tput rmso
 }
 cumulative=""
 line=""
@@ -149,32 +162,38 @@ function modify_values() {
 	# esac
 }
 # #endregion modify_values
+gen_status_text() {
+	echo -n "Completed: $c_complete, Successful: $c_successful, Failures: $c_failure, Errors: $c_error"
+}
 declare -i c_iterations=0 start_int=0
 readonly sp="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"
 readonly patsub_replacement_off=$( if [[ $(shopt patsub_replacement) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
 readonly extglob_off=$( if [[ $(shopt extglob) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
+tput sc
+tput smcup
+trap 'tput rc;tput rmcup' EXIT
 while eval $is_active; do
 	((c_iterations+=1))
 	out_pipe
-	echo "Newest input (raw): $line" >> $LOGFILE
+	eval "$DO_LOG" && (echo "Newest input (raw): $line" >> $LOGFILE)
 	test
 	if [ -z "$line" ]; then
 		if kill -0 $sub_pid > /dev/null 2>&1; then
 			line=''
-			echo "(empty)"
+			# echo "(empty)"
 		else
-			echo -e "\nDONE!"
+			# echo -e "\nDONE!"
 			is_active="false"
 		fi
 	fi
 	if eval $is_active && [ -n "$line" ]; then
-		echo -n "$line"
+		# echo -n "$line"
 		cumulative+="$line"
 		if ((start_int != 0)); then
 			if eval "$extglob_off"; then shopt -s extglob; fi
 			if eval "$patsub_replacement_off"; then shopt -s patsub_replacement; fi
 			results_string="${cumulative:start_int}"
-			echo "$results_string" >> $LOGFILE
+			eval "$DO_LOG" && (echo "$results_string" >> $LOGFILE)
 			if [[ "$results_string" =~ $sp ]]; then
 				modify_values "$line"
 			elif [[ "${results_string:0:-1}" =~ $sp ]] && [ "${results_string: -1:1}" != $'\n' ]; then
@@ -182,22 +201,29 @@ while eval $is_active; do
 			fi
 			if eval "$extglob_off"; then shopt -u extglob; fi
 			if eval "$patsub_replacement_off"; then shopt -u patsub_replacement; fi
-			echo "Completed: $c_complete, Successful: $c_successful, Failures: $c_failure, Errors: $c_error" >> $LOGFILE
+			# shellcheck disable=SC2005
+			eval "$DO_LOG" && (echo "$(gen_status_text)" >> $LOGFILE)
 			# display_text "Completed: $c_complete"
 			# tput rmso
 			# tput rc
+			display_text "$(gen_status_text)" "$cumulative"
 		elif [[ $cumulative =~ $START_TEXT ]]; then
 			start_int=${#cumulative}
 			declare -i -r start_int
 		fi
 	fi
 done
+tput rc
+tput rmcup
+trap - EXIT
 echo "Successfully completed!"
-echo "Iterations: $c_iterations
+output="Iterations: $c_iterations
 start_int: $start_int
 Cumulative length: ${#cumulative}
 Cumulative output:
 $cumulative"
+echo "$output"
+eval "$DO_LOG" && (echo "$output" >> $LOGFILE)
 exit
 # results_string='..............
 # 1111111

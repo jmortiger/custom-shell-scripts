@@ -23920,3 +23920,3071 @@ Finished in 966.999144s, 1.5160 runs/s, 3.5698 assertions/s.
 
 Completed: 1466, Successful: 1465, Failures: 0, Errors: 1
 Newest input (raw): 
+
+17:09:43 12/28/24
+Newest input (raw): R
+Newest input (raw): u
+Newest input (raw): n
+Newest input (raw):  
+Newest input (raw): o
+Newest input (raw): p
+Newest input (raw): t
+Newest input (raw): i
+Newest input (raw): o
+Newest input (raw): n
+Newest input (raw): s
+Newest input (raw): :
+Newest input (raw):  
+Newest input (raw): -
+Newest input (raw): -
+Newest input (raw): s
+Newest input (raw): e
+Newest input (raw): e
+Newest input (raw): d
+Newest input (raw):  
+Newest input (raw): 5
+Newest input (raw): 7
+Newest input (raw): 0
+Newest input (raw): 1
+Newest input (raw): 9
+Newest input (raw): 
+
+Newest input (raw): 
+
+Newest input (raw): #
+Newest input (raw):  
+Newest input (raw): R
+Newest input (raw): u
+Newest input (raw): n
+Newest input (raw): n
+Newest input (raw): i
+Newest input (raw): n
+Newest input (raw): g
+Newest input (raw): :
+Newest input (raw): 
+
+Newest input (raw): 
+
+Newest input (raw): .
+.
+Completed: 1, Successful: 1, Failures: 0, Errors: 0
+Newest input (raw): .
+..
+Completed: 2, Successful: 2, Failures: 0, Errors: 0
+Newest input (raw): .
+...
+Completed: 3, Successful: 3, Failures: 0, Errors: 0
+Newest input (raw): .
+....
+Completed: 4, Successful: 4, Failures: 0, Errors: 0
+Newest input (raw): .
+.....
+Completed: 5, Successful: 5, Failures: 0, Errors: 0
+Newest input (raw): .
+......
+Completed: 6, Successful: 6, Failures: 0, Errors: 0
+Newest input (raw): .
+.......
+Completed: 7, Successful: 7, Failures: 0, Errors: 0
+Newest input (raw): .
+........
+Completed: 8, Successful: 8, Failures: 0, Errors: 0
+Newest input (raw): .
+.........
+Completed: 9, Successful: 9, Failures: 0, Errors: 0
+Newest input (raw): .
+..........
+Completed: 10, Successful: 10, Failures: 0, Errors: 0
+Newest input (raw): .
+...........
+Completed: 11, Successful: 11, Failures: 0, Errors: 0
+Newest input (raw): .
+............
+Completed: 12, Successful: 12, Failures: 0, Errors: 0
+Newest input (raw): .
+.............
+Completed: 13, Successful: 13, Failures: 0, Errors: 0
+Newest input (raw): .
+..............
+Completed: 14, Successful: 14, Failures: 0, Errors: 0
+Newest input (raw): .
+...............
+Completed: 15, Successful: 15, Failures: 0, Errors: 0
+Newest input (raw): .
+................
+Completed: 16, Successful: 16, Failures: 0, Errors: 0
+Newest input (raw): .
+.................
+Completed: 17, Successful: 17, Failures: 0, Errors: 0
+Newest input (raw): .
+..................
+Completed: 18, Successful: 18, Failures: 0, Errors: 0
+Newest input (raw): .
+...................
+Completed: 19, Successful: 19, Failures: 0, Errors: 0
+Newest input (raw): .
+....................
+Completed: 20, Successful: 20, Failures: 0, Errors: 0
+Newest input (raw): .
+.....................
+Completed: 21, Successful: 21, Failures: 0, Errors: 0
+Newest input (raw): .
+......................
+Completed: 22, Successful: 22, Failures: 0, Errors: 0
+Newest input (raw): .
+.......................
+Completed: 23, Successful: 23, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): F
+........................
+
+F
+Completed: 25, Successful: 24, Failures: 1, Errors: 0
+Newest input (raw): i
+........................
+
+Fi
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Fin
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Fini
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finis
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): h
+........................
+
+Finish
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finishe
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): d
+........................
+
+Finished
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished i
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 6
+........................
+
+Finished in 0.6
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 6
+........................
+
+Finished in 0.66
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 5
+........................
+
+Finished in 0.665
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 3
+........................
+
+Finished in 0.6653
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.66532
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.665329
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.665329s,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 3
+........................
+
+Finished in 0.665329s, 3
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 6
+........................
+
+Finished in 0.665329s, 36
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.665329s, 36.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.665329s, 36.0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.665329s, 36.07
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.665329s, 36.072
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 4
+........................
+
+Finished in 0.665329s, 36.0724
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.665329s, 36.0724 r
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.665329s, 36.0724 ru
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.665329s, 36.0724 run
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): /
+........................
+
+Finished in 0.665329s, 36.0724 runs/
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.665329s, 36.0724 runs/s,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 1
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 1
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 4
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 14
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 5
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.79
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.792
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 5
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 a
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 as
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 ass
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 asse
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 asser
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): t
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assert
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 asserti
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertio
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertion
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): /
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+2
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 4
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 r
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 ru
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 run
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 9
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 a
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 as
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 ass
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 asse
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 asser
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): t
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assert
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 asserti
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertio
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertion
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): f
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 f
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 fa
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 fai
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): l
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 fail
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failu
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failur
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failure
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 e
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 er
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 err
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 erro
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 error
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): k
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 sk
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 ski
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): p
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skip
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skips
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Finished in 0.665329s, 36.0724 runs/s, 145.7925 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skips
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+17:10:54 12/28/24
+Newest input (raw): R
+Newest input (raw): u
+Newest input (raw): n
+Newest input (raw):  
+Newest input (raw): o
+Newest input (raw): p
+Newest input (raw): t
+Newest input (raw): i
+Newest input (raw): o
+Newest input (raw): n
+Newest input (raw): s
+Newest input (raw): :
+Newest input (raw):  
+Newest input (raw): -
+Newest input (raw): -
+Newest input (raw): s
+Newest input (raw): e
+Newest input (raw): e
+Newest input (raw): d
+Newest input (raw):  
+Newest input (raw): 2
+Newest input (raw): 4
+Newest input (raw): 7
+Newest input (raw): 1
+Newest input (raw): 6
+Newest input (raw): 
+
+Newest input (raw): 
+
+Newest input (raw): #
+Newest input (raw):  
+Newest input (raw): R
+Newest input (raw): u
+Newest input (raw): n
+Newest input (raw): n
+Newest input (raw): i
+Newest input (raw): n
+Newest input (raw): g
+Newest input (raw): :
+Newest input (raw): 
+
+Newest input (raw): 
+
+Newest input (raw): .
+.
+Completed: 1, Successful: 1, Failures: 0, Errors: 0
+Newest input (raw): .
+..
+Completed: 2, Successful: 2, Failures: 0, Errors: 0
+Newest input (raw): .
+...
+Completed: 3, Successful: 3, Failures: 0, Errors: 0
+Newest input (raw): .
+....
+Completed: 4, Successful: 4, Failures: 0, Errors: 0
+Newest input (raw): .
+.....
+Completed: 5, Successful: 5, Failures: 0, Errors: 0
+Newest input (raw): .
+......
+Completed: 6, Successful: 6, Failures: 0, Errors: 0
+Newest input (raw): .
+.......
+Completed: 7, Successful: 7, Failures: 0, Errors: 0
+Newest input (raw): .
+........
+Completed: 8, Successful: 8, Failures: 0, Errors: 0
+Newest input (raw): .
+.........
+Completed: 9, Successful: 9, Failures: 0, Errors: 0
+Newest input (raw): .
+..........
+Completed: 10, Successful: 10, Failures: 0, Errors: 0
+Newest input (raw): .
+...........
+Completed: 11, Successful: 11, Failures: 0, Errors: 0
+Newest input (raw): .
+............
+Completed: 12, Successful: 12, Failures: 0, Errors: 0
+Newest input (raw): .
+.............
+Completed: 13, Successful: 13, Failures: 0, Errors: 0
+Newest input (raw): .
+..............
+Completed: 14, Successful: 14, Failures: 0, Errors: 0
+Newest input (raw): .
+...............
+Completed: 15, Successful: 15, Failures: 0, Errors: 0
+Newest input (raw): .
+................
+Completed: 16, Successful: 16, Failures: 0, Errors: 0
+Newest input (raw): .
+.................
+Completed: 17, Successful: 17, Failures: 0, Errors: 0
+Newest input (raw): .
+..................
+Completed: 18, Successful: 18, Failures: 0, Errors: 0
+Newest input (raw): .
+...................
+Completed: 19, Successful: 19, Failures: 0, Errors: 0
+Newest input (raw): .
+....................
+Completed: 20, Successful: 20, Failures: 0, Errors: 0
+Newest input (raw): .
+.....................
+Completed: 21, Successful: 21, Failures: 0, Errors: 0
+Newest input (raw): .
+......................
+Completed: 22, Successful: 22, Failures: 0, Errors: 0
+Newest input (raw): .
+.......................
+Completed: 23, Successful: 23, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): F
+........................
+
+F
+Completed: 25, Successful: 24, Failures: 1, Errors: 0
+Newest input (raw): i
+........................
+
+Fi
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Fin
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Fini
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finis
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): h
+........................
+
+Finish
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finishe
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): d
+........................
+
+Finished
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished i
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 6
+........................
+
+Finished in 0.6
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.67
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 6
+........................
+
+Finished in 0.676
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.6769
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 1
+........................
+
+Finished in 0.67691
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 4
+........................
+
+Finished in 0.676914
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.676914s,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 3
+........................
+
+Finished in 0.676914s, 3
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 5
+........................
+
+Finished in 0.676914s, 35
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.676914s, 35.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 4
+........................
+
+Finished in 0.676914s, 35.4
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 5
+........................
+
+Finished in 0.676914s, 35.45
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 5
+........................
+
+Finished in 0.676914s, 35.455
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.676914s, 35.4550
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.676914s, 35.4550 r
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.676914s, 35.4550 ru
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.676914s, 35.4550 run
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): /
+........................
+
+Finished in 0.676914s, 35.4550 runs/
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.676914s, 35.4550 runs/s,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 1
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 1
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 4
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 14
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 3
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.29
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.297
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 3
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 a
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 as
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 ass
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 asse
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 asser
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): t
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assert
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 asserti
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertio
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertion
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): /
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+2
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 4
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 r
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 ru
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 run
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 9
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 a
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 as
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 ass
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 asse
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 asser
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): t
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assert
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 asserti
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertio
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertion
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): f
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 f
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 fa
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 fai
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): l
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 fail
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failu
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failur
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failure
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 e
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 er
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 err
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 erro
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 error
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): k
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 sk
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 ski
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): p
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skip
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skips
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Finished in 0.676914s, 35.4550 runs/s, 143.2973 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skips
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+17:11:50 12/28/24
+Newest input (raw): R
+Newest input (raw): u
+Newest input (raw): n
+Newest input (raw):  
+Newest input (raw): o
+Newest input (raw): p
+Newest input (raw): t
+Newest input (raw): i
+Newest input (raw): o
+Newest input (raw): n
+Newest input (raw): s
+Newest input (raw): :
+Newest input (raw):  
+Newest input (raw): -
+Newest input (raw): -
+Newest input (raw): s
+Newest input (raw): e
+Newest input (raw): e
+Newest input (raw): d
+Newest input (raw):  
+Newest input (raw): 2
+Newest input (raw): 8
+Newest input (raw): 0
+Newest input (raw): 2
+Newest input (raw): 8
+Newest input (raw): 
+
+Newest input (raw): 
+
+Newest input (raw): #
+Newest input (raw):  
+Newest input (raw): R
+Newest input (raw): u
+Newest input (raw): n
+Newest input (raw): n
+Newest input (raw): i
+Newest input (raw): n
+Newest input (raw): g
+Newest input (raw): :
+Newest input (raw): 
+
+Newest input (raw): 
+
+Newest input (raw): .
+.
+Completed: 1, Successful: 1, Failures: 0, Errors: 0
+Newest input (raw): .
+..
+Completed: 2, Successful: 2, Failures: 0, Errors: 0
+Newest input (raw): .
+...
+Completed: 3, Successful: 3, Failures: 0, Errors: 0
+Newest input (raw): .
+....
+Completed: 4, Successful: 4, Failures: 0, Errors: 0
+Newest input (raw): .
+.....
+Completed: 5, Successful: 5, Failures: 0, Errors: 0
+Newest input (raw): .
+......
+Completed: 6, Successful: 6, Failures: 0, Errors: 0
+Newest input (raw): .
+.......
+Completed: 7, Successful: 7, Failures: 0, Errors: 0
+Newest input (raw): .
+........
+Completed: 8, Successful: 8, Failures: 0, Errors: 0
+Newest input (raw): .
+.........
+Completed: 9, Successful: 9, Failures: 0, Errors: 0
+Newest input (raw): .
+..........
+Completed: 10, Successful: 10, Failures: 0, Errors: 0
+Newest input (raw): .
+...........
+Completed: 11, Successful: 11, Failures: 0, Errors: 0
+Newest input (raw): .
+............
+Completed: 12, Successful: 12, Failures: 0, Errors: 0
+Newest input (raw): .
+.............
+Completed: 13, Successful: 13, Failures: 0, Errors: 0
+Newest input (raw): .
+..............
+Completed: 14, Successful: 14, Failures: 0, Errors: 0
+Newest input (raw): .
+...............
+Completed: 15, Successful: 15, Failures: 0, Errors: 0
+Newest input (raw): .
+................
+Completed: 16, Successful: 16, Failures: 0, Errors: 0
+Newest input (raw): .
+.................
+Completed: 17, Successful: 17, Failures: 0, Errors: 0
+Newest input (raw): .
+..................
+Completed: 18, Successful: 18, Failures: 0, Errors: 0
+Newest input (raw): .
+...................
+Completed: 19, Successful: 19, Failures: 0, Errors: 0
+Newest input (raw): .
+....................
+Completed: 20, Successful: 20, Failures: 0, Errors: 0
+Newest input (raw): .
+.....................
+Completed: 21, Successful: 21, Failures: 0, Errors: 0
+Newest input (raw): .
+......................
+Completed: 22, Successful: 22, Failures: 0, Errors: 0
+Newest input (raw): .
+.......................
+Completed: 23, Successful: 23, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): F
+........................
+
+F
+Completed: 25, Successful: 24, Failures: 1, Errors: 0
+Newest input (raw): i
+........................
+
+Fi
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Fin
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Fini
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finis
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): h
+........................
+
+Finish
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finishe
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): d
+........................
+
+Finished
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished i
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 6
+........................
+
+Finished in 0.6
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 1
+........................
+
+Finished in 0.61
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 6
+........................
+
+Finished in 0.616
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 4
+........................
+
+Finished in 0.6164
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.61649
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 5
+........................
+
+Finished in 0.616495
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.616495s,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 3
+........................
+
+Finished in 0.616495s, 3
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 8
+........................
+
+Finished in 0.616495s, 38
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.616495s, 38.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.616495s, 38.9
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.616495s, 38.92
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.616495s, 38.929
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.616495s, 38.9297
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.616495s, 38.9297 r
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.616495s, 38.9297 ru
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.616495s, 38.9297 run
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): /
+........................
+
+Finished in 0.616495s, 38.9297 runs/
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.616495s, 38.9297 runs/s,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 1
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 1
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 5
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 15
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 3
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 4
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.34
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 1
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.341
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 a
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 as
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 ass
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 asse
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 asser
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): t
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assert
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 asserti
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertio
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertion
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): /
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+2
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 4
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 r
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 ru
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 run
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 9
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 a
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 as
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 ass
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 asse
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 asser
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): t
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assert
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 asserti
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertio
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertion
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): f
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 f
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 fa
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 fai
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): l
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 fail
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failu
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failur
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failure
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 e
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 er
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 err
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 erro
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 error
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): k
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 sk
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 ski
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): p
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skip
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skips
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Finished in 0.616495s, 38.9297 runs/s, 157.3410 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skips
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+17:12:34 12/28/24
+Newest input (raw): R
+Newest input (raw): u
+Newest input (raw): n
+Newest input (raw):  
+Newest input (raw): o
+Newest input (raw): p
+Newest input (raw): t
+Newest input (raw): i
+Newest input (raw): o
+Newest input (raw): n
+Newest input (raw): s
+Newest input (raw): :
+Newest input (raw):  
+Newest input (raw): -
+Newest input (raw): -
+Newest input (raw): s
+Newest input (raw): e
+Newest input (raw): e
+Newest input (raw): d
+Newest input (raw):  
+Newest input (raw): 1
+Newest input (raw): 2
+Newest input (raw): 7
+Newest input (raw): 7
+Newest input (raw): 6
+Newest input (raw): 
+
+Newest input (raw): 
+
+Newest input (raw): #
+Newest input (raw):  
+Newest input (raw): R
+Newest input (raw): u
+Newest input (raw): n
+Newest input (raw): n
+Newest input (raw): i
+Newest input (raw): n
+Newest input (raw): g
+Newest input (raw): :
+Newest input (raw): 
+
+Newest input (raw): 
+
+Newest input (raw): .
+.
+Completed: 1, Successful: 1, Failures: 0, Errors: 0
+Newest input (raw): .
+..
+Completed: 2, Successful: 2, Failures: 0, Errors: 0
+Newest input (raw): .
+...
+Completed: 3, Successful: 3, Failures: 0, Errors: 0
+Newest input (raw): .
+....
+Completed: 4, Successful: 4, Failures: 0, Errors: 0
+Newest input (raw): .
+.....
+Completed: 5, Successful: 5, Failures: 0, Errors: 0
+Newest input (raw): .
+......
+Completed: 6, Successful: 6, Failures: 0, Errors: 0
+Newest input (raw): .
+.......
+Completed: 7, Successful: 7, Failures: 0, Errors: 0
+Newest input (raw): .
+........
+Completed: 8, Successful: 8, Failures: 0, Errors: 0
+Newest input (raw): .
+.........
+Completed: 9, Successful: 9, Failures: 0, Errors: 0
+Newest input (raw): .
+..........
+Completed: 10, Successful: 10, Failures: 0, Errors: 0
+Newest input (raw): .
+...........
+Completed: 11, Successful: 11, Failures: 0, Errors: 0
+Newest input (raw): .
+............
+Completed: 12, Successful: 12, Failures: 0, Errors: 0
+Newest input (raw): .
+.............
+Completed: 13, Successful: 13, Failures: 0, Errors: 0
+Newest input (raw): .
+..............
+Completed: 14, Successful: 14, Failures: 0, Errors: 0
+Newest input (raw): .
+...............
+Completed: 15, Successful: 15, Failures: 0, Errors: 0
+Newest input (raw): .
+................
+Completed: 16, Successful: 16, Failures: 0, Errors: 0
+Newest input (raw): .
+.................
+Completed: 17, Successful: 17, Failures: 0, Errors: 0
+Newest input (raw): .
+..................
+Completed: 18, Successful: 18, Failures: 0, Errors: 0
+Newest input (raw): .
+...................
+Completed: 19, Successful: 19, Failures: 0, Errors: 0
+Newest input (raw): .
+....................
+Completed: 20, Successful: 20, Failures: 0, Errors: 0
+Newest input (raw): .
+.....................
+Completed: 21, Successful: 21, Failures: 0, Errors: 0
+Newest input (raw): .
+......................
+Completed: 22, Successful: 22, Failures: 0, Errors: 0
+Newest input (raw): .
+.......................
+Completed: 23, Successful: 23, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): F
+........................
+
+F
+Completed: 25, Successful: 24, Failures: 1, Errors: 0
+Newest input (raw): i
+........................
+
+Fi
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Fin
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Fini
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finis
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): h
+........................
+
+Finish
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finishe
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): d
+........................
+
+Finished
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished i
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.7
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 5
+........................
+
+Finished in 0.75
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 8
+........................
+
+Finished in 0.758
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.7582
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 8
+........................
+
+Finished in 0.75828
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.758280
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.758280s,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 3
+........................
+
+Finished in 0.758280s, 3
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 1
+........................
+
+Finished in 0.758280s, 31
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.758280s, 31.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 6
+........................
+
+Finished in 0.758280s, 31.6
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 5
+........................
+
+Finished in 0.758280s, 31.65
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.758280s, 31.650
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 6
+........................
+
+Finished in 0.758280s, 31.6506
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.758280s, 31.6506 r
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.758280s, 31.6506 ru
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.758280s, 31.6506 run
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): /
+........................
+
+Finished in 0.758280s, 31.6506 runs/
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.758280s, 31.6506 runs/s,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 1
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 1
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 12
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.92
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 1
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.921
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 1
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 a
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 as
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 ass
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 asse
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 asser
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): t
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assert
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 asserti
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertio
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertion
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): /
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): .
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 2
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+2
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 4
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 r
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 ru
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 run
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 9
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 9
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 7
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 a
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 as
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 ass
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 asse
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 asser
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): t
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assert
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 asserti
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertio
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): n
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertion
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): f
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 f
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): a
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 fa
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 fai
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): l
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 fail
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): u
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failu
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failur
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failure
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): e
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 e
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 er
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 err
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): o
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 erro
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): r
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 error
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): ,
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors,
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 0
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw):  
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 s
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): k
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 sk
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): i
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 ski
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): p
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skip
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): s
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skips
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 
+
+........................
+
+Finished in 0.758280s, 31.6506 runs/s, 127.9211 assertions/s.
+24 runs, 97 assertions, 0 failures, 0 errors, 0 skips
+
+Completed: 24, Successful: 24, Failures: 0, Errors: 0
+Newest input (raw): 

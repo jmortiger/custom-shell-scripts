@@ -7,6 +7,14 @@
 		{
 			"type": "bashdb",
 			"request": "launch",
+			"name": "cache_shoptions",
+			"cwd": "${workspaceFolder}",
+			"program": "cache_shoptions",
+			"argsString": "extglob patsub_replacement",
+		},
+		{
+			"type": "bashdb",
+			"request": "launch",
 			"name": "decode",
 			"cwd": "${workspaceFolder}",
 			"program": "${workspaceFolder}/decode",
