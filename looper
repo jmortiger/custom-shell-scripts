@@ -2,26 +2,26 @@
 
 readonly LOGFILE='/home/jmor/reposLocal/custom-shell-scripts/log.txt'
 current_count=0
-date +'%T %D' >> $LOGFILE
+# date +'%T %D' >> $LOGFILE
 trap exit INT
 trap exit QUIT
 trap exit TERM
 trap exit KILL
 echo -n $current_count
-echo -n $current_count >>$LOGFILE
-while (( $current_count < 10 )); do
-	sleep 2
-	let current_count+=1
+# echo -n $current_count >>$LOGFILE
+while (( current_count < 10 )); do
+	sleep 1
+	((current_count+=1))
 	# echo -n "$current_count"
 	if (( current_count & 1 == 1 )); then
 		echo -n "$current_count "
-		echo -n "$current_count " >>$LOGFILE
+		# echo -n "$current_count " >>$LOGFILE
 	else
 		echo -n "$current_count
 "
-		echo -n "$current_count
-" >>$LOGFILE
+# 		echo -n "$current_count
+# " >>$LOGFILE
 	fi
 done
 # echo $current_count
-exit
+exit $current_count
