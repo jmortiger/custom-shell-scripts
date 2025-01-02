@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# cspell:ignore logfile jmor FEWC smso rmso civis rmcup smcup cnorm extglob patsub
+
 # https://www.kylheku.com/cgit/basta/tree/basta.sh?id=7fbdc5a088c37bd24da5954474a189cd4c890dce
 # https://www.kylheku.com/cgit/basta/about/
 
@@ -39,16 +41,39 @@ readonly NON_NL_PATTERN='[[:print:][:blank:]]'
 readonly NON_NL_NOR_STATUS_CHARACTERS="[ABDG-VXYZa-z!-,/[:digit:][:blank:]]"
 readonly PATTERN="^([$STATUS_CHARACTERS]+)((${NL_PATTERN}[^.]$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
 # readonly PATTERN="^([$STATUS_CHARACTERS]+)(($NL_PATTERN+[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
+
+# declare -i last_row=$(cursor_pos -r) LINES=$(tput lines)
+# declare -i cum_stat_rows=0; declare -i cum_stat_line_offset=0
 display_text() {
 	local -r text="$1"
 	local -r whole_text="$2"
 	local -r delta="$3"
-	clear
-	echo "$whole_text"
-	tput cup $(($(tput lines) - 1)) 0 # $(($(tput cols) - ${#text} - 1))
+	tput rc
+	tput el # tput ed
+	echo -n "$delta"
+	tput el
+	# declare t="$(profile_text --row_at _ --no_trailing_control --initial_line_offset $cum_stat_line_offset "$delta")"
+	# ((cum_stat_rows+=$(profile_text -r --initial_line_offset $cum_stat_line_offset "$delta"), cum_stat_line_offset=${#t}))
+	if (("$(profile_text -r "$whole_text")"+init_row > $(tput lines))); then
+		# tput sc
+		tput cud1
+		# tput el
+		# tput rc
+		tput cuu1
+		echo -n $'\r'
+		if ((t="$(profile_text --col_at _ "$whole_text")", t > 0)); then
+			tput cuf "$(profile_text --col_at _ "$whole_text")"
+		fi
+	fi
+	tput sc
+	tput cud1
+	# echo -n $'\r'
+	# echo -n "$(cursor_pos)"
 	tput smso
 	echo -n "$text"
 	tput rmso
+	# last_row=$(cursor_pos -r)
+	# LINES=$(tput lines)
 }
 cumulative=""
 line=""
@@ -132,10 +157,16 @@ tput civis
 # trap 'tput rc;tput rmcup' EXIT
 # trap 'tput rc; tput cnorm' EXIT
 status_text="WAITING..."
+init_row=$(cursor_pos -r)
 while eval $is_active; do
+	# last_row=$(cursor_pos -r)
+	# LINES=$(tput lines)
 	((c_iterations+=1))
 	out_pipe
 	eval "$DO_LOG" && (echo "Newest input (raw): $line" >> $LOGFILE)
+	# if [[ -z "${init_row+x}" ]]; then
+	# 	declare -r -i init_row=$(cursor_pos -r)
+	# fi
 	if [ -z "$line" ]; then
 		if kill -0 $sub_pid > /dev/null 2>&1; then
 			line=''
@@ -169,8 +200,8 @@ while eval $is_active; do
 done
 tput rc
 # tput rmcup
-tput cnorm
-echo "Successfully completed!"
+tput cnorm ed
+echo $'\nSuccessfully completed!'
 output="Iterations: $c_iterations
 start_int: $start_int
 Cumulative length: ${#cumulative}

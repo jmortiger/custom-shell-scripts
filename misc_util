@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# cspell:disable
 readonly MAX_INT=$(( 2**63 - 1 ))
 declare -r -i MAX_READ_INT=$(( 2**31 - 1))
 # https://man7.org/linux/man-pages/man7/signal.7.html
@@ -41,28 +42,75 @@ readonly SIGPWR=30
 # readonly SIGLOST=-
 readonly SIGSYS=31
 readonly SIGUNUSED=31
+# cspell:enable
 
-# readonly ORIG_IFS=$IFS
-
-# row() {
-#     local COL
-#     local ROW
-#     IFS=';' read -sdR -p $'\E[6n' ROW COL
-#     echo "${ROW#*[}"
-# 	IFS=$ORIG_IFS
-# 	return
-# }
-# col() {
-#     local COL
-#     local ROW
-#     IFS=';' read -sdR -p $'\E[6n' ROW COL
-#     echo "${COL}"
-# 	IFS=$ORIG_IFS
-# 	return
-# }
-
-# echo $(row)
-# echo $(col)
-# tput cuf 8
-# echo $(col)
-# exit $?
+#########################region GET OPTIONS#########################
+useLabels='false'
+useValues='true'
+while [ "$1" != "" ] && [ "$1" != '--' ]; do
+    #If it's an option
+    if [[ $1 =~ ^\- ]]; then
+        useLabels='false'
+        if [[ ${#VALUES[@]} -gt 0 ]]; then
+            useValues='false'
+        fi
+    fi
+    case $1 in
+        # #region Flags
+		-l | --labels )
+		    useLabels='true'
+		    ;;
+		-t | --passthrough )
+		    passthrough='true'
+		    ;;
+		-z | --zero_based )
+		    zero_based='true'
+		    ;;
+		-r | --return_decoded )
+		    decode_value_before_return='true'
+		    ;;
+		# #endregion Flags
+        # #region Values
+		-d | --decode | --decode_method )
+		    shift
+		    decode_method=$1
+		    ;;
+		-p | --prompt )
+		    shift
+		    prompt=$1
+		    ;;
+		-c | --option_count_format )
+		    shift
+		    option_count_format=$1
+		    ;;
+		-b | --blank_label )
+		    shift
+		    blank_label=$1
+		    ;;
+		--replace_blank_label_with )
+		    shift
+		    replace_blank_label_with=$1
+		    ;;
+		-f | --return_on_fail | --return_on_failure )
+		    shift;
+		    return_on_failure=$1
+		    ;;
+		# #endregion Values
+        -h | --help )
+            show_help
+            exit
+            ;;
+        * )
+            if $($useLabels); then
+                LABELS[${#LABELS[@]}]=$1
+            elif $($useValues); then
+                VALUES[${#VALUES[@]}]=$1
+            else
+                show_help
+                exit 1
+            fi
+            ;;
+    esac
+    shift
+done
+#########################endregion GET OPTIONS#########################

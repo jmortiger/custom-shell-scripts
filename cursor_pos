@@ -1,13 +1,83 @@
 #!/usr/bin/env bash
+# shellcheck shell=bash
 
 # cursor_pos - Find cursor position
 
+readonly C_MODE_ROW='ROWS'
+readonly C_MODE_COL='COLS'
+readonly C_MODE_BOTH='BOTH'
+readonly C_MODE_BOTH_DELIM=' '
+readonly C_TIMEOUT_REGEX='^[[:digit:]]*\.?[[:digit:]]+$'
 readonly ORIG_IFS=$IFS
+
+show_help() {
+	echo ""
+}
+
+#########################region GET OPTIONS#########################
+p_mode=$C_MODE_BOTH
+p_delim=$C_MODE_BOTH_DELIM
+# p_timeout=''
+while [ -n "$1" ] && [ "$1" != '--' ]; do
+    # # If it's an option
+    # if [[ $1 =~ ^\- ]]; then
+    #     useLabels='false'
+    #     if [[ ${#VALUES[@]} -gt 0 ]]; then
+    #         useValues='false'
+    #     fi
+    # fi
+    case "$1" in
+        # #region Flags
+		# -r | --rows );;
+		#     decode_value_before_return='true'
+		#     ;;
+		# #endregion Flags
+        # #region Enum flags
+		-r | --rows )
+		    p_mode=$C_MODE_ROW
+		    ;;
+		-c | --cols | --columns )
+		    p_mode=$C_MODE_COL
+		    ;;
+		# #endregion Enum flags
+        # #region Values
+		-d | --delim | --delimiter )
+		    shift
+		    p_delim="$1"
+		    ;;
+		-t | --timeout )
+		    shift
+			if [[ "$1" =~ $C_TIMEOUT_REGEX ]]; then
+		    	declare -g p_timeout="$1"
+			else
+				echo "Timeout must follow: '$C_TIMEOUT_REGEX'; value was '$1'"
+            	show_help
+            	exit 1
+			fi
+		    ;;
+		# #endregion Values
+        -h | --help )
+            show_help
+            exit
+            ;;
+        * )
+            show_help
+            exit 1
+            ;;
+    esac
+    shift
+done
+declare -r -g p_timeout p_delim p_mode
+#########################endregion GET OPTIONS#########################
 
 row() {
     local COL
     local ROW
-    IFS=';' read -sdR -p $'\E[6n' ROW COL
+	if [[ -n "${p_timeout+x}" ]]; then
+    	IFS=';' read -t $p_timeout -sdR -p $'\E[6n' ROW COL
+	else
+    	IFS=';' read -sdR -p $'\E[6n' ROW COL
+	fi
     echo "${ROW#*[}"
     # echo "${ROW#*}"
 	IFS=$ORIG_IFS
@@ -16,18 +86,20 @@ row() {
 col() {
     local COL
     local ROW
-    IFS=';' read -sdR -p $'\E[6n' ROW COL
+	if [[ -n "${p_timeout+x}" ]]; then
+    	IFS=';' read -t $p_timeout -sdR -p $'\E[6n' ROW COL
+	else
+    	IFS=';' read -sdR -p $'\E[6n' ROW COL
+	fi
     echo "${COL}"
 	IFS=$ORIG_IFS
 	return
 }
-if [ "$1" = "-r" -o "$1" = "--row" ]; then
-	row
-elif [ "$1" = "-c" -o "$1" = "--column" ]; then
-	col
-else
-	echo "$(row) $(col)"
-fi
+case "$p_mode" in
+	"$C_MODE_ROW") row ;;
+	"$C_MODE_COL") col ;;
+	*) echo "$(row)$p_delim$(col)" ;;
+esac
 # tput cuf 8
 # echo $(col)
 exit $?
