@@ -28,12 +28,14 @@ readonly SIGINT=2
 readonly SIGQUIT=3
 readonly SIGTERM=15
 # #endregion Signals
+declare -r -i MAX_READ_INT=$(( 2**31 - 1))
 readonly FAIL_TEXT="FAILURE"
 readonly START_TEXT='
 
 # Running:
 
 $'
+# #region Patterns
 readonly STATUS_CHARACTERS='.FEWC'
 readonly NL_STUB='[:print:][:blank:]'
 readonly NL_PATTERN='[^[:print:][:blank:]]'
@@ -41,6 +43,7 @@ readonly NON_NL_PATTERN='[[:print:][:blank:]]'
 readonly NON_NL_NOR_STATUS_CHARACTERS="[ABDG-VXYZa-z!-,/[:digit:][:blank:]]"
 readonly PATTERN="^([$STATUS_CHARACTERS]+)((${NL_PATTERN}[^.]$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
 # readonly PATTERN="^([$STATUS_CHARACTERS]+)(($NL_PATTERN+[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
+# #endregion Patterns
 
 # declare -i last_row=$(cursor_pos -r) LINES=$(tput lines)
 # declare -i cum_stat_rows=0; declare -i cum_stat_line_offset=0
@@ -49,9 +52,10 @@ display_text() {
 	local -r whole_text="$2"
 	local -r delta="$3"
 	tput rc
-	tput el # tput ed
+	# tput el
+	tput ed
 	echo -n "$delta"
-	tput el
+	# tput el
 	# declare t="$(profile_text --row_at _ --no_trailing_control --initial_line_offset $cum_stat_line_offset "$delta")"
 	# ((cum_stat_rows+=$(profile_text -r --initial_line_offset $cum_stat_line_offset "$delta"), cum_stat_line_offset=${#t}))
 	if (("$(profile_text -r "$whole_text")"+init_row > $(tput lines))); then
@@ -79,8 +83,19 @@ cumulative=""
 line=""
 exec 3< <("$@")
 declare -i -r sub_pid=$!
+declare f_end_reached='false'
 out_pipe() {
-	read -s -r -N 1 -u 3 line
+	# line=''
+	# while read -srt 0 -u 3; do
+	# 	read -s -r -N 1 -u 3 t
+	# 	line+="$t"
+	# done
+	# if eval $f_end_reached; then
+	# 	read -s -r -N 1 -u 3 line
+	# else
+	# 	read -s -r -N 1 -u 3 line
+	# fi
+	read -s -r -t .1 -N $MAX_READ_INT -u 3 line
 }
 # #region Exit handling
 is_active="true"
