@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 
 readonly LOGFILE='/home/jmor/reposLocal/custom-shell-scripts/log.txt'
-current_count=0
+declare -i current_count=0
 # date +'%T %D' >> $LOGFILE
-trap exit INT
-trap exit QUIT
-trap exit TERM
-trap exit KILL
+l_exit() {
+	# shellcheck disable=SC2086
+	# shellcheck disable=SC2317
+	echo "Early exit"
+	exit 200
+}
+trap l_exit INT
+trap l_exit QUIT
+trap l_exit TERM
+# trap exit KILL
 echo -n $current_count
 # echo -n $current_count >>$LOGFILE
 while (( current_count < 10 )); do

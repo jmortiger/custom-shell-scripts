@@ -59,52 +59,85 @@ readonly STATUS_SEG_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$NL_PATTERN+[
 
 # declare -i last_row=$(cursor_pos -r) LINES=$(tput lines)
 # declare -i cum_stat_rows=0; declare -i cum_stat_line_offset=0
-declare -i prior_stat_rows=0; #declare f_overflow_mode='false'
+# declare -i prior_stat_rows=0; #declare f_overflow_mode='false'
+declare cached_delta
+declare -i cached_col=0
 display_text() {
 	local -r text="$1"
 	local -r whole_text="$2"
-	local -r delta="$3"
-	# local -r prior="$4"
-	tput rc
-	eval $ONE_CHAR_INPUT && tput el
-	eval "$MULTI_CHAR_INPUT" && tput ed
+	if [[ -n "${cached_delta+x}" ]]; then
+		local -r delta="$cached_delta$3"
+	else
+		local -r delta="$3"
+	fi
+	local -r prior="$4"
+	# eval $ONE_CHAR_INPUT && tput el
+	# eval "$MULTI_CHAR_INPUT" && tput ed
 	echo -n "$delta"
-	eval $ONE_CHAR_INPUT &&  tput el
+	# tput sc
+	# eval $ONE_CHAR_INPUT &&  tput el
 	# declare t="$(profile_text --row_at _ --no_trailing_control --initial_line_offset $cum_stat_line_offset "$delta")"
 	# ((cum_stat_rows+=$(profile_text -r --initial_line_offset $cum_stat_line_offset "$delta"), cum_stat_line_offset=${#t}))
-	local -i t_prior_rows=$prior_stat_rows
+	# local -i t_prior_rows=$prior_stat_rows
 	# if (("$(profile_text -r "$whole_text")"+init_row > $(tput lines))); then
 	# if ((prior_stat_rows="$(profile_text -r "$whole_text")", t_prior_rows < prior_stat_rows)) && ((prior_stat_rows+init_row >= $(tput lines))); then
 	# if (("$(profile_text -r "$whole_text")"+init_row >= $(tput lines))); then
 	# if ((prior_stat_rows="$(profile_text -r --edit_mode "$whole_text")", t_prior_rows < prior_stat_rows)) && ((prior_stat_rows+init_row >= $(tput lines))); then
 	# ((tput_lines=$(tput lines), tput_cols=$(tput cols), t_text_count=${#text} > 0 && ${#text} % tput_cols > 0 ? ${#text} : ${#text} - 1))
-	local was_true='false'
-	if ((prior_stat_rows="$(profile_text -r "$whole_text")", t_prior_rows < prior_stat_rows)) && ((tput_lines=$(tput lines), tput_cols=$(tput cols), t_text_count=${#text} <= 0 || ${#text} % tput_cols > 0 ? ${#text} : ${#text} - 1, prior_stat_rows+init_row > tput_lines-1-t_text_count/tput_cols)); then
-		was_true='true'
-		# tput sc
-		if ((t="$(profile_text --col_at _ "$whole_text")", t > 0)); then
-			tput cud1
-		fi
-		tput cud1
-		# tput rc
-		tput cuu1
-		# echo -n $'\r'
-		if ((t > 0)); then
-			# tput cuf "$t"
-			tput hpa $t
-		fi
-		# tput hpa "$(profile_text --edit_mode --col_at _ "$whole_text")"
-	fi
-	tput sc
+	# local was_true='false'
+	# if ((prior_stat_rows="$(profile_text --display-mode -r "$whole_text")", t_prior_rows < prior_stat_rows)) && ((tput_lines=$(tput lines), tput_cols=$(tput cols), t_text_count=${#text} <= 0 || ${#text} % tput_cols > 0 ? ${#text} : ${#text} - 1, prior_stat_rows+init_row > tput_lines-1-t_text_count/tput_cols)) && [ "${delta: -1}" != $'\n' ]; then
+	# 	was_true='true'
+	# 	# tput sc
+	# 	((t="$(profile_text --col_at _ "$whole_text")"))
+	# 	if ((t == 1)); then
+	# 		tput cud1
+	# 	fi
+	# 	tput cud1
+	# 	# tput rc
+	# 	tput cuu1
+	# 	# echo -n $'\r'
+	# 	if ((t > 0)); then
+	# 		# tput cuf "$t"
+	# 		tput hpa $((t - 1))
+	# 	# elif profile_text --row_succeeded_by -1 "$STATUS_LINE_PATTERN" --trailing_control && [ ${delta:0:1} != $'\n' ]; then
+	# 	# 	tput hpa "$tput_cols"
+	# 	else
+	# 		tput hpa 0
+	# 	fi
+	# 	# tput hpa "$(profile_text --edit_mode --col_at _ "$whole_text")"
+	# 	unset t
+	# fi
+	# if (($(profile_text --display_mode --col_at _ "$prior") + $(profile_text --trailing_control --display_mode --col_at 0 "$delta") >= $(tput cols))); then
+	# 	declare -g cached_delta="${prior: -1}"
+	# else
+	# 	unset cached_delta
+	# fi
+	# tput sc
+	# declare -i -g cached_col
+	# ((cached_col=$(profile_text --display_mode --col_at _ "$whole_text")))
 	tput cud1
+	tput cr
 	eval $ONE_CHAR_INPUT && tput el
-	# echo -n $'\r'
-	# echo -n "$(cursor_pos)"
 	tput smso
-	if eval $was_true; then echo -n "TRUE $text"; else echo -n "$text"; fi
+	# if eval $was_true; then echo -n "TRUE $text"; else echo -n "$text"; fi
+	echo -n "$text"
 	tput rmso
 	# last_row=$(cursor_pos -r)
 	# LINES=$(tput lines)
+	# cached_delta="$delta"
+	# tput rc
+	tput cuu1
+	# if [ "${prior: -1}" != $'\n' ]; then ((cached_col+=1)); fi
+	tput hpa $(($(profile_text --display_mode --col_at _ "$whole_text")))
+	# if (("$(profile_text -r "$whole_text")"+init_row >= $(tput lines))); then
+	# 	tput cuu1
+	# fi
+	# if (($(profile_text --display_mode --col_at _ "$prior") + $(profile_text --no_trailing_control --display_mode --col_at 0 "$delta") >= $(tput cols))); then
+	declare -g cached_delta="${delta: -1}"
+	if [ "$cached_delta" == $'\n' ]; then unset cached_delta; fi
+	# else
+	# 	unset cached_delta
+	# fi
 }
 cumulative=""
 line=""
@@ -124,7 +157,9 @@ do_stop() {
 	# shellcheck disable=SC2317
 	if eval "$is_killing"; then
 		kill -n "$1" "$sub_pid"
+		echo "Killing ($1)..."
 	else
+		echo "Is Killing ($1)..."
 		is_killing='true'
 	fi
 	# shellcheck disable=SC2317
@@ -133,8 +168,8 @@ do_stop() {
 	declare -i -r exitcode
 	# shellcheck disable=SC2317
 	exec 3>&-
-	# shellcheck disable=SC2317
-	exit "$exitcode"
+	# shellcheck disable=SC2317,SC2086
+	exit $exitcode
 }
 # shellcheck disable=SC2064
 trap "do_stop $SIGINT" INT
@@ -174,7 +209,8 @@ function modify_values() {
 	done
 }
 gen_status_text() {
-	echo -n "Completed: $c_complete, Successful: $c_successful, Failures: $c_failure, Errors: $c_error, Warnings: $c_warning"
+	# echo -n "Completed: $c_complete, Successful: $c_successful, Failures: $c_failure, Errors: $c_error, Warnings: $c_warning"
+	echo -n ".: $c_complete, S: $c_successful, F: $c_failure, E: $c_error, W: $c_warning"
 }
 # #endregion modify_values & gen_status_text
 declare -i c_iterations=0; declare -i start_int=0
@@ -204,7 +240,7 @@ while eval $is_active; do
 		fi
 	fi
 	if eval $is_active && [ -n "$line" ]; then
-		# t_prior="$cumulative"
+		t_prior="$cumulative"
 		cumulative+="$line"
 		if ((start_int != 0)); then
 			if eval "$extglob_off"; then shopt -s extglob; fi
@@ -237,7 +273,7 @@ while eval $is_active; do
 			fi
 			declare -i -r start_int
 		fi
-		display_text "$status_text" "$cumulative" "$line" # "$t_prior"
+		display_text "$status_text" "$cumulative" "$line" "$t_prior"
 	fi
 done
 tput rc

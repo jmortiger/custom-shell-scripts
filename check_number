@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+shopt -s extglob
+declare pattern='^'
+declare pattern_body='[[:digit:]]+\.?$'
+declare is_decimal='false'
+declare is_signed='false'
+# TODO: TEST
+# TODO: Add hex support?
+# TODO: Add bounds support?
+while [[ "$1" =~ ^(-[[:alpha:]]|--[[:alpha:]_]+)$ ]]; do
+	case "$1" in
+		(-i | --integer)
+			pattern_body='[[:digit:]]+\.?$'
+			declare -r is_decimal='false'
+			if [ ! $? ]; then exit 1; fi
+			shift
+			;;
+		(-d | --decimal)
+			pattern_body='([[:digit:]]+\.?|[[:digit:]]*\.[[:digit:]]+)$'
+			declare -r is_decimal='true'
+			if [ ! $? ]; then exit 1; fi
+			shift
+			;;
+		(-s | --signed)
+			declare -r pattern='^(-|\+)'
+			declare -r is_signed='true'
+			if [ ! $? ]; then exit 1; fi
+			shift
+			;;
+		(*)
+			break;
+			;;
+	esac
+done
+pattern+=$pattern_body
+declare -r pattern
+if [[ "$*" =~ $pattern ]]; then
+	echo -n "$*"
+	exit
+# elif [ "$1" = '_' ]; then :; # index is last entry
+else
+	err_msg="must be a"
+	if eval $is_signed; then err_msg+=" signed "; else err_msg+="n unsigned "; fi
+	if eval $is_decimal; then err_msg+="decimal number"; else err_msg+="integer"; fi
+	echo "$err_msg; value was '$1'" 1>&2
+	exit 1
+fi

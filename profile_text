@@ -3,8 +3,10 @@
 # cspell:ignore ilos OVERRIDERS extglob
 readonly C_OUTPUT_ROWS='ROWS'
 readonly C_OUTPUT_MAX_COLS='MAX_COLUMNS'
+readonly C_OUTPUT_MAX_CHARACTERS_IN_A_ROW='MAX_CHARS'
 readonly C_OUTPUT_MAX_COLS_AT='MAX_COLUMNS_AT'
 readonly C_OUTPUT_COLS_AT='COLUMNS_AT'
+readonly C_OUTPUT_CHARS_AT='CHARS_AT'
 readonly C_OUTPUT_ROW_AT='ROW_AT'
 readonly C_OUTPUT_ROW_PRECEDED_BY='ROW_PRECEDED'
 readonly C_OUTPUT_ROW_SUCCEEDED_BY='ROW_SUCCEEDED'
@@ -26,12 +28,14 @@ show_help() {
 		Output:
 	    	-h | --help: Display this help text.
 			-r | --rows: get the total number of rows
-			-c | --col_at INDEX: Get the # of columns on the specified row INDEX (or, if '_', the last index). By default, turns off appending control characters (See '--no_trailing_control').
-			-m | --max_col: Get the maximum number of columns (i.e characters) in any row. By default, turns off appending control characters (See '--no_trailing_control').
-			--max_col_at: Get the row index of the maximum number of columns (i.e characters) in a row. By default, turns off appending control characters (See '--no_trailing_control'). # TODO: FIGURE OUT TIES
+			-c | --col_at INDEX: Get the # of columns on the specified row INDEX (or, if '_', the last index). Negative indices are subtracted from length (e.g. -1 = length - 1). By default, turns off appending control characters (See '--no_trailing_control').
+			--chars_at INDEX: Get the # of characters on the specified row INDEX (or, if '_', the last index). Negative indices are subtracted from length (e.g. -1 = length - 1). By default, turns off appending control characters (See '--no_trailing_control').
+			-m | --max_col: Get the maximum number of columns (i.e characters +/- offset due to control characters) in any row. By default, turns off appending control characters (See '--no_trailing_control').
+			--max_col_at: Get the row index of the maximum number of columns (i.e characters +/- offset due to control characters) in a row. By default, turns off appending control characters (See '--no_trailing_control'). # TODO: FIGURE OUT TIES
+			--max_chars_in_row: Get the maximum number of characters in any row. By default, turns off appending control characters (See '--no_trailing_control').
 			--row_at INDEX: Get the text on the row specified by INDEX (or, if '_', the last index).
-			--row_preceded_by INDEX REGEX: Does the text preceding the row specified by INDEX (or, if '_', the last index) match the given REGEX. If matched, returns \${BASH_REMATCH[*]} and an exit status of true; otherwise, returns nothing with an exit status of false.
-			--row_succeeded_by INDEX REGEX: Does the text following the row specified by INDEX (or, if '_', the first index) match the given REGEX. If matched, returns \${BASH_REMATCH[*]} and an exit status of true; otherwise, returns nothing with an exit status of false.
+			--row_preceded_by INDEX REGEX: Does the text preceding the row specified by INDEX (or, if '_', the last index) match the given REGEX. Negative indices are subtracted from length (e.g. -1 = length - 1). If matched, returns \${BASH_REMATCH[*]} and an exit status of true; otherwise, returns nothing with an exit status of false.
+			--row_succeeded_by INDEX REGEX: Does the text following the row specified by INDEX (or, if '_', the first index) match the given REGEX. Negative indices are subtracted from length (e.g. -1 = length - 1). If matched, returns \${BASH_REMATCH[*]} and an exit status of true; otherwise, returns nothing with an exit status of false.
 			--rows_where [PRE] REGEX [POST]: Get the rows whose preceding rows match PRE (if not '*'), succeeding rows match POST (if not '*'), and body matches the given REGEX. If matched, returns each \${BASH_REMATCH[*]} (for REGEX only) and an exit status of true; otherwise, returns nothing with an exit status of false.
 		Settings:
 			--edit_mode: Act as though editing text; inverse of display_mode.
@@ -51,14 +55,14 @@ show_help() {
 
 readonly ORIG_IFS=$IFS
 # #region PARAMS
-# TODO: Add option - Remove lines overwritten due to being preceded by \r?
+# TODO: Add option - Modify text in accordance w/ control characters like backspace & CR?
+# TODO: IMPLEMENT max_chars_in_row
 # TODO: IMPLEMENT rows_where
+# TODO: IMPLEMENT p_debugLevel
 allow_continue='true'
 shopt -s 'extglob'
 # readonly extglob_off=$( if [[ $(shopt extglob) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
-# if eval $extglob_off; then
-# 	shopt -s 'extglob'
-# fi
+# if eval $extglob_off; then; shopt -s 'extglob'; fi
 declare -i TERM_COLS=$(tput cols) TERM_ROWS=$(tput lines)
 declare -i initial_line_offset=0 initial_line_offset_unwrapped=0
 declare p_trailing_control_chars='true'
@@ -66,11 +70,22 @@ declare flagTrackRows='false'
 declare flagTrackUnwrapped='false'
 # Add 1 invisible character to values to emulate a cursor (e.g. if TERM_COLS=100 & there are 100 characters w/o a new line, row count would be 1 if false, 2 if true, b/c the cursor would overflow to a new line)
 declare flagEditMode='false'
+# declare flagDebug='false'
+declare -i p_debugLevel=0
+declare flagMaxCharMode='true'
 while (( $# > 1 )) && eval $allow_continue; do
 	case "$1" in
 		( -h | --help )
 			show_help
 			exit 0
+			;;
+		( -d | --debug )
+			# declare -r flagDebug='true'
+			if t=$(check_number "$2"); then
+				declare -r -i p_debugLevel=$t
+			else
+				declare -r -i p_debugLevel=255
+			fi
 			;;
 		( --output_columns )
 			shift
@@ -135,6 +150,7 @@ while (( $# > 1 )) && eval $allow_continue; do
 				p_trailing_control_chars='false'
 			fi
 			declare -r flagTrackRows='true'
+			declare -r flagMaxCharMode='false'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
 		( -m | --max_col )
@@ -144,23 +160,34 @@ while (( $# > 1 )) && eval $allow_continue; do
 				p_trailing_control_chars='false'
 			fi
 			declare -r flagTrackRows='true'
+			declare -r flagMaxCharMode='false'
+			# if [ ! $? ]; then exit 1; fi
+			;;&
+		( --max_chars_in_row )
+			declare -r p_output=$C_OUTPUT_MAX_CHARACTERS_IN_A_ROW
+			if [ ! $? ]; then exit 1; fi
+			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
+				p_trailing_control_chars='false'
+			fi
+			declare -r flagTrackRows='true'
+			declare -r flagMaxCharMode='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
 		( --row_preceded_by )
 			declare -r p_output=$C_OUTPUT_ROW_PRECEDED_BY
 			if [ ! $? ]; then exit 1; fi
 			shift
-			if [[ "$1" =~ ^[[:digit:]]+$ ]]; then
+			if [[ "$1" =~ ^(-|\+)?[[:digit:]]+$ ]]; then
 		    	declare -r -g -i p_index="$1"
 				if [ ! $? ]; then exit 1; fi
 			elif [ "$1" = '_' ]; then :; # index is last entry
 			else
-				echo "row_preceded_by's INDEX must be a non-negative integer or a _; value was '$1'"
+				echo "row_preceded_by's INDEX must be a signed integer or a _; value was '$1'"
             	show_help
             	exit 1
 			fi
-			declare -r -g p_regex="$1"
 			shift
+			declare -r -g p_regex="$1"
 			declare -r flagTrackRows='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
@@ -168,18 +195,38 @@ while (( $# > 1 )) && eval $allow_continue; do
 			declare -r p_output=$C_OUTPUT_ROW_SUCCEEDED_BY
 			if [ ! $? ]; then exit 1; fi
 			shift
-			if [[ "$1" =~ ^[[:digit:]]+$ ]]; then
+			if [[ "$1" =~ ^(-|\+)?[[:digit:]]+$ ]]; then
 		    	declare -r -g -i p_index="$1"
 				if [ ! $? ]; then exit 1; fi
 			elif [ "$1" = '_' ]; then :; # index is last entry
 			else
-				echo "row_succeeded_by's INDEX must be a non-negative integer or a _; value was '$1'"
+				echo "row_succeeded_by's INDEX must be a signed integer or a _; value was '$1'"
             	show_help
             	exit 1
 			fi
 			declare -r -g p_regex="$1"
 			shift
 			declare -r flagTrackRows='true'
+			# if [ ! $? ]; then exit 1; fi
+			;;&
+		( --chars_at )
+			declare -r p_output=$C_OUTPUT_CHARS_AT
+			if [ ! $? ]; then exit 1; fi
+			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
+				p_trailing_control_chars='false'
+			fi
+			shift
+			if [[ "$1" =~ ^(-|\+)?[[:digit:]]+$ ]]; then
+		    	declare -r -g -i p_index="$1"
+				if [ ! $? ]; then exit 1; fi
+			elif [ "$1" = '_' ]; then :; # index is last entry
+			else
+				echo "chars_at must be a signed integer or a _; value was '$1'"
+            	show_help
+            	exit 1
+			fi
+			declare -r flagTrackRows='true'
+			declare -r flagMaxCharMode='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
 		( -c | --col_at )
@@ -189,28 +236,29 @@ while (( $# > 1 )) && eval $allow_continue; do
 				p_trailing_control_chars='false'
 			fi
 			shift
-			if [[ "$1" =~ ^[[:digit:]]+$ ]]; then
+			if [[ "$1" =~ ^(-|\+)?[[:digit:]]+$ ]]; then
 		    	declare -r -g -i p_index="$1"
 				if [ ! $? ]; then exit 1; fi
 			elif [ "$1" = '_' ]; then :; # index is last entry
 			else
-				echo "col_at must be a non-negative integer or a _; value was '$1'"
+				echo "col_at must be a signed integer or a _; value was '$1'"
             	show_help
             	exit 1
 			fi
 			declare -r flagTrackRows='true'
+			declare -r flagMaxCharMode='false'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
 		( --row_at )
 			declare -r p_output=$C_OUTPUT_ROW_AT
 			if [ ! $? ]; then exit 1; fi
 			shift
-			if [[ "$1" =~ ^[[:digit:]]+$ ]]; then
+			if [[ "$1" =~ ^(-|\+)?[[:digit:]]+$ ]]; then
 		    	declare -r -g -i p_index="$1"
 				if [ ! $? ]; then exit 1; fi
 			elif [ "$1" = '_' ]; then :; # index is last entry
 			else
-				echo "row_at must be a non-negative integer or a _; value was '$1'"
+				echo "row_at must be a signed integer or a _; value was '$1'"
             	show_help
             	exit 1
 			fi
@@ -233,9 +281,9 @@ while (( $# > 1 )) && eval $allow_continue; do
 done
 # echo "Out of param loop"
 if [[ -z "${p_output+SET}" ]]; then declare -r p_output=$C_OUTPUT_ROWS; fi
-is_edit_mode() {
-	if eval $flagEditMode; then return 0; else return 1; fi
-}
+# #region Validate
+((initial_line_offset%=TERM_COLS))
+# #endregion Validate
 # #endregion PARAMS
 
 readonly text="$*"
@@ -244,7 +292,7 @@ declare -r -i C_LENGTH=${#text}
 
 # declare -r -i TERM_COLS=$(tput cols) TERM_ROWS=$(tput lines)
 
-declare -i c_rows=1 c_rows_unwrapped=1
+declare -i c_rows=1 # c_rows_unwrapped=1
 
 # TODO: Finish optimizing for requested values
 # TODO: Finish unwrapped stuff
@@ -254,7 +302,6 @@ declare -a row_ilos=([0]=$initial_line_offset) # row_ilos_unwrapped=([0]=$initia
 declare -i char_offset=0 trailing_count=0
 declare uninterrupted_line="" # uninterrupted_line_unwrapped=""
 declare -i max_col=-1 max_col_at=-1
-declare -i last_remainder=-1
 is_not_at_end() ((char_offset < $C_LENGTH))
 is_at_end() ((char_offset >= $C_LENGTH))
 # echo "Length: $C_LENGTH"
@@ -262,28 +309,18 @@ while is_not_at_end; do
 	# echo "${#rows[@]}"
 	# echo "c_rows at loop start: $c_rows"
 	text_segment=${text:char_offset}
+	# echo -n "char_offset: $char_offset -> "
 	if [[ $text_segment =~ ^($NON_NL_PATTERN*)($NL_PATTERN) ]]; then
-		# echo -n "char_offset: $char_offset -> "
 		((char_offset+=${#BASH_REMATCH[0]}))
-		# echo "$char_offset"
-		# echo "matched ${BASH_REMATCH[*]}"
 		uninterrupted_line=${BASH_REMATCH[1]}
 		ctl_char=${BASH_REMATCH[2]}
 	else
-		# echo -n "char_offset: $char_offset -> "
 		((char_offset+=${#text_segment}))
-		# echo "$char_offset"
 		uninterrupted_line=$text_segment
 		unset ctl_char
 	fi
-	# #region TODO: FINISH SAFETY CHECK
-	# TODO: FINISH SAFETY CHECK
-	# ((t=${#text_segment}+char_offset, new_remainder=$C_LENGTH-t))
-	# if (( last_remainder < 0 )); then
-	# 	((last_remainder=new_remainder))
-	# elif (( last_remainder > 0 && last_remainder !=  ))
-	# fi
-	# #endregion TODO: FINISH SAFETY CHECK
+	# echo "$char_offset"
+	# [[ -n "${ctl_char+x}" ]] && echo "matched ${BASH_REMATCH[*]}"
 	# uninterrupted_line_unwrapped=$uninterrupted_line
 	# ((initial_line_offset_unwrapped+=${#uninterrupted_line}))
 	if ! eval $flagTrackRows; then
@@ -297,26 +334,36 @@ while is_not_at_end; do
 		# fi
 		# ((c_rows+=t/TERM_COLS))
 	else
-		((t_eol=TERM_COLS-initial_line_offset, initial_line_offset+=${#uninterrupted_line}))
-		for ((t_off=0, t_inc=1; ${#uninterrupted_line}-t_off > 0; t_off+=t_eol, t_eol=TERM_COLS, c_rows+=t_inc)); do
-			# if ((t_off + t_eol > ${#uninterrupted_line})); then
-			if ((t_off + t_eol >= ${#uninterrupted_line})); then
-				t_l="${uninterrupted_line:t_off}"
+		((t_ilo=initial_line_offset, t_spaceInLine=TERM_COLS-t_ilo, initial_line_offset+=${#uninterrupted_line}))
+		for ((t_off=0, t_inc=1; ${#uninterrupted_line} - t_off > 0; t_off+=t_spaceInLine, t_spaceInLine=TERM_COLS, c_rows+=t_inc, t_ilo=0)); do
+			# if ((t_off + t_spaceInLine > ${#uninterrupted_line})); then
+			# if ((t_spaceInLine > ${#uninterrupted_line} - t_off)); then
+			if ((${#uninterrupted_line} - t_off < t_spaceInLine)); then
+				t_seg="${uninterrupted_line:t_off}"
 				((t_inc=0))
 			else
-				t_l="${uninterrupted_line:t_off:t_eol}"
+				t_seg="${uninterrupted_line:t_off:t_spaceInLine}"
 				((t_inc=1))
 			fi
-			# echo "c_rows: $c_rows rows.length: ${#rows[@]} $t_l"
-			rows[-1]+="$t_l"
+			# echo "c_rows: $c_rows rows.length: ${#rows[@]} $t_seg"
+			rows[-1]+="$t_seg"
 			# TODO: Account for potential line terminator in column length when p_trailing_control_chars
-			# ((max_col = max_col < ${#t_l} ? ${#t_l} : max_col))
-			if ((max_col < ${#t_l})); then
-				((max_col = ${#t_l}, max_col_at=${#rows[@]}-1))
+			# ((max_col = max_col < ${#t_seg} ? ${#t_seg} : max_col))
+			if eval $flagMaxCharMode; then
+				if ((max_col < ${#t_seg})); then
+					((max_col = ${#t_seg}, max_col_at=${#rows[@]}-1))
+				fi
+			else
+				# if ((max_col + ${row_ilos[$max_col_at]} < t_ilo + ${#t_seg})); then
+				# 	((max_col = ${#t_seg}, max_col_at=${#rows[@]}-1))
+				# fi
+				if ((max_col < ${#t_seg} + t_ilo)); then
+					((max_col = ${#t_seg} + t_ilo, max_col_at=${#rows[@]}-1))
+				fi
 			fi
 			if ((t_inc > 0)); then
 				rows+=("")
-				rows_ilos+=($((TERM_COLS - t_eol)))
+				row_ilos+=("$t_ilo")
 			fi
 			# echo "${rows[-1]}"
 			# echo "rows.length: ${#rows[@]}"
@@ -334,7 +381,7 @@ while is_not_at_end; do
 			((initial_line_offset%=TERM_COLS))
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
-				rows_ilos+=("$initial_line_offset") # rows_ilos+=($((TERM_COLS - t_eol)))
+				row_ilos+=("$initial_line_offset") # row_ilos+=($((TERM_COLS - t_spaceInLine)))
 				rows+=("")
 			fi
 			;;
@@ -344,7 +391,7 @@ while is_not_at_end; do
 			((initial_line_offset%=TERM_COLS))
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
-				rows_ilos+=("$initial_line_offset") # rows_ilos+=($((TERM_COLS - t_eol)))
+				row_ilos+=("$initial_line_offset") # row_ilos+=($((TERM_COLS - t_spaceInLine)))
 				rows+=("")
 			fi
 			;;
@@ -355,7 +402,7 @@ while is_not_at_end; do
 			((initial_line_offset=0, initial_line_offset_unwrapped=0))
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
-				# rows_ilos[-1]=("$initial_line_offset") # rows_ilos+=("0")
+				# row_ilos[-1]=("$initial_line_offset") # row_ilos+=("0")
 			fi
 			;;
 		# TODO: Finish handling trailing chars
@@ -365,7 +412,7 @@ while is_not_at_end; do
 			((initial_line_offset-=1, initial_line_offset_unwrapped-=1))
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
-				# rows_ilos[-1]=("$initial_line_offset") # rows_ilos+=("0")
+				# row_ilos[-1]=("$initial_line_offset") # row_ilos+=("0")
 			fi
 			;;
 		($'\n')
@@ -379,7 +426,7 @@ while is_not_at_end; do
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
 				rows+=("")
-				rows_ilos+=("$initial_line_offset") # rows_ilos+=("0")
+				row_ilos+=("$initial_line_offset") # row_ilos+=("0")
 			fi
 			;;
 		(*)
@@ -393,7 +440,7 @@ while is_not_at_end; do
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
 				rows+=("")
-				rows_ilos+=("$initial_line_offset") # rows_ilos+=("0")
+				row_ilos+=("$initial_line_offset") # row_ilos+=("0")
 			fi
 			;;
 		# fi
@@ -403,7 +450,7 @@ while is_not_at_end; do
 	if eval $flagEditMode && ((initial_line_offset > 0 && initial_line_offset%TERM_COLS==0)) && is_at_end; then
 		if eval $flagTrackRows; then 
 			rows+=("")
-			rows_ilos+=("0")
+			row_ilos+=("0")
 		fi
 		((c_rows+=1))
 	fi
@@ -424,8 +471,9 @@ done
 # 	esac
 # 	((i++))
 # done
+# TODO: Add outputs for new options
 case "$p_output" in
-	("$C_OUTPUT_MAX_COLS")
+	("$C_OUTPUT_MAX_COLS" | "$C_OUTPUT_MAX_CHARACTERS_IN_A_ROW")
 		echo $max_col
 		;;
 	("$C_OUTPUT_MAX_COLS_AT")
@@ -438,11 +486,22 @@ case "$p_output" in
 		if [[ -z "${p_index+x}" ]]; then
 			# ((p_index=${#rows[@]}-1))
 			# echo "Index: $p_index"
-			echo "${#rows[-1]}"
+			# echo "${#rows[-1]}"
+			echo $((${#rows[-1]}+${row_ilos[-1]}))
 		else
 			# echo "Index: $p_index"
-			echo "${#rows[$p_index]}"
+			# echo "${#rows[$p_index]}"
+			echo $((${#rows[$p_index]}+${row_ilos[$p_index]}))
 		fi
+		;;
+	("$C_OUTPUT_CHARS_AT")
+		# if [[ -z "${p_index+x}" ]]; then
+		# 	echo "${#rows[-1]}"
+		# else
+		# 	echo "${#rows[$p_index]}"
+		# fi
+		if [[ -z "${p_index+x}" ]]; then ((p_index = -1)); fi
+		echo "${#rows[$p_index]}"
 		;;
 	("$C_OUTPUT_ROW_AT")
 		if [[ -z "${p_index+x}" ]]; then ((p_index=${#rows[@]}-1)); fi
@@ -476,10 +535,13 @@ case "$p_output" in
 		fi
 		IFS="$ORIG_IFS"
 		;;
-	("$C_OUTPUT_ROWS") ;&
-	(*)
+	("$C_OUTPUT_ROWS")
 		# if eval $flagTrackRows; then echo "$c_rows == ${#rows[@]}"; IFS='%'; echo "${rows[*]}"; IFS=$ORIG_IFS; else echo $c_rows; fi
 		echo $c_rows
+		;;
+	(*)
+		echo "I forgot to add the output for $p_output" 1>&2
+		exit 1
 		;;
 esac
 exit
