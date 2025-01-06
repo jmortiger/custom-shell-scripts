@@ -1,36 +1,25 @@
 #!/usr/bin/env bash
 
-# cspell:ignore logfile jmor FEWC smso rmso civis rmcup smcup cnorm extglob patsub exitcode globasciiranges
+# cspell:ignore logfile jmor FEWC smso rmso civis rmcup smcup cnorm extglob patsub exitcode globasciiranges setaf ABDG SIGCHLD SIGTRAP SIGWINCH
 
 # https://www.kylheku.com/cgit/basta/tree/basta.sh?id=7fbdc5a088c37bd24da5954474a189cd4c890dce
 # https://www.kylheku.com/cgit/basta/about/
 
 readonly ONE_CHAR_INPUT='false'
-readonly MULTI_CHAR_INPUT="! $ONE_CHAR_INPUT"
 readonly DO_LOG='false'
-readonly LOGFILE='/home/jmor/reposLocal/custom-shell-scripts/log.txt'
-eval "$DO_LOG" && (echo -n $'\n' >> $LOGFILE)
-eval "$DO_LOG" && (date +'%T %D' >> $LOGFILE)
+readonly LOGFILE="$HOME/reposLocal/custom-shell-scripts/log.txt"
+eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE")
+eval "$DO_LOG" && (date +'%T %D' >> "$LOGFILE")
 # #region Signals
 # https://man7.org/linux/man-pages/man7/signal.7.html
-# readonly SIGHUP=1
 # readonly SIGTRAP=5
-# readonly SIGABRT=6
-# readonly SIGKILL=9
-# readonly SIGSTKFLT=16
 # readonly SIGCHLD=17
-# readonly SIGCONT=18
-# readonly SIGSTOP=19
-# readonly SIGTSTP=20
-# readonly SIGTTIN=21
-# readonly SIGTTOU=22
-# readonly SIGPROF=27
 # readonly SIGWINCH=28
 readonly SIGINT=2
 readonly SIGQUIT=3
 readonly SIGTERM=15
 # #endregion Signals
-declare -r -i MAX_READ_INT=$(( 2**31 - 1))
+readonly MAX_READ_INT=$(( 2**31 - 1))
 readonly FAIL_TEXT="FAILURE"
 # #region Patterns
 readonly V_CTRL_STUB=$'\n\v\f'
@@ -62,9 +51,10 @@ readonly STATUS_LINE_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"
 readonly STATUS_SEG_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$NL_PATTERN+[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS+.*"
 # #endregion Patterns
 
+# #region Print handler
 # The last printed, non-vertical-whitespace character printed by `display_text`.
 declare last_char=''
-declare -i last_col=0
+# declare -i last_col=0
 declare last_status=''
 declare -i current_color=7
 declare -a print_instructions_colors=()
@@ -81,7 +71,7 @@ declare -a print_instructions_indices=()
 # 	cr
 display_text() {
 	local -r status_text="$1"
-	local -r whole_text="$2"
+	# local -r whole_text="$2"
 	# If there's a prior character, add it to the delta to redraw it.
 	local delta=''
 	if [[ -n "${last_char+x}" ]]; then
@@ -89,24 +79,19 @@ display_text() {
 	else
 		local -r delta="$3"
 	fi
+	local -r prior_whole_text="$4"
 	if ((${#last_status} > 0)); then
 		tput hpa 0 el
-		# tput el
 		tput cuu1
-		# TODO: Repeat cuu1 if status_text is longer than 1 line
 		local -i t_statusRows=$(profile_text --display_mode -r "$last_status")
 		while ((t_statusRows > 1)); do
 			tput el cuu1
 			((t_statusRows--))
 		done
-		tput hpa $last_col
+		tput hpa "$(profile_text --display_mode --col_at _ "$prior_whole_text")"
 	fi
-	# local -r l_prior="$4"
-	# eval $ONE_CHAR_INPUT && tput el
-	# eval "$MULTI_CHAR_INPUT" && tput ed
 	if ((${#print_instructions_colors[@]} == 0)) || ((${#print_instructions_colors[@]} == 1)) && [[ "${print_instructions_colors[0]}" =~ ^-$|^$current_color$ ]]; then
 		echo -n "$(tput setaf $current_color)$delta$(tput setaf 7)"
-		# declare -g current_color=
 	else
 		local t_d=''
 		local -i t_last_index=0
@@ -133,21 +118,17 @@ display_text() {
 		t_d+="${delta:$t_last_index}"
 		echo -n "$t_d$(tput setaf 7)"
 	fi
-	# echo -n "$delta"
 	tput cud1
 	tput cr
 	eval $ONE_CHAR_INPUT && tput el
 	tput smso
 	echo -n "$status_text"
 	tput rmso
-	# tput cuu1
-	# # TODO: Repeat cuu1 if status_text is longer than 1 line
-	# tput hpa $(($(profile_text --display_mode --col_at _ "$whole_text")))
-	((last_col=$(profile_text --display_mode --col_at _ "$whole_text")))
-	last_status=$status_text
+	declare -g last_status=$status_text
 	declare -g last_char="${delta: -1}"
 	if [[ "$last_char" =~ [$V_CTRL_STUB] ]]; then unset last_char; fi
 }
+# #endregion Print handler
 # #region modify_values & gen_status_text
 # #1: Former color
 # #2: New color
@@ -267,6 +248,7 @@ trap "do_stop $SIGQUIT" QUIT
 # shellcheck disable=SC2064
 trap "do_stop $SIGTERM" TERM
 # #endregion Exit handling
+# #region Input loop
 declare -i c_iterations=0; declare -i start_int=0
 readonly extglob_off=$( if [[ $(shopt extglob) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
 readonly globasciiranges_off=$( if [[ $(shopt globasciiranges) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
@@ -287,7 +269,7 @@ out_pipe() {
 while eval $is_active; do
 	((c_iterations+=1))
 	out_pipe
-	eval "$DO_LOG" && (echo "Newest input (raw): $line" >> $LOGFILE)
+	eval "$DO_LOG" && (echo "Newest input (raw): $line" >> "$LOGFILE")
 	if [ -z "$line" ]; then
 		if kill -0 $sub_pid > /dev/null 2>&1; then
 			line=''
@@ -304,7 +286,7 @@ while eval $is_active; do
 			if eval "$globasciiranges_off"; then shopt -s globasciiranges; fi
 			if eval "$patsub_replacement_off"; then shopt -s patsub_replacement; fi
 			results_string="${cumulative:start_int}"
-			eval "$DO_LOG" && (echo "$results_string" >> $LOGFILE)
+			eval "$DO_LOG" && (echo "$results_string" >> "$LOGFILE")
 			# if eval $ONE_CHAR_INPUT; then
 				if [[ "$results_string" =~ $STATUS_LINE_PATTERN ]]; then
 					modify_values "$line"
@@ -323,7 +305,7 @@ while eval $is_active; do
 			if eval "$globasciiranges_off"; then shopt -u globasciiranges; fi
 			if eval "$patsub_replacement_off"; then shopt -u patsub_replacement; fi
 			status_text="$(gen_status_text)"
-			eval "$DO_LOG" && (echo "$status_text" >> $LOGFILE)
+			eval "$DO_LOG" && (echo "$status_text" >> "$LOGFILE")
 		elif [[ $cumulative =~ $START_PATTERN ]]; then
 			if eval $ONE_CHAR_INPUT; then
 				start_int=${#cumulative}
@@ -335,6 +317,7 @@ while eval $is_active; do
 		display_text "$status_text" "$cumulative" "$line" "$t_prior"
 	fi
 done
+# #endregion Input loop
 if [[ -z "${exitcode+x}" ]]; then wait $sub_pid && declare -ir exitcode; fi
 tput rc
 tput cnorm ed
@@ -346,5 +329,5 @@ Cumulative length: ${#cumulative}
 Cumulative output:
 $cumulative"
 echo "$output"
-eval "$DO_LOG" && (echo "$output" >> $LOGFILE)
+eval "$DO_LOG" && (echo "$output" >> "$LOGFILE")
 exit
