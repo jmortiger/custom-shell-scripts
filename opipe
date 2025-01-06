@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# cspell:ignore logfile jmor FEWC smso rmso civis rmcup smcup cnorm extglob patsub exitcode
+# cspell:ignore logfile jmor FEWC smso rmso civis rmcup smcup cnorm extglob patsub exitcode globasciiranges
 
 # https://www.kylheku.com/cgit/basta/tree/basta.sh?id=7fbdc5a088c37bd24da5954474a189cd4c890dce
 # https://www.kylheku.com/cgit/basta/about/
@@ -33,168 +33,185 @@ readonly SIGTERM=15
 declare -r -i MAX_READ_INT=$(( 2**31 - 1))
 readonly FAIL_TEXT="FAILURE"
 # #region Patterns
+readonly V_CTRL_STUB=$'\n\v\f'
 readonly START_TEXT='
 
 # Running:
 
 '
+declare START_PATTERN=''
 if eval $ONE_CHAR_INPUT; then
-	readonly START_PATTERN="$START_TEXT\$"
+	declare -r START_PATTERN="$START_TEXT\$"
 else
-	readonly START_PATTERN="^(.*$START_TEXT)"
+	declare -r START_PATTERN="^(.*$START_TEXT)"
 fi
 readonly END_TEXT='
 
 Finished in '
+readonly END_PATTERN="${END_TEXT}[[:digit:].]+s, [[:digit:].]+ runs/s, [[:digit:].]+ assertions/s.
+[[:digit:]]+ runs, [[:digit:]]+ assertions, [[:digit:]]+ failures, [[:digit:]]+ errors, [[:digit:]]+ skips[$V_CTRL_STUB]"
 readonly STATUS_CHARACTERS='.FEWC'
 readonly NL_STUB='[:print:][:blank:]'
 readonly NL_PATTERN='[^[:print:][:blank:]]'
 readonly NON_NL_PATTERN='[[:print:][:blank:]]'
-readonly NON_NL_NOR_STATUS_CHARACTERS="[ABDG-VXYZa-z!-,/[:digit:][:blank:]]"
+readonly NON_NL_NOR_STATUS_CHARACTERS=$'[^\n\v\f.FEWC]' # readonly NON_NL_NOR_STATUS_CHARACTERS='[ABDG-VXYZa-z!-,/[:digit:][:blank:]]'
 readonly PATTERN="^([$STATUS_CHARACTERS]+)((${NL_PATTERN}[^.]$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
 # readonly PATTERN="^([$STATUS_CHARACTERS]+)(($NL_PATTERN+[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
 readonly STATUS_LINE_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"
-readonly STATUS_SEG_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$NL_PATTERN+[$STATUS_CHARACTERS]+[^$STATUS_CHARACTERS]+.*"
+# readonly STATUS_SEG_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$NL_PATTERN+[$STATUS_CHARACTERS]+[^$STATUS_CHARACTERS]+.*"
+readonly STATUS_SEG_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$NL_PATTERN+[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS+.*"
 # #endregion Patterns
 
-# declare -i last_row=$(cursor_pos -r) LINES=$(tput lines)
-# declare -i cum_stat_rows=0; declare -i cum_stat_line_offset=0
-# declare -i prior_stat_rows=0; #declare f_overflow_mode='false'
-declare cached_delta
-declare -i cached_col=0
+# The last printed, non-vertical-whitespace character printed by `display_text`.
+declare last_char=''
+declare -i last_col=0
+declare last_status=''
+declare -i current_color=7
+declare -a print_instructions_colors=()
+declare -a print_instructions_indices=()
+# To account for end of line jank, jumps to the last character's position and rewrites it in a block with the new output (as this ensures proper word wrapping & window resizing).
+# Depends on:
+# 	cud1
+# 	cuu1
+# 	hpa
+# 	el
+# 	ed
+# 	smso
+# 	rmso
+# 	cr
 display_text() {
-	local -r text="$1"
+	local -r status_text="$1"
 	local -r whole_text="$2"
-	if [[ -n "${cached_delta+x}" ]]; then
-		local -r delta="$cached_delta$3"
+	# If there's a prior character, add it to the delta to redraw it.
+	local delta=''
+	if [[ -n "${last_char+x}" ]]; then
+		local -r delta="$last_char$3"
 	else
 		local -r delta="$3"
 	fi
-	local -r prior="$4"
+	if ((${#last_status} > 0)); then
+		tput hpa 0 el
+		# tput el
+		tput cuu1
+		# TODO: Repeat cuu1 if status_text is longer than 1 line
+		local -i t_statusRows=$(profile_text --display_mode -r "$last_status")
+		while ((t_statusRows > 1)); do
+			tput el cuu1
+			((t_statusRows--))
+		done
+		tput hpa $last_col
+	fi
+	# local -r l_prior="$4"
 	# eval $ONE_CHAR_INPUT && tput el
 	# eval "$MULTI_CHAR_INPUT" && tput ed
-	echo -n "$delta"
-	# tput sc
-	# eval $ONE_CHAR_INPUT &&  tput el
-	# declare t="$(profile_text --row_at _ --no_trailing_control --initial_line_offset $cum_stat_line_offset "$delta")"
-	# ((cum_stat_rows+=$(profile_text -r --initial_line_offset $cum_stat_line_offset "$delta"), cum_stat_line_offset=${#t}))
-	# local -i t_prior_rows=$prior_stat_rows
-	# if (("$(profile_text -r "$whole_text")"+init_row > $(tput lines))); then
-	# if ((prior_stat_rows="$(profile_text -r "$whole_text")", t_prior_rows < prior_stat_rows)) && ((prior_stat_rows+init_row >= $(tput lines))); then
-	# if (("$(profile_text -r "$whole_text")"+init_row >= $(tput lines))); then
-	# if ((prior_stat_rows="$(profile_text -r --edit_mode "$whole_text")", t_prior_rows < prior_stat_rows)) && ((prior_stat_rows+init_row >= $(tput lines))); then
-	# ((tput_lines=$(tput lines), tput_cols=$(tput cols), t_text_count=${#text} > 0 && ${#text} % tput_cols > 0 ? ${#text} : ${#text} - 1))
-	# local was_true='false'
-	# if ((prior_stat_rows="$(profile_text --display-mode -r "$whole_text")", t_prior_rows < prior_stat_rows)) && ((tput_lines=$(tput lines), tput_cols=$(tput cols), t_text_count=${#text} <= 0 || ${#text} % tput_cols > 0 ? ${#text} : ${#text} - 1, prior_stat_rows+init_row > tput_lines-1-t_text_count/tput_cols)) && [ "${delta: -1}" != $'\n' ]; then
-	# 	was_true='true'
-	# 	# tput sc
-	# 	((t="$(profile_text --col_at _ "$whole_text")"))
-	# 	if ((t == 1)); then
-	# 		tput cud1
-	# 	fi
-	# 	tput cud1
-	# 	# tput rc
-	# 	tput cuu1
-	# 	# echo -n $'\r'
-	# 	if ((t > 0)); then
-	# 		# tput cuf "$t"
-	# 		tput hpa $((t - 1))
-	# 	# elif profile_text --row_succeeded_by -1 "$STATUS_LINE_PATTERN" --trailing_control && [ ${delta:0:1} != $'\n' ]; then
-	# 	# 	tput hpa "$tput_cols"
-	# 	else
-	# 		tput hpa 0
-	# 	fi
-	# 	# tput hpa "$(profile_text --edit_mode --col_at _ "$whole_text")"
-	# 	unset t
-	# fi
-	# if (($(profile_text --display_mode --col_at _ "$prior") + $(profile_text --trailing_control --display_mode --col_at 0 "$delta") >= $(tput cols))); then
-	# 	declare -g cached_delta="${prior: -1}"
-	# else
-	# 	unset cached_delta
-	# fi
-	# tput sc
-	# declare -i -g cached_col
-	# ((cached_col=$(profile_text --display_mode --col_at _ "$whole_text")))
+	if ((${#print_instructions_colors[@]} == 0)) || ((${#print_instructions_colors[@]} == 1)) && [[ "${print_instructions_colors[0]}" =~ ^-$|^$current_color$ ]]; then
+		echo -n "$(tput setaf $current_color)$delta$(tput setaf 7)"
+		# declare -g current_color=
+	else
+		local t_d=''
+		local -i t_last_index=0
+		t_d+=$(tput setaf $current_color)
+		if ((${#last_char}!=0)); then 
+			t_d+=$(tput setaf $current_color)
+			t_d+="${delta:$t_last_index:${#last_char}}"
+			((t_last_index=${#last_char}))
+		elif [ "${print_instructions_colors[0]}" = '-' ] || [ "${print_instructions_colors[0]}" = "$current_color" ]; then
+			t_d+=$(tput setaf $current_color)
+		fi
+		for ((i=0; i < ${#print_instructions_colors[@]}; i++)); do
+			t_d+="${delta:$t_last_index:$((${print_instructions_indices[$i]}+${#last_char}-t_last_index))}"
+			if [ "${print_instructions_colors[$i]}" != '-' ]; then
+				t_d+=$(tput setaf "${print_instructions_colors[$i]}")
+				((current_color=${print_instructions_colors[$i]}))
+			fi	
+			((t_last_index=${print_instructions_indices[$i]}+${#last_char}))
+			unset "print_instructions_indices[$i]"
+			unset "print_instructions_colors[$i]"
+		done
+		if [ ${#print_instructions_colors[@]} != 0 ]; then echo "Not cleared; ${#print_instructions_colors[@]}: ${print_instructions_colors[*]}"; exit 1; fi
+		if [ ${#print_instructions_indices[@]} != 0 ]; then echo "Not cleared; ${#print_instructions_indices[@]}: ${print_instructions_indices[*]}"; exit 1; fi
+		t_d+="${delta:$t_last_index}"
+		echo -n "$t_d$(tput setaf 7)"
+	fi
+	# echo -n "$delta"
 	tput cud1
 	tput cr
 	eval $ONE_CHAR_INPUT && tput el
 	tput smso
-	# if eval $was_true; then echo -n "TRUE $text"; else echo -n "$text"; fi
-	echo -n "$text"
+	echo -n "$status_text"
 	tput rmso
-	# last_row=$(cursor_pos -r)
-	# LINES=$(tput lines)
-	# cached_delta="$delta"
-	# tput rc
-	tput cuu1
-	# if [ "${prior: -1}" != $'\n' ]; then ((cached_col+=1)); fi
-	tput hpa $(($(profile_text --display_mode --col_at _ "$whole_text")))
-	# if (("$(profile_text -r "$whole_text")"+init_row >= $(tput lines))); then
-	# 	tput cuu1
-	# fi
-	# if (($(profile_text --display_mode --col_at _ "$prior") + $(profile_text --no_trailing_control --display_mode --col_at 0 "$delta") >= $(tput cols))); then
-	declare -g cached_delta="${delta: -1}"
-	if [ "$cached_delta" == $'\n' ]; then unset cached_delta; fi
-	# else
-	# 	unset cached_delta
-	# fi
+	# tput cuu1
+	# # TODO: Repeat cuu1 if status_text is longer than 1 line
+	# tput hpa $(($(profile_text --display_mode --col_at _ "$whole_text")))
+	((last_col=$(profile_text --display_mode --col_at _ "$whole_text")))
+	last_status=$status_text
+	declare -g last_char="${delta: -1}"
+	if [[ "$last_char" =~ [$V_CTRL_STUB] ]]; then unset last_char; fi
 }
-cumulative=""
-line=""
-exec 3< <("$@")
-declare -i -r sub_pid=$!
-out_pipe() {
-	if eval $ONE_CHAR_INPUT; then
-		read -s -r -N 1 -u 3 line
-	else
-		read -s -r -t .3 -N $MAX_READ_INT -u 3 line
-	fi
-}
-# #region Exit handling
-is_active="true"
-is_killing="false"
-do_stop() {
-	# shellcheck disable=SC2317
-	if eval "$is_killing"; then
-		kill -n "$1" "$sub_pid"
-		echo "Killing ($1)..."
-	else
-		echo "Is Killing ($1)..."
-		is_killing='true'
-	fi
-	# shellcheck disable=SC2317
-	exitcode=$(wait "$sub_pid")
-	# shellcheck disable=SC2317
-	declare -i -r exitcode
-	# shellcheck disable=SC2317
-	exec 3>&-
-	# shellcheck disable=SC2317,SC2086
-	exit $exitcode
-}
-# shellcheck disable=SC2064
-trap "do_stop $SIGINT" INT
-# shellcheck disable=SC2064
-trap "do_stop $SIGQUIT" QUIT
-# shellcheck disable=SC2064
-trap "do_stop $SIGTERM" TERM
-# #endregion Exit handling
 # #region modify_values & gen_status_text
-declare -i c_complete=0 c_successful=0 c_failure=0 c_error=0 c_warning=0
+# #1: Former color
+# #2: New color
+# #3: Index
+add_instruction() {
+	if (($1 == $2)); then
+		if ((${#print_instructions_colors[@]} == 0)); then
+			print_instructions_colors[0]="-"
+			# ((print_instructions_counts[0]=1))
+			((print_instructions_indices[0]=$3))
+		# else
+			# local -i instCount=${#print_instructions_counts[@]}
+			# ((print_instructions_counts[$instCount]+=1))
+			# local -i instCount=${#print_instructions_counts[@]}
+			# ((print_instructions_indices[instCount]=))
+		fi
+	else
+		print_instructions_colors+=("$2")
+		# print_instructions_counts+=(1)
+		print_instructions_indices+=("$3")
+	fi
+}
+declare -i i_complete=0 i_successful=0 i_failure=0 i_error=0 i_warning=0 i_correction=0
+# #1: text
+# #2 (optional): - to subtract, anything else (other than an unsigned integer) to add
+# ...: an index to skip + either the index to skip to (inclusive) or nothing to skip to the end.
 function modify_values() {
 	local -r appended="$1"
-	local -i i
-	if [ "$2" = "-" ]; then
+	shift
+	if [ "$1" = "-" ]; then
 		local -r operand="-"
 	else
 		local -r operand="+"
 	fi
-	local -n target=c_successful
+	while [[ -n "${1+x}" ]] && [[ "$1" =~ [^[:digit:]] ]]; do shift; done
+	local -n target=i_successful
+	local -i curr_color=$current_color
+	local -i new_color=0
+	if (( ${#print_instructions_colors[@]} != 0 )); then
+		unset print_instructions_colors
+		declare -g -a print_instructions_colors=()
+	fi
+	if (( ${#print_instructions_indices[@]} != 0 )); then
+		unset print_instructions_indices
+		declare -g -a print_instructions_indices=()
+	fi
 	for (( i=0; i < ${#appended}; i+=1 )); do
+		if [[ -n "${1+x}" ]] && (($1 == i)); then
+			add_instruction $curr_color 7 $i
+			((curr_color=7))
+			if [[ -n "${2+x}" ]]; then
+				((i+=$2 - $1))
+				shift 2
+				continue
+			else
+				break
+			fi
+		fi
 		case "${appended:$i:1}" in
-			(F) local -n target=c_failure;;
-			(E) local -n target=c_error;;
-			(W) local -n target=c_warning;;
-			(\.) local -n target=c_successful;;
+			(F) local -n target=i_failure; ((new_color=1));;
+			(E) local -n target=i_error; ((new_color=1));;
+			(C) local -n target=i_correction; ((new_color=2));;
+			(\.) local -n target=i_successful; ((new_color=2));;
+			(W) local -n target=i_warning; ((new_color=3));;
 			(*)
 				local -n target=FAIL_TEXT
 				echo "Something's wrong"
@@ -204,39 +221,79 @@ function modify_values() {
 			# shellcheck disable=SC2091 disable=SC2271 disable=SC1105
 			((target$operand=1))
 			# shellcheck disable=SC2091 disable=SC2271 disable=SC1105
-			((c_complete$operand=1))
+			((i_complete$operand=1))
+			add_instruction $curr_color $new_color $i
+			((curr_color=new_color))
 		fi
 	done
 }
 gen_status_text() {
-	# echo -n "Completed: $c_complete, Successful: $c_successful, Failures: $c_failure, Errors: $c_error, Warnings: $c_warning"
-	echo -n ".: $c_complete, S: $c_successful, F: $c_failure, E: $c_error, W: $c_warning"
+	echo -n "Completed: $i_complete, .: $i_successful, F: $i_failure, E: $i_error, W: $i_warning, C: $i_correction"
 }
 # #endregion modify_values & gen_status_text
+exec 3< <("$@")
+declare -i -r sub_pid=$!
+# #region Exit handling
+is_active="true"
+# is_killing="false"
+do_stop() {
+	# shellcheck disable=SC2317
+	# if eval "$is_killing"; then
+		kill -n "$1" "$sub_pid"
+		# echo "Killing ($1)..."
+	# else
+		# echo "Is Killing ($1)..."
+		# is_killing='true'
+	# fi
+	# shellcheck disable=SC2317
+	exitcode=$(wait "$sub_pid")
+	# wait "$sub_pid" && exitcode=$?
+	# shellcheck disable=SC2317
+	declare -i -r exitcode
+	# shellcheck disable=SC2317
+	# exec 3>&-
+	# shellcheck disable=SC2317,SC2086,SC2064
+	# exit $exitcode
+	trap - INT
+	# shellcheck disable=SC2317,SC2064
+	trap - QUIT
+	# shellcheck disable=SC2317,SC2064
+	trap - TERM
+}
+# shellcheck disable=SC2064
+trap "do_stop $SIGINT" INT
+# shellcheck disable=SC2064
+trap "do_stop $SIGQUIT" QUIT
+# shellcheck disable=SC2064
+trap "do_stop $SIGTERM" TERM
+# #endregion Exit handling
 declare -i c_iterations=0; declare -i start_int=0
-readonly patsub_replacement_off=$( if [[ $(shopt patsub_replacement) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
 readonly extglob_off=$( if [[ $(shopt extglob) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
+readonly globasciiranges_off=$( if [[ $(shopt globasciiranges) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
+readonly patsub_replacement_off=$( if [[ $(shopt patsub_replacement) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
 tput sc
 tput civis
-# tput smcup
-# trap 'tput rc;tput rmcup' EXIT
 # trap 'tput rc; tput cnorm' EXIT
 status_text="WAITING..."
-init_row=$(cursor_pos -r)
+cumulative=""
+line=""
+out_pipe() {
+	if eval $ONE_CHAR_INPUT; then
+		read -s -r -N 1 -u 3 line
+	else
+		read -s -r -t .3 -N $MAX_READ_INT -u 3 line
+	fi
+}
 while eval $is_active; do
-	# last_row=$(cursor_pos -r)
-	# LINES=$(tput lines)
 	((c_iterations+=1))
 	out_pipe
 	eval "$DO_LOG" && (echo "Newest input (raw): $line" >> $LOGFILE)
-	# if [[ -z "${init_row+x}" ]]; then
-	# 	declare -r -i init_row=$(cursor_pos -r)
-	# fi
 	if [ -z "$line" ]; then
 		if kill -0 $sub_pid > /dev/null 2>&1; then
 			line=''
 		else
 			is_active="false"
+			if [[ -z "${exitcode+x}" ]]; then wait $sub_pid && declare -ir exitcode; fi
 		fi
 	fi
 	if eval $is_active && [ -n "$line" ]; then
@@ -244,6 +301,7 @@ while eval $is_active; do
 		cumulative+="$line"
 		if ((start_int != 0)); then
 			if eval "$extglob_off"; then shopt -s extglob; fi
+			if eval "$globasciiranges_off"; then shopt -s globasciiranges; fi
 			if eval "$patsub_replacement_off"; then shopt -s patsub_replacement; fi
 			results_string="${cumulative:start_int}"
 			eval "$DO_LOG" && (echo "$results_string" >> $LOGFILE)
@@ -262,6 +320,7 @@ while eval $is_active; do
 			# 	fi
 			# fi
 			if eval "$extglob_off"; then shopt -u extglob; fi
+			if eval "$globasciiranges_off"; then shopt -u globasciiranges; fi
 			if eval "$patsub_replacement_off"; then shopt -u patsub_replacement; fi
 			status_text="$(gen_status_text)"
 			eval "$DO_LOG" && (echo "$status_text" >> $LOGFILE)
@@ -276,11 +335,12 @@ while eval $is_active; do
 		display_text "$status_text" "$cumulative" "$line" "$t_prior"
 	fi
 done
+if [[ -z "${exitcode+x}" ]]; then wait $sub_pid && declare -ir exitcode; fi
 tput rc
-# tput rmcup
 tput cnorm ed
-echo $'\nSuccessfully completed!'
-output="Iterations: $c_iterations
+exec 3>&-
+output="Exitcode: $exitcode
+Iterations: $c_iterations
 start_int: $start_int
 Cumulative length: ${#cumulative}
 Cumulative output:

@@ -11,8 +11,12 @@ readonly C_OUTPUT_ROW_AT='ROW_AT'
 readonly C_OUTPUT_ROW_PRECEDED_BY='ROW_PRECEDED'
 readonly C_OUTPUT_ROW_SUCCEEDED_BY='ROW_SUCCEEDED'
 readonly C_OUTPUT_COLS_AT_REGEX='^[[:digit:]]+$|^_$'
-readonly NL_PATTERN='[^[:print:][:blank:]]'
-readonly NON_NL_PATTERN='[[:print:][:blank:]]'
+readonly CTRL_CHAR_PATTERN='[^[:print:][:blank:]]'
+readonly NON_CTRL_CHAR_PATTERN='[[:print:][:blank:]]'
+# Line Feed, Vertical Tab, Form Feed
+readonly V_CTRL_STUB=$'\n\v\f'
+# Horizontal Tab, Carriage Return, Backspace, Delete
+readonly H_CTRL_STUB=$'\t\r\b\x7F'
 readonly C_TRAILING_CTRL_OVERRIDERS='^-[mc]$|^--(max_col|col_at)$'
 # TODO: Output multiple
 # #region show_help
@@ -310,7 +314,7 @@ while is_not_at_end; do
 	# echo "c_rows at loop start: $c_rows"
 	text_segment=${text:char_offset}
 	# echo -n "char_offset: $char_offset -> "
-	if [[ $text_segment =~ ^($NON_NL_PATTERN*)($NL_PATTERN) ]]; then
+	if [[ $text_segment =~ ^($NON_CTRL_CHAR_PATTERN*)($CTRL_CHAR_PATTERN) ]]; then
 		((char_offset+=${#BASH_REMATCH[0]}))
 		uninterrupted_line=${BASH_REMATCH[1]}
 		ctl_char=${BASH_REMATCH[2]}
