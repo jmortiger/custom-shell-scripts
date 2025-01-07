@@ -8,8 +8,6 @@
 readonly ONE_CHAR_INPUT='false'
 readonly DO_LOG='false'
 readonly LOGFILE="$HOME/reposLocal/custom-shell-scripts/log.txt"
-eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE")
-eval "$DO_LOG" && (date +'%T %D' >> "$LOGFILE")
 # #region Signals
 # https://man7.org/linux/man-pages/man7/signal.7.html
 # readonly SIGTRAP=5
@@ -20,50 +18,32 @@ readonly SIGQUIT=3
 readonly SIGTERM=15
 # #endregion Signals
 readonly MAX_READ_INT=$(( 2**31 - 1))
-readonly -i DEFAULT_COLOR_FOREGROUND=7
-readonly FAIL_TEXT="FAILURE"
+declare -ir DEFAULT_COLOR_FOREGROUND=7
+readonly DEFAULT_STATUS_TEXT='WAITING...'
 # #region Patterns
+readonly FAIL_TEXT="FAILURE"
 readonly V_CTRL_STUB=$'\n\v\f'
-readonly START_TEXT='
-
-# Running:
-
-'
-declare START_PATTERN=''
-if eval $ONE_CHAR_INPUT; then
-	declare -r START_PATTERN="$START_TEXT\$"
-else
-	declare -r START_PATTERN="^(.*$START_TEXT)"
-fi
-readonly END_TEXT='
-
-Finished in '
-readonly END_PATTERN="${END_TEXT}[[:digit:].]+s, [[:digit:].]+ runs/s, [[:digit:].]+ assertions/s.
-[[:digit:]]+ runs, [[:digit:]]+ assertions, [[:digit:]]+ failures, [[:digit:]]+ errors, [[:digit:]]+ skips[$V_CTRL_STUB]"
+readonly START_TEXT=$'\n\n# Running:\n\n'
+declare -r START_PATTERN=$( if eval $ONE_CHAR_INPUT; then echo "$START_TEXT\$"; else echo "^(.*$START_TEXT)"; fi )
+# readonly END_TEXT=$'\n\nFinished in '
+# readonly END_PATTERN="${END_TEXT}[[:digit:].]+s, [[:digit:].]+ runs/s, [[:digit:].]+ assertions/s.
+# [[:digit:]]+ runs, [[:digit:]]+ assertions, [[:digit:]]+ failures, [[:digit:]]+ errors, [[:digit:]]+ skips[$V_CTRL_STUB]"
 readonly STATUS_CHARACTERS='.FEWC'
-readonly STATUS_CHARACTERS_PATTERN='[.FEWC]'
-readonly NL_STUB='[:print:][:blank:]'
 readonly NL_PATTERN='[^[:print:][:blank:]]'
 readonly NON_NL_PATTERN='[[:print:][:blank:]]'
-readonly NON_NL_NOR_STATUS_CHARACTERS=$'[^\n\v\f.FEWC]' # readonly NON_NL_NOR_STATUS_CHARACTERS='[ABDG-VXYZa-z!-,/[:digit:][:blank:]]'
-readonly PATTERN="^([$STATUS_CHARACTERS]+)((${NL_PATTERN}[^.]$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
-# readonly PATTERN="^([$STATUS_CHARACTERS]+)(($NL_PATTERN+[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS$NON_NL_PATTERN*)+$NL_PATTERN*)(.*)$"
+readonly NON_NL_NOR_STATUS_CHARACTERS=$'[^\n\v\f.FEWC]'
 readonly STATUS_LINE_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"
-readonly STATUS_LINE_START="^($NL_PATTERN*)([$STATUS_CHARACTERS]+)($|$NL_PATTERN)"
-readonly SL_START_CLEAN="^($NL_PATTERN+)([$STATUS_CHARACTERS]+)($|$NL_PATTERN+)"
-readonly SL_CHUNKER="^($NL_PATTERN*)(([$STATUS_CHARACTERS]+)|($NON_NL_PATTERN*))($|$NL_PATTERN+)"
-readonly STATUS_CHUNK_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)($|$NL_PATTERN+.*$)"
 readonly SL_TRAILING_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"
 readonly SL_LEADING_NOT_PATTERN="^[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS"
-# readonly STATUS_SEG_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$NL_PATTERN+[$STATUS_CHARACTERS]+[^$STATUS_CHARACTERS]+.*"
-readonly STATUS_SEG_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$NL_PATTERN+[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS+.*"
 # #endregion Patterns
+# #endregion CONSTANTS
+eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date +'%T %D' >> "$LOGFILE")
 
-# #region Print handler
-# The last printed, non-vertical-whitespace character printed by `display_text`.
+# display_text STATE:
+	# # The last printed, non-vertical-whitespace character printed by `display_text`.
 # declare last_char=''
-# The last printed section of the main output printed by `display_text`.
-declare last_delta=''
+	# # The last printed section of the main output printed by `display_text`.
+	# declare last_delta=''
 # The last status text printed by `display_text`; used to determine how many lines to shift up in the next iteration.
 declare last_status=''
 declare -i current_color=$DEFAULT_COLOR_FOREGROUND
@@ -141,12 +121,10 @@ display_text() {
 	# declare -g last_char="${delta: -1}"
 	# if [[ "$last_char" =~ [$V_CTRL_STUB] ]]; then unset last_char; fi
 }
-# #endregion Print handler
-# #region modify_values & gen_status_text
 # #1: Former color
 # #2: New color
 # #3: Index
-add_instruction() {
+function add_instruction() {
 	if (($1 != $2)); then
 		print_instructions_colors+=("$2")
 		print_instructions_indices+=("$3")
@@ -157,7 +135,12 @@ add_instruction() {
 	# 	fi
 	fi
 }
-declare -i i_complete=0 i_successful=0 i_failure=0 i_error=0 i_warning=0 i_correction=0
+declare -i i_complete=0
+	declare -i i_successful=0
+	declare -i i_failure=0
+	declare -i i_error=0
+	declare -i i_warning=0
+	declare -i i_correction=0
 # #1: text
 # #2 (optional): - to subtract, anything else (other than an unsigned integer) to add
 # #3 (optional; -[[:digit:]]+): the index to start processing on; 0 if omitted
@@ -223,15 +206,6 @@ function modify_values() {
 			(W) local -n target=i_warning; ((new_color=3));;
 			(*)
 				local -n target=FAIL_TEXT
-				# add_instruction $curr_color $DEFAULT_COLOR_FOREGROUND $i
-				# ((curr_color=DEFAULT_COLOR_FOREGROUND))
-				# if [[ "${appended:$i}" =~ ^$NL_PATTERN*([$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS+$NON_NL_PATTERN*)$NL_PATTERN+ ]]; then
-				# 	((i+=${#BASH_REMATCH[0]} - 1))
-				# 	shift 2
-				# 	continue
-				# else
-				# 	break
-				# fi
 				echo "Something's wrong"
 				;;
 		esac
@@ -244,31 +218,18 @@ function modify_values() {
 			((curr_color=new_color))
 		fi
 	done
-	exit $curr_color
+	# exit $curr_color
 }
-gen_status_text() {
+function gen_status_text() {
 	echo -n "Completed: $i_complete, .: $i_successful, F: $i_failure, E: $i_error, W: $i_warning, C: $i_correction"
 }
-# #endregion modify_values & gen_status_text
 exec 3< <("$@")
 declare -i -r sub_pid=$!
 # #region Exit handling
 is_active="true"
-do_stop() {
+function do_stop() {
 	# shellcheck disable=SC2317
 		kill -n "$1" "$sub_pid"
-		kill -n "$1" "$sub_pid"
-		# echo "Killing ($1)..."
-	# else
-		# echo "Is Killing ($1)..."
-		# is_killing='true'
-	# fi
-	kill -n "$1" "$sub_pid"
-		# echo "Killing ($1)..."
-	# else
-		# echo "Is Killing ($1)..."
-		# is_killing='true'
-	# fi
 	# shellcheck disable=SC2317
 	exitcode=$(wait "$sub_pid")
 	# wait "$sub_pid" && exitcode=$?
@@ -293,16 +254,16 @@ trap "do_stop $SIGTERM" TERM
 # #endregion Exit handling
 # #region Input loop
 declare -i c_iterations=0; declare -i start_int=0
+# Set up shopt
 readonly extglob_off=$( if [[ $(shopt extglob) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
 readonly globasciiranges_off=$( if [[ $(shopt globasciiranges) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
 readonly patsub_replacement_off=$( if [[ $(shopt patsub_replacement) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
-tput sc
-tput civis
+tput sc civis
 # trap 'tput rc; tput cnorm' EXIT
-status_text="WAITING..."
+status_text=$DEFAULT_STATUS_TEXT
 cumulative=""
 line=""
-out_pipe() {
+function out_pipe() {
 	if eval $ONE_CHAR_INPUT; then
 		read -s -r -N 1 -u 3 line
 	else
@@ -336,41 +297,14 @@ while eval $is_active; do
 				elif [[ "${results_string:0:-1}" =~ $STATUS_LINE_PATTERN ]] && [ "${results_string: -1:1}" != $'\n' ]; then
 					modify_values "${BASH_REMATCH[2]}" '-'
 				fi
-			# TODO: Finish status line parsing for multi-char input
+			# TODO: Test status line parsing for multi-char input
 			else
-				# declare -i t_o=0
-				# for ((t_o=0, t_inc=0; t_o < ${#line}; t_o+="${#BASH_REMATCH[0]}", t_inc=1)); do
-				# if [[ "${line:$((t_o-t_inc))}" =~ $SL_CHUNKER ]]; then
-				# 	if [[ -n "${BASH_REMATCH[3]+x}" ]]; then
-				# 		command ...
-				# 	fi
-				# 	if (("${#BASH_REMATCH[1]}" > 0)); then
-				# 		modify_values "${line:$t_o}" '+' "-$t_o"
-				# 	fi
-				# fi
-				# if [[ "${line:$t_o}" =~ $SL_START_CLEAN ]] then
-				# 	if [ "${BASH_REMATCH[0]}" = "${line:$t_o}" ] then
-				# 		modify_values "${line:$t_o}" '+' "-$t_o"
-				# 	elif [ "${#BASH_REMATCH[2]}" = "${line:$t_o}" ]
-						
-				# 	fi
-				# elif [[ "$line" =~ $STATUS_SEG_PATTERN ]] && [[ "$t_prior" =~ (^|$NL_PATTERN)($NON_NL_PATTERN*)$ ]] && [[ "${BASH_REMATCH[2]}" =~ ^[$STATUS_CHARACTERS]*$ ]]; then
-				# 	modify_values "$line" '+'
-				# elif [[ "${line:0:-1}" =~ $STATUS_SEG_PATTERN ]] && [ "${line: -1:1}" != $'\n' ]; then
-				# 	modify_values "${BASH_REMATCH[2]}" '-'
-				# fi
-				# done
 				if [[ "$line" =~ $SL_LEADING_NOT_PATTERN ]]; then
 					if [[ "$t_prior" =~ $SL_TRAILING_PATTERN ]]; then
 						modify_values "${BASH_REMATCH[2]}" '-' 
 					fi
 				fi
 				modify_values "$line"
-				# if [[ "$t_prior" =~ $SL_TRAILING_PATTERN ]]; then
-				# 	# declare -r -a MATCH_CACHE=$(mapfile ) #(${BASH_REMATCH[@]})
-				# 	mapfile -t MATCH_CACHE <<< "${BASH_REMATCH[@]}"
-				# 	declare -r -a MATCH_CACHE #=$(mapfile ) #(${BASH_REMATCH[@]})
-				# fi
 			fi
 			if eval "$extglob_off"; then shopt -u extglob; fi
 			if eval "$globasciiranges_off"; then shopt -u globasciiranges; fi
@@ -389,6 +323,7 @@ while eval $is_active; do
 	fi
 done
 # #endregion Input loop
+# #region Cleanup and exit
 if [[ -z "${exitcode+x}" ]]; then wait $sub_pid && declare -ir exitcode; fi
 tput rc
 tput cnorm ed
@@ -402,3 +337,4 @@ $cumulative"
 echo "$output"
 eval "$DO_LOG" && (echo "$output" >> "$LOGFILE")
 exit
+# #endregion Cleanup and exit
