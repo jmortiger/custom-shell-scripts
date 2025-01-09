@@ -40,13 +40,26 @@ readonly SL_TRAILING_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"
 readonly SL_LEADING_NOT_PATTERN="^[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS"
 # #endregion Patterns
 declare dt_pre_sl=''
-if [[ "$(infocmp)" =~ 'cud1=\n,' ]]; then
+readonly -a TERM_CAPS_REQUIRED=('cud1' 'cuu1' 'hpa' 'el' 'ed' 'smso' 'rmso' 'cr')
+readonly TERM_CAPS_AVAILABLE="$(infocmp)"
+if [[ $TERM_CAPS_AVAILABLE =~ 'cud1=\n,' ]]; then
 	dt_pre_sl=$'\n\r'
 	dt_pre_sl+="$(tput smso)"
 else
 	dt_pre_sl="$(tput cud1 cr smso)"
 fi
 readonly dt_pre_sl
+for ((i=0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
+	# shellcheck disable=SC2076
+	if ! [[ "$TERM_CAPS_AVAILABLE" =~ "${TERM_CAPS_REQUIRED[$i]}=" ]]; then
+		err_msg="Missing terminal capability ${TERM_CAPS_REQUIRED[$i]}; executing command w/o status checking"
+		echo "$err_msg"
+		eval "$DO_LOG" && (echo "$err_msg" >> "$LOGFILE")
+		exec "$@"
+		exit
+	fi
+done
+unset i err_msg
 # #endregion CONSTANTS
 eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date +'%T %D' >> "$LOGFILE")
 # display_text STATE:
