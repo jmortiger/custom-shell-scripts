@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# cspell:ignore logfile jmor FEWC smso rmso civis rmcup smcup cnorm extglob patsub exitcode globasciiranges setaf ABDG SIGCHLD SIGTRAP SIGWINCH infocmp
+# cspell:ignore logfile jmor FEWC smso rmso civis rmcup smcup cnorm extglob patsub exitcode globasciiranges setaf ABDG SIGCHLD SIGWINCH infocmp
 
 # https://www.kylheku.com/cgit/basta/tree/basta.sh?id=7fbdc5a088c37bd24da5954474a189cd4c890dce
 # https://www.kylheku.com/cgit/basta/about/
@@ -9,28 +9,22 @@
 readonly ONE_CHAR_INPUT='false'
 readonly DO_LOG='false'
 readonly LOGFILE="$HOME/reposLocal/custom-shell-scripts/log.txt"
-# #region Signals
 # https://man7.org/linux/man-pages/man7/signal.7.html
-# readonly SIGTRAP=5
-# readonly SIGCHLD=17
-# readonly SIGWINCH=28
-readonly SIGINT=2
-readonly SIGQUIT=3
-readonly SIGTERM=15
-# #endregion Signals
+	# readonly SIGCHLD=17
+	# readonly SIGWINCH=28
+	readonly SIGINT=2
+	readonly SIGQUIT=3
+	readonly SIGTERM=15
 readonly MAX_READ_INT=$(( 2**31 - 1))
 declare -ir DEFAULT_COLOR_FOREGROUND=7
 # The # of empty lines between the end of the output and the status line.
-declare -ir DEFAULT_STATUS_SPACING=0
+declare -ir DEFAULT_STATUS_SPACING=1
 readonly DEFAULT_STATUS_TEXT='WAITING...'
 # #region Patterns
 readonly FAIL_TEXT="FAILURE"
 readonly V_CTRL_STUB=$'\n\v\f'
 readonly START_TEXT=$'\n\n# Running:\n\n'
 readonly START_PATTERN=$( if eval $ONE_CHAR_INPUT; then echo "$START_TEXT\$"; else echo "^(.*$START_TEXT)"; fi )
-# readonly END_TEXT=$'\n\nFinished in '
-# readonly END_PATTERN="${END_TEXT}[[:digit:].]+s, [[:digit:].]+ runs/s, [[:digit:].]+ assertions/s.
-# [[:digit:]]+ runs, [[:digit:]]+ assertions, [[:digit:]]+ failures, [[:digit:]]+ errors, [[:digit:]]+ skips[$V_CTRL_STUB]"
 readonly STATUS_CHARACTERS='.FEWC'
 readonly NL_PATTERN='[^[:print:][:blank:]]'
 readonly NON_NL_PATTERN='[[:print:][:blank:]]'
@@ -39,16 +33,21 @@ readonly STATUS_LINE_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"
 readonly SL_TRAILING_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"
 readonly SL_LEADING_NOT_PATTERN="^[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS"
 # #endregion Patterns
-declare dt_pre_sl=''
 readonly -a TERM_CAPS_REQUIRED=('cud1' 'cuu1' 'hpa' 'el' 'ed' 'smso' 'rmso' 'cr')
 readonly TERM_CAPS_AVAILABLE="$(infocmp)"
+declare t_trail=$'\r'
+t_trail+="$(tput smso)"
+declare TPUT_CUD1="$(tput cud1)"
 if [[ $TERM_CAPS_AVAILABLE =~ 'cud1=\n,' ]]; then
-	dt_pre_sl=$'\n\r'
-	dt_pre_sl+="$(tput smso)"
+	TPUT_CUD1=$'\n'
 else
-	dt_pre_sl="$(tput cud1 cr smso)"
+	TPUT_CUD1="$(tput cud1)"
 fi
+declare dt_pre_sl="$TPUT_CUD1"
+for ((i=0;i<DEFAULT_STATUS_SPACING;i++)); do dt_pre_sl+=$'\n'; done
+dt_pre_sl+="$t_trail"
 readonly dt_pre_sl
+unset t_trail i
 for ((i=0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
 	# shellcheck disable=SC2076
 	if ! [[ "$TERM_CAPS_AVAILABLE" =~ "${TERM_CAPS_REQUIRED[$i]}=" ]]; then
@@ -62,23 +61,19 @@ done
 unset i err_msg
 # #endregion CONSTANTS
 eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date +'%T %D' >> "$LOGFILE")
+declare colored_cumulative=''
 # display_text STATE:
-	# # The last printed, non-vertical-whitespace character printed by `display_text`.
-	# declare last_char=''
-	# # The last printed section of the main output printed by `display_text`.
-	# declare last_delta=''
 	# The last status text printed by `display_text`; used to determine how many lines to shift up in the next iteration.
 	declare last_status=''
 	declare -i current_color=$DEFAULT_COLOR_FOREGROUND
-	declare -a print_instructions_colors=()
-	declare -a print_instructions_indices=()
+	declare -a print_colors=()
+	declare -a print_indices=()
 # To account for end of line jank, jumps to the last character's position and rewrites it in a block with the new output (as this ensures proper word wrapping & window resizing).
 	# Depends on:
 	# 	cud1
 	# 	cuu1
 	# 	hpa
 	# 	el
-	# 	ed
 	# 	smso
 	# 	rmso
 	# 	cr
@@ -86,84 +81,76 @@ function display_text() {
 	local -r l_status_text="$1"
 	local -r whole_text="$2"
 	local delta="$3"
+	local -r deltaRaw="$delta"
 	local -r prior_whole_text="$4"
 	# The last printed, non-vertical-whitespace character printed by `display_text`.
 	local last_char="${prior_whole_text: -1}" # local last_char="${last_delta: -1}"
-	# if [[ "$last_char" =~ [$V_CTRL_STUB] ]]; then unset last_char; else local -r last_char; fi
 	if [[ "$last_char" =~ [$V_CTRL_STUB] ]]; then local -r last_char=''; else local -r last_char; fi
 	# If there's a prior character, add it to the delta to redraw it.
 	if [[ -n "${last_char+x}" ]]; then local -r delta="$last_char$delta"; fi
-	# local -r prior_whole_text="$4"
 	local l_cumulative_output=''
 	if ((${#last_status} > 0)); then
 		local -ir prior_rows="$(profile_text --display_mode --col_at _ "$prior_whole_text")"
-		l_cumulative_output+="$(tput hpa 0)" # tput hpa 0
+		l_cumulative_output+="$(tput hpa 0)"
 		local -i t_statusRows
-		for ((t_statusRows=$(profile_text --display_mode -r "$last_status"); t_statusRows > 0; t_statusRows--)); do
-			l_cumulative_output+="$(tput el)" # tput el
-			l_cumulative_output+="$(tput cuu1)" # tput cuu1
+		for ((t_statusRows=$(profile_text --display_mode -r "$last_status")+DEFAULT_STATUS_SPACING; t_statusRows > 0; t_statusRows--)); do
+			l_cumulative_output+="$(tput el)"
+			l_cumulative_output+="$(tput cuu1)"
 		done
-		l_cumulative_output+="$(tput hpa "$prior_rows")" # tput hpa "$prior_rows"
+		l_cumulative_output+="$(tput hpa "$prior_rows")"
 	fi
-	if ((${#print_instructions_colors[@]} == 0)) || ((${#print_instructions_colors[@]} == 1)) && [[ "${print_instructions_colors[0]}" =~ ^-$|^$current_color$ ]]; then
+	if ((${#print_colors[@]} == 0)) || ((${#print_colors[@]} == 1)) && [[ "${print_colors[0]}" =~ ^-$|^$current_color$ ]]; then
 		l_cumulative_output+="$(tput setaf $current_color)$delta$(tput setaf $DEFAULT_COLOR_FOREGROUND)"
+		colored_cumulative+="$deltaRaw"
 	else
 		local t_d=''
 		local -i t_last_index=0
-		t_d+=$(tput setaf $current_color)
+		local -i i=0
+		# t_d+=$(tput setaf $current_color)
 		if ((${#last_char} > 0)); then
-			t_d+=$(tput setaf $current_color)
-			t_d+="${delta:$t_last_index:${#last_char}}"
+			l_cumulative_output+=$(tput setaf $current_color)
+			l_cumulative_output+="${delta:$t_last_index:${#last_char}}"
 			((t_last_index=${#last_char}))
-		elif [ "${print_instructions_colors[0]}" = '-' ] || [ "${print_instructions_colors[0]}" = "$current_color" ]; then
-			t_d+=$(tput setaf $current_color)
+			if [[ "${print_colors[0]}" =~ ^-$|^$current_color$ ]]; then
+				((i+=1))
+			fi
+		elif [[ "${print_colors[0]}" =~ ^-$|^$current_color$ ]]; then
+			l_cumulative_output+=$(tput setaf $current_color)
+			((i+=1))
+		elif [[ "${print_indices[0]}" == 0 ]]; then
+			t_d+=$(tput setaf "${print_colors[0]}")
+			((current_color=${print_colors[0]}))
+			((i+=1))
 		fi
-		for ((i=0; i < ${#print_instructions_colors[@]}; i++)); do
-			t_d+="${delta:$t_last_index:$((${print_instructions_indices[$i]}+${#last_char}-t_last_index))}"
-			if [ "${print_instructions_colors[$i]}" != '-' ]; then
-				t_d+=$(tput setaf "${print_instructions_colors[$i]}")
-				((current_color=${print_instructions_colors[$i]}))
-			fi	
-			((t_last_index=${print_instructions_indices[$i]}+${#last_char}))
+		for ((; i < ${#print_colors[@]}; t_last_index=${print_indices[$i]}+${#last_char}, i++)); do
+			t_d+="${delta:$t_last_index:$((${print_indices[$i]}+${#last_char}-t_last_index))}"
+			if ! [[ "${print_colors[$i]}" =~ ^-$|^$current_color$ ]]; then
+				t_d+=$(tput setaf "${print_colors[$i]}")
+				((current_color=${print_colors[$i]}))
+			fi
 		done
-		unset print_instructions_indices print_instructions_colors
-		print_instructions_indices=()
-		print_instructions_colors=()
 		t_d+="${delta:$t_last_index}"
 		l_cumulative_output+="$t_d$(tput setaf $DEFAULT_COLOR_FOREGROUND)"
-		# echo -n "$t_d$(tput setaf $DEFAULT_COLOR_FOREGROUND)"
+		colored_cumulative+="$t_d"
 	fi
-	# l_pre_sl="$(tput cud1 cr smso)"
-	# l_pre_sl=$'\n\r'; l_pre_sl+="$(tput smso)"
-	# echo -n "$l_cumulative_output$l_pre_sl" # l_cumulative_commands+=("echo -n '$l_cumulative_output'")
-	echo -n "$l_cumulative_output$dt_pre_sl" # l_cumulative_commands+=("echo -n '$l_cumulative_output'")
-	l_cumulative_output=''
-	# tput el
-	# tput cud1
-	# l_cumulative_output+="$(tput cr)" # tput cr # l_cumulative_output+="$(tput cr)"
-	# # eval $ONE_CHAR_INPUT && l_cumulative_output+="$(tput el)"
-	# l_cumulative_output+="$(tput smso)" # tput smso # l_cumulative_output+="$(tput smso)"
-	l_cumulative_output+="$l_status_text" # l_cumulative_commands+=("echo -n '$l_status_text'") # echo -n "$l_status_text"
-	# if [[ -n "${t_backupRows+x}" ]]; then l_cumulative_output+=", ROWS: $t_backupRows"; fi
-	l_cumulative_output+="$(tput rmso)" # tput rmso # l_cumulative_output+="$(tput rmso)"
+	# echo -n "$l_cumulative_output$dt_pre_sl"
+	# l_cumulative_output=''
+	l_cumulative_output+="$dt_pre_sl"
+	l_cumulative_output+="$l_status_text"
+	l_cumulative_output+="$(tput rmso)"
 	declare -g last_status="$l_status_text"
-	# declare -g last_delta="$delta"
-	# declare -g last_char="${delta: -1}"
-	# if [[ "$last_char" =~ [$V_CTRL_STUB] ]]; then unset last_char; fi
 	echo -n "$l_cumulative_output"
+	unset print_indices print_colors
+	print_indices=()
+	print_colors=()
 }
 # #1: Former color
 	# #2: New color
 	# #3: Index
 function add_instruction() {
 	if (($1 != $2)); then
-		print_instructions_colors+=("$2")
-		print_instructions_indices+=("$3")
-	# else
-	# 	if ((${#print_instructions_colors[@]} == 0)); then
-	# 		print_instructions_colors[0]="-"
-	# 		((print_instructions_indices[0]=$3))
-	# 	fi
+		print_colors+=("$2")
+		print_indices+=("$3")
 	fi
 }
 declare -i i_complete=0
@@ -182,12 +169,9 @@ function modify_values() {
 	# #region P2
 	local operand="+"
 	case "$1" in
-		-)  local -r operand="-";;
-		\+) local -r operand="+";;
-		*) ;;
-			# echo "2nd arg must be +/-; was $1"
-			# exit 127
-			# ;;
+		-) 	local -r operand="-";;
+		\+)	local -r operand="+";;
+		*)	local -r operand;;
 	esac
 	while [[ -n "${1+x}" ]] && [[ "$1" =~ -?[^[:digit:]] ]]; do shift; done
 	# #endregion P2
@@ -199,13 +183,13 @@ function modify_values() {
 	local -n target=i_successful
 	local -i curr_color=$current_color
 	local -i new_color=0
-	if (( ${#print_instructions_colors[@]} != 0 )); then
-		unset print_instructions_colors
-		declare -g -a print_instructions_colors=()
+	if (( ${#print_colors[@]} != 0 )); then
+		unset print_colors
+		declare -g -a print_colors=()
 	fi
-	if (( ${#print_instructions_indices[@]} != 0 )); then
-		unset print_instructions_indices
-		declare -g -a print_instructions_indices=()
+	if (( ${#print_indices[@]} != 0 )); then
+		unset print_indices
+		declare -g -a print_indices=()
 	fi
 	for (( i=l_offset; i < ${#appended}; i+=1 )); do
 		if [[ -n "${1+x}" ]] && (($1 <= i)); then
@@ -294,7 +278,7 @@ tput civis
 status_text=$DEFAULT_STATUS_TEXT
 cumulative=""
 line=""
-function out_pipe() {
+function read_input_stream() {
 	if eval $ONE_CHAR_INPUT; then
 		read -s -r -N 1 -u 3 line
 	else
@@ -313,12 +297,9 @@ function process_status() {
 		elif [[ "${results_string:0:-1}" =~ $STATUS_LINE_PATTERN ]] && [ "${results_string: -1:1}" != $'\n' ]; then
 			modify_values "${BASH_REMATCH[2]}" '-'
 		fi
-	# TODO: Test status line parsing for multi-char input
 	else
-		if [[ "$line" =~ $SL_LEADING_NOT_PATTERN ]]; then
-			if [[ "$t_prior" =~ $SL_TRAILING_PATTERN ]]; then
-				modify_values "${BASH_REMATCH[2]}" '-' 
-			fi
+		if [[ "$line" =~ $SL_LEADING_NOT_PATTERN ]] && [[ "$t_prior" =~ $SL_TRAILING_PATTERN ]]; then
+			modify_values "${BASH_REMATCH[2]}" '-' 
 		fi
 		modify_values "$line"
 	fi
@@ -330,7 +311,7 @@ function process_status() {
 }
 while eval $is_active; do
 	((c_iterations+=1))
-	out_pipe
+	read_input_stream
 	eval "$DO_LOG" && (echo "Newest input (raw): $line" >> "$LOGFILE")
 	if [ -z "$line" ]; then
 		if kill -0 $sub_pid > /dev/null 2>&1; then
@@ -345,31 +326,6 @@ while eval $is_active; do
 		cumulative+="$line"
 		if ((start_int != 0)); then
 			process_status
-			# if eval "$extglob_off"; then shopt -s extglob; fi
-			# if eval "$globasciiranges_off"; then shopt -s globasciiranges; fi
-			# if eval "$patsub_replacement_off"; then shopt -s patsub_replacement; fi
-			# results_string="${cumulative:start_int}"
-			# eval "$DO_LOG" && (echo "$results_string" >> "$LOGFILE")
-			# if eval $ONE_CHAR_INPUT; then
-			# 	if [[ "$results_string" =~ $STATUS_LINE_PATTERN ]]; then
-			# 		modify_values "$line" '+'
-			# 	elif [[ "${results_string:0:-1}" =~ $STATUS_LINE_PATTERN ]] && [ "${results_string: -1:1}" != $'\n' ]; then
-			# 		modify_values "${BASH_REMATCH[2]}" '-'
-			# 	fi
-			# # TODO: Test status line parsing for multi-char input
-			# else
-			# 	if [[ "$line" =~ $SL_LEADING_NOT_PATTERN ]]; then
-			# 		if [[ "$t_prior" =~ $SL_TRAILING_PATTERN ]]; then
-			# 			modify_values "${BASH_REMATCH[2]}" '-' 
-			# 		fi
-			# 	fi
-			# 	modify_values "$line"
-			# fi
-			# if eval "$extglob_off"; then shopt -u extglob; fi
-			# if eval "$globasciiranges_off"; then shopt -u globasciiranges; fi
-			# if eval "$patsub_replacement_off"; then shopt -u patsub_replacement; fi
-			# status_text="$(gen_status_text)"
-			# eval "$DO_LOG" && (echo "$status_text" >> "$LOGFILE")
 		elif [[ $cumulative =~ $START_PATTERN ]]; then
 			if eval $ONE_CHAR_INPUT; then
 				start_int=${#cumulative}
@@ -391,8 +347,12 @@ output="Exitcode: $exitcode
 Iterations: $c_iterations
 start_int: $start_int
 Cumulative length: ${#cumulative}
-Cumulative output:
-$cumulative"
+Cumulative Output:
+$colored_cumulative"
+if eval "$DO_LOG"; then output+="
+Raw output:
+$cumulative
+"; fi
 echo "$output"
 eval "$DO_LOG" && (echo "$output" >> "$LOGFILE")
 exit

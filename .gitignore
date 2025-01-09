@@ -1,6 +1,8 @@
 %20
 .vscode/
-automount
+# automount
+automounts.txt
 log.txt
 .vscode/*
 .vscode/launch.json
+normal_output.png
