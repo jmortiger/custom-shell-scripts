@@ -327,11 +327,7 @@ while eval $is_active; do
 		if ((start_int != 0)); then
 			process_status
 		elif [[ $cumulative =~ $START_PATTERN ]]; then
-			if eval $ONE_CHAR_INPUT; then
-				start_int=${#cumulative}
-			else
-				start_int=${#BASH_REMATCH[1]}
-			fi
+			eval $ONE_CHAR_INPUT; ((start_int = $? ? ${#cumulative} : ${#BASH_REMATCH[1]}))
 			declare -i -r start_int
 			if ! eval $ONE_CHAR_INPUT; then process_status; fi
 		fi
