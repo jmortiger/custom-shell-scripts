@@ -1,7 +1,7 @@
 %20
 .vscode/
 # automount
-automounts.txt
+automount_binds.txt
 log.txt
 .vscode/*
 .vscode/launch.json

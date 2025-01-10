@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+# cspell:ignore ntfs jmor nofail noatime automount extglob globasciiranges jmort patsub
+
+# sudo mount -t ntfs-3g -o defaults,uid=jmor,nofail,x-systemd.device-timeout=2,windows_names,noatime /dev/sda3 /mnt/win10
+# if (( $? > 0 )); then exit $?; fi
+# sudo mount --bind -o defaults,nofail,x-systemd.device-timeout=2,windows_names,noatime /mnt/win10/Users/jmort/source/repos/ /home/jmor/repos/
+# exit $?
+readonly AUTO_BINDS_PATH="/home/jmor/reposLocal/custom-shell-scripts/automount_binds.txt"
+readonly WINDOWS_PATH='/mnt/win10'
+readonly WINDOWS_PARTITION='/dev/sda3'
+declare -i ec=0
+if cd '/mnt/win10/Users/'; then
+	read -r -p 'Already mounted. Proceed with binds? (y/n)' proceed
+	if [ "$proceed" = 'y' ] || [ "$proceed" = 'Y' ]; then
+		echo 'Proceeding...'
+	else
+		exit
+	fi
+else
+	sudo mount -t ntfs-3g -o defaults,uid=jmor,nofail,x-systemd.device-timeout=2,windows_names,noatime "$WINDOWS_PARTITION" "$WINDOWS_PATH"
+	ec=$?
+	if (( ec != 0 )); then
+		# sleep 2
+		exit $ec
+	fi
+fi
+readonly ORIG_IFS="$IFS"
+declare -a BIND_ORDER=()
+declare -A BINDS=()
+do_read() {
+	local b_source=''
+	local b_destination=''
+	while read -s -t 0; do
+		read -sr b_source b_destination
+		if (( ${#b_source} <= 0 || ${#b_destination} <= 0 )); then break; fi
+		if [[ "$b_source" =~ /$ ]]; then b_source="${b_source:0:-1}"; fi
+		if [[ "$b_destination" =~ /$ ]]; then b_destination="${b_destination:0:-1}"; fi
+		BIND_ORDER+=("$b_source")
+		BINDS[$b_source]="$b_destination"
+	done
+	# echo $?
+	return
+}
+IFS=$'\t'
+do_read < "$AUTO_BINDS_PATH"
+IFS="$ORIG_IFS"
+readonly BIND_ORDER BINDS
+shopt -s extglob globasciiranges patsub_replacement
+readonly SPACE_LITERAL=' '
+declare src=''
+declare dest=''
+for ((i = 0, ec = 0; ec == 0 && i < ${#BIND_ORDER[@]}; ec=$?, i += ec == 0 ? 1 : 0)); do
+	src="${BIND_ORDER[$i]}"
+	dest="${BINDS[$src]}"
+	if [[ "$(findmnt -r --target "$dest" -o TARGET,SOURCE)" =~ ^$'TARGET SOURCE\n'(.+)$ ]] && [[ "${BASH_REMATCH[1]}" =~ (^|$'\n')$dest$SPACE_LITERAL([^$'\n']*) ]]; then
+		echo "Skipping $dest (already mounted to ${BASH_REMATCH[2]})"
+		continue
+	fi
+	# echo "Bound $src to $dest"
+	sudo mount --bind -o defaults,nofail,x-systemd.device-timeout=2,windows_names,noatime "$src" "$dest"
+	# ec=$?
+done
+if (( i < ${#BIND_ORDER[@]} )); then echo "Failed at binding $src to $dest ($ec)"; fi
+exit $ec
