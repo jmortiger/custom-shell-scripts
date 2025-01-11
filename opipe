@@ -60,7 +60,10 @@ for ((i=0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
 done
 unset i err_msg
 # #endregion CONSTANTS
-eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date +'%T %D' >> "$LOGFILE")
+# eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date +'%T %D' >> "$LOGFILE")
+eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date >> "$LOGFILE")
+declare -ri TIME_START=$(date -u +'%-s')
+declare -r TIMEOUT_INTERVAL='.3'
 declare colored_cumulative=''
 # display_text STATE:
 	# The last status text printed by `display_text`; used to determine how many lines to shift up in the next iteration.
@@ -236,7 +239,14 @@ function modify_values() {
 	# exit $curr_color
 }
 function gen_status_text() {
-	echo -n "Completed: $i_complete, .: $i_successful, F: $i_failure, E: $i_error, W: $i_warning, C: $i_correction"
+	local -ir elapsed=$(date -u +'%-s')-$TIME_START
+	local fmt='%S'
+	if ((elapsed > 86400)); then fmt="$((elapsed / 86400))days %H hrs %M min %S s"
+	elif ((elapsed > 3600)); then fmt="%-H:%M:%S"
+	elif ((elapsed > 60)); then fmt="%-M:%S"
+	else fmt="%-S seconds"
+	fi
+	echo -n "Completed: $i_complete, .: $i_successful, F: $i_failure, E: $i_error, W: $i_warning, C: $i_correction; ELAPSED: $(date -u -d "@$elapsed" +"$fmt")"
 }
 exec 3< <("$@")
 declare -i -r sub_pid=$!
@@ -282,7 +292,7 @@ function read_input_stream() {
 	if eval $ONE_CHAR_INPUT; then
 		read -s -r -N 1 -u 3 line
 	else
-		read -s -r -t .3 -N $MAX_READ_INT -u 3 line
+		read -s -r -t "$TIMEOUT_INTERVAL" -N $MAX_READ_INT -u 3 line
 	fi
 }
 function process_status() {
