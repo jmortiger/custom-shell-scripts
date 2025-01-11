@@ -44,11 +44,11 @@ else
 	TPUT_CUD1="$(tput cud1)"
 fi
 declare dt_pre_sl="$TPUT_CUD1"
-for ((i=0;i<DEFAULT_STATUS_SPACING;i++)); do dt_pre_sl+=$'\n'; done
+for ((i = 0; i < DEFAULT_STATUS_SPACING; i++)); do dt_pre_sl+=$'\n'; done
 dt_pre_sl+="$t_trail"
 readonly dt_pre_sl
 unset t_trail i
-for ((i=0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
+for ((i = 0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
 	# shellcheck disable=SC2076
 	if ! [[ "$TERM_CAPS_AVAILABLE" =~ "${TERM_CAPS_REQUIRED[$i]}=" ]]; then
 		err_msg="Missing terminal capability ${TERM_CAPS_REQUIRED[$i]}; executing command w/o status checking"
@@ -60,7 +60,6 @@ for ((i=0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
 done
 unset i err_msg
 # #endregion CONSTANTS
-# eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date +'%T %D' >> "$LOGFILE")
 eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date >> "$LOGFILE")
 declare -ri TEST_COUNT=1466
 declare -ri TIME_START=$(date -u +'%-s')
@@ -73,17 +72,9 @@ declare colored_cumulative=''
 	declare -a print_colors=()
 	declare -a print_indices=()
 # To account for end of line jank, jumps to the last character's position and rewrites it in a block with the new output (as this ensures proper word wrapping & window resizing).
-	# Depends on:
-	# 	cud1
-	# 	cuu1
-	# 	hpa
-	# 	el
-	# 	smso
-	# 	rmso
-	# 	cr
 function display_text() {
 	local -r l_status_text="$1"
-	local -r whole_text="$2"
+	# local -r whole_text="$2"
 	local delta="$3"
 	local -r deltaRaw="$delta"
 	local -r prior_whole_text="$4"
@@ -110,7 +101,6 @@ function display_text() {
 		local t_d=''
 		local -i t_last_index=0
 		local -i i=0
-		# t_d+=$(tput setaf $current_color)
 		if ((${#last_char} > 0)); then
 			l_cumulative_output+=$(tput setaf $current_color)
 			l_cumulative_output+="${delta:$t_last_index:${#last_char}}"
@@ -123,6 +113,7 @@ function display_text() {
 			((i+=1))
 		elif [[ "${print_indices[0]}" == 0 ]]; then
 			t_d+=$(tput setaf "${print_colors[0]}")
+			# shellcheck disable=SC2004
 			((current_color=${print_colors[0]}))
 			((i+=1))
 		fi
@@ -137,8 +128,6 @@ function display_text() {
 		l_cumulative_output+="$t_d$(tput setaf $DEFAULT_COLOR_FOREGROUND)"
 		colored_cumulative+="$t_d"
 	fi
-	# echo -n "$l_cumulative_output$dt_pre_sl"
-	# l_cumulative_output=''
 	l_cumulative_output+="$dt_pre_sl"
 	l_cumulative_output+="$l_status_text"
 	l_cumulative_output+="$(tput rmso)"
@@ -237,7 +226,6 @@ function modify_values() {
 			((curr_color=new_color))
 		fi
 	done
-	# exit $curr_color
 }
 function gen_status_text() {
 	local -ir elapsed=$(date -u +'%-s')-$TIME_START
@@ -247,14 +235,11 @@ function gen_status_text() {
 	elif ((elapsed > 60)); then fmt1="%-M:%S"
 	else fmt1="%-S seconds"
 	fi
-	# echo -n "Completed: $i_complete, .: $i_successful, F: $i_failure, E: $i_error, W: $i_warning, C: $i_correction; ELAPSED: $(date -u -d "@$elapsed" +"$fmt1")"
-	# echo -n "Completed: $i_complete, .: $((i_successful * 100 / i_complete))% ($i_successful), F: $((i_failure * 100 / i_complete))% ($i_failure), E: $((i_error * 100 / i_complete))% ($i_error), W: $((i_warning * 100 / i_complete))% ($i_warning), C: $((i_correction * 100 / i_complete))% ($i_correction); ELAPSED: $(date -u -d "@$elapsed" +"$fmt1")"
 	local results="ELAPSED: $(date -u -d "@$elapsed" +"$fmt1")"
 	results+=$'\n'
 	results+="Completed: $i_complete ($((i_complete * 100 / TEST_COUNT))%)"
 	if ((i_complete > 0)); then
 		results+=", .: $((i_successful * 100 / i_complete))% ($i_successful), F: $((i_failure * 100 / i_complete))% ($i_failure), E: $((i_error * 100 / i_complete))% ($i_error), W: $((i_warning * 100 / i_complete))% ($i_warning), C: $((i_correction * 100 / i_complete))% ($i_correction)"
-		# $((TEST_COUNT*1000/$i_complete*$elapsed/1000))
 		local -i remaining=0
 		((remaining = TEST_COUNT * elapsed / i_complete))
 		local -ir remaining
@@ -304,7 +289,6 @@ declare -i c_iterations=0; declare -i start_int=0
 	readonly globasciiranges_off=$( if [[ $(shopt globasciiranges) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
 	readonly patsub_replacement_off=$( if [[ $(shopt patsub_replacement) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
 tput civis
-# trap 'tput cnorm' EXIT
 status_text=$DEFAULT_STATUS_TEXT
 cumulative=""
 line=""

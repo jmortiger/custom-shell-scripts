@@ -8,7 +8,6 @@ OPipe:
   	✔ Hardcode test count (currently 1466) @done(25-01-11 13:19)
   	✔ Add to status line @done(25-01-11 13:19)
   	✔ Calculate percentage completion @done(25-01-11 13:19)
-  	☐ Allow 
 	✔ Add support for time remaining estimate. @done(25-01-11 12:53)
 	☐ Add support for dynamic window resizing.
   	☐ Add variable that stops multiple calls to display text from firing at once
