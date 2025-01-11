@@ -62,6 +62,7 @@ unset i err_msg
 # #endregion CONSTANTS
 # eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date +'%T %D' >> "$LOGFILE")
 eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date >> "$LOGFILE")
+declare -ri TEST_COUNT=1466
 declare -ri TIME_START=$(date -u +'%-s')
 declare -r TIMEOUT_INTERVAL='.3'
 declare colored_cumulative=''
@@ -240,13 +241,32 @@ function modify_values() {
 }
 function gen_status_text() {
 	local -ir elapsed=$(date -u +'%-s')-$TIME_START
-	local fmt='%S'
-	if ((elapsed > 86400)); then fmt="$((elapsed / 86400))days %H hrs %M min %S s"
-	elif ((elapsed > 3600)); then fmt="%-H:%M:%S"
-	elif ((elapsed > 60)); then fmt="%-M:%S"
-	else fmt="%-S seconds"
+	local fmt1='%S'
+	if ((elapsed > 86400)); then fmt1="$((elapsed / 86400))days %H hrs %M min %S s"
+	elif ((elapsed > 3600)); then fmt1="%-H:%M:%S"
+	elif ((elapsed > 60)); then fmt1="%-M:%S"
+	else fmt1="%-S seconds"
 	fi
-	echo -n "Completed: $i_complete, .: $i_successful, F: $i_failure, E: $i_error, W: $i_warning, C: $i_correction; ELAPSED: $(date -u -d "@$elapsed" +"$fmt")"
+	# echo -n "Completed: $i_complete, .: $i_successful, F: $i_failure, E: $i_error, W: $i_warning, C: $i_correction; ELAPSED: $(date -u -d "@$elapsed" +"$fmt1")"
+	# echo -n "Completed: $i_complete, .: $((i_successful * 100 / i_complete))% ($i_successful), F: $((i_failure * 100 / i_complete))% ($i_failure), E: $((i_error * 100 / i_complete))% ($i_error), W: $((i_warning * 100 / i_complete))% ($i_warning), C: $((i_correction * 100 / i_complete))% ($i_correction); ELAPSED: $(date -u -d "@$elapsed" +"$fmt1")"
+	local results="ELAPSED: $(date -u -d "@$elapsed" +"$fmt1")"
+	results+=$'\n'
+	results+="Completed: $i_complete ($((i_complete * 100 / TEST_COUNT))%)"
+	if ((i_complete > 0)); then
+		results+=", .: $((i_successful * 100 / i_complete))% ($i_successful), F: $((i_failure * 100 / i_complete))% ($i_failure), E: $((i_error * 100 / i_complete))% ($i_error), W: $((i_warning * 100 / i_complete))% ($i_warning), C: $((i_correction * 100 / i_complete))% ($i_correction)"
+		# $((TEST_COUNT*1000/$i_complete*$elapsed/1000))
+		local -i remaining=0
+		((remaining = TEST_COUNT * elapsed / i_complete))
+		local -ir remaining
+		local fmt2='%S'
+		if ((remaining > 86400)); then fmt2="$((remaining / 86400))days %H hrs %M min %S s"
+		elif ((remaining > 3600)); then fmt2="%-H:%M:%S"
+		elif ((remaining > 60)); then fmt2="%-M:%S"
+		else fmt2="%-S seconds"
+		fi
+		results+="; REMAINING: $(date -u -d "@$remaining" +"$fmt2")"
+	fi
+	echo -n "$results"
 }
 exec 3< <("$@")
 declare -i -r sub_pid=$!

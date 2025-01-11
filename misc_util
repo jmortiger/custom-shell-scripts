@@ -3,6 +3,10 @@
 # cspell:disable
 readonly MAX_INT=$(( 2**63 - 1 ))
 declare -r -i MAX_READ_INT=$(( 2**31 - 1))
+# https://unix.stackexchange.com/questions/592159/how-to-read-file-in-bash-using-a-fixed-number-of-character#comment1104513_592159
+# https://www.reddit.com/r/bash/comments/1cest8z/comment/l1o17vt/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+# https://www.reddit.com/r/bash/comments/1cest8z/comment/l1orak7/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+declare -r -i MAX_READ_BUFFER=4096
 # https://man7.org/linux/man-pages/man7/signal.7.html
 readonly SIGHUP=1
 readonly SIGINT=2

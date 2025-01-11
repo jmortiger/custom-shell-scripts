@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+readonly -a LINE_COMMENTS=('#' '//')
+readonly -A MULTILINE_COMMENTS=([/*]='*/')
+readonly ORIG_IFS="$IFS"
+
+text="$*"
+if [[ -z "$text" ]]; then
+	while read -t 0; do
+		read -rs
+		text+="$REPLY"
+	done
+fi
+
+IFS="|"
+lcs_or="${LINE_COMMENTS[*]}"
+IFS=""
+lcs_group="[${LINE_COMMENTS[*]}]"
+lcs_group_not="[^${LINE_COMMENTS[*]}]"
+IFS="$ORIG_IFS"
+shopt -s extglob globasciiranges patsub_replacement
+while [[ "$text" =~ (^|^.*?$'\n')(((([\"\']).*?[^\]\5)|$lcs_group_not+)*|($lcs_or).*($|$'\n')|(.*($|$'\n'))) ]]; do
+	command ...
+done
