@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+declare -ir numerator="$1"
+declare -ir denominator="$2"
+declare -ir pre=numerator/denominator
+declare -ir coarseness="$((10 ** "${#3}" / 10))"
+if ((coarseness==1)); then
+	echo -n "$pre"
+	return
+fi
+declare separator='.'
+if [[ -n "${4+x}" ]]; then separator="$4"; fi
+declare -i l_intermediate=0; ((l_intermediate=numerator * coarseness / denominator))
+echo -n "$pre$separator$l_intermediate"

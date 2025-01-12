@@ -10,6 +10,7 @@ OPipe:
 	✔ Add support for time remaining estimate. @done(25-01-11 12:53)
 	✔ Improve time estimation @done(25-01-12 16:13)
 	✔ Make new time start for estimation after start_int initialized @done(25-01-12 16:13)
+	✔ Increase decimal precision (average is useless as is) @done(25-01-12 17:40)
 	- Start in Character Read Mode and switch to Flush Read Mode once the 1st character comes in to prevent/minimize wheel-spinning at the start of the run.
 	- Add support for dynamic window resizing.
 		- Add variable that stops multiple calls to display text from firing at once
@@ -27,3 +28,19 @@ Profile Rails Tests:
 		- For each:
 			- find each line starting with whitespace, and the word `should`
 				- Regex: `(^|$'\n')[[:blank:]]*should (["'])?([_[:print:][:blank:][:punct:]]*?)(\2)? do($|$'\n')`
+
+Print decimal calculations:
+	✔ Initial implementation @done(25-01-12 17:34)
+	✔ Customizable decimal separator @done(25-01-12 17:36)
+	✔ Customizable precision @done(25-01-12 17:37)
+	- Customizable formatting
+		- trim trailing zeros
+		- pad leading/trailing zeros
+
+Format seconds:
+	✔ Pull initial implementation from opipe @done(25-01-12 17:49)
+	- Customizable formatting
+
+# A framework to add a status line to anything
+Status Report:
+	- Retrieve old version of opipe and update it/remove contextual elements from newest version

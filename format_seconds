@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# show_help() {
+# 	echo "Takes unsigned integer/decimal seconds and prints them as simple hours, minutes, & seconds as the time overflows."
+# }
+
+declare formatStr=''
+declare -i timeInput=0
+if [[ "$1" =~ ^([[:digit:]]+)(\.[[:digit:]]*)$ ]]; then
+	declare -ir timeInput="${BASH_REMATCH[1]}"
+	declare formatStr="S${BASH_REMATCH[2]}"
+else
+	declare -ir timeInput="$1"
+	declare formatStr="S"
+fi
+if ((timeInput > 86400)); then formatStr="$((timeInput / 86400))days %H hrs %M min %$formatStr s"
+elif ((timeInput > 3600)); then formatStr="%-H:%M:%$formatStr"
+elif ((timeInput > 60)); then formatStr="%-M:%$formatStr"
+else formatStr="%-$formatStr seconds"
+fi
+date -u -d "@$timeInput" +"$formatStr"
