@@ -5,6 +5,7 @@
 # https://www.kylheku.com/cgit/basta/tree/basta.sh?id=7fbdc5a088c37bd24da5954474a189cd4c890dce
 # https://www.kylheku.com/cgit/basta/about/
 
+declare -ri TIME_START=$(date -u +'%-s')
 # #region CONSTANTS
 readonly ONE_CHAR_INPUT='false'
 readonly DO_LOG='false'
@@ -18,7 +19,7 @@ readonly LOGFILE="$HOME/reposLocal/custom-shell-scripts/log.txt"
 readonly MAX_READ_INT=$(( 2**31 - 1))
 declare -ir DEFAULT_COLOR_FOREGROUND=7
 # The # of empty lines between the end of the output and the status line.
-declare -ir DEFAULT_STATUS_SPACING=1
+declare -ir DEFAULT_STATUS_SPACING=2
 readonly DEFAULT_STATUS_TEXT='WAITING...'
 # #region Patterns
 readonly FAIL_TEXT="FAILURE"
@@ -60,9 +61,18 @@ for ((i = 0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
 done
 unset i err_msg
 # #endregion CONSTANTS
+function format_time() {
+	local fmt1='%S'
+	local -ir timeInput="$1"
+	if ((timeInput > 86400)); then fmt1="$((timeInput / 86400))days %H hrs %M min %S s"
+	elif ((timeInput > 3600)); then fmt1="%-H:%M:%S"
+	elif ((timeInput > 60)); then fmt1="%-M:%S"
+	else fmt1="%-S seconds"
+	fi
+	date -u -d "@$timeInput" +"$fmt1"
+}
 eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date >> "$LOGFILE")
-declare -ri TEST_COUNT=1466
-declare -ri TIME_START=$(date -u +'%-s')
+declare -ri TEST_COUNT=1474
 declare -r TIMEOUT_INTERVAL='.3'
 declare colored_cumulative=''
 # display_text STATE:
@@ -227,30 +237,19 @@ function modify_values() {
 		fi
 	done
 }
+declare -i TIME_TESTS_BEGAN=-1
+declare TIME_TESTS_BEGAN_STRING=''
 function gen_status_text() {
-	local -ir elapsed=$(date -u +'%-s')-$TIME_START
-	local fmt1='%S'
-	if ((elapsed > 86400)); then fmt1="$((elapsed / 86400))days %H hrs %M min %S s"
-	elif ((elapsed > 3600)); then fmt1="%-H:%M:%S"
-	elif ((elapsed > 60)); then fmt1="%-M:%S"
-	else fmt1="%-S seconds"
-	fi
-	local results="ELAPSED: $(date -u -d "@$elapsed" +"$fmt1")"
-	results+=$'\n'
-	results+="Completed: $i_complete ($((i_complete * 100 / TEST_COUNT))%)"
+	local -i elapsed=0;((elapsed=TIME_TESTS_BEGAN > 0 ? $(date -u +'%-s') - TIME_TESTS_BEGAN : 0)); local -ir elapsed
+	local results="${TIME_TESTS_BEGAN_STRING}ELAPSED: $(format_time $elapsed) ($elapsed)"
+	local test_results="Completed: $i_complete ($((i_complete * 100 / TEST_COUNT))%)"
 	if ((i_complete > 0)); then
-		results+=", .: $((i_successful * 100 / i_complete))% ($i_successful), F: $((i_failure * 100 / i_complete))% ($i_failure), E: $((i_error * 100 / i_complete))% ($i_error), W: $((i_warning * 100 / i_complete))% ($i_warning), C: $((i_correction * 100 / i_complete))% ($i_correction)"
-		local -i remaining=0
-		((remaining = TEST_COUNT * elapsed / i_complete))
-		local -ir remaining
-		local fmt2='%S'
-		if ((remaining > 86400)); then fmt2="$((remaining / 86400))days %H hrs %M min %S s"
-		elif ((remaining > 3600)); then fmt2="%-H:%M:%S"
-		elif ((remaining > 60)); then fmt2="%-M:%S"
-		else fmt2="%-S seconds"
-		fi
-		results+="; REMAINING: $(date -u -d "@$remaining" +"$fmt2")"
+		test_results+=", .: $((i_successful * 100 / i_complete))% ($i_successful), F: $((i_failure * 100 / i_complete))% ($i_failure), E: $((i_error * 100 / i_complete))% ($i_error), W: $((i_warning * 100 / i_complete))% ($i_warning), C: $((i_correction * 100 / i_complete))% ($i_correction)"
+		results+="; REMAINING: $(format_time $((TEST_COUNT * elapsed / i_complete)))"
+		results+="; AVG: $(format_time $((elapsed / i_complete)))"
 	fi
+	results+=$'\n'
+	results+="$test_results"
 	echo -n "$results"
 }
 exec 3< <("$@")
@@ -343,6 +342,10 @@ while eval $is_active; do
 		elif [[ $cumulative =~ $START_PATTERN ]]; then
 			eval $ONE_CHAR_INPUT; ((start_int = $? ? ${#cumulative} : ${#BASH_REMATCH[1]}))
 			declare -i -r start_int
+			((TIME_TESTS_BEGAN=$(date -u +'%-s'), t__t=TIME_START - TIME_TESTS_BEGAN))
+			declare -ri TIME_TESTS_BEGAN
+			declare -r TIME_TESTS_BEGAN_STRING="START DELAY: $(date -u -d "@$t__t" +"$(format_time $t__t)"); "
+			unset t__t
 			if ! eval $ONE_CHAR_INPUT; then process_status; fi
 		fi
 		display_text "$status_text" "$cumulative" "$line" "$t_prior"

@@ -1,20 +1,29 @@
 
 OPipe:
-	- Start in Character Read Mode and switch to Flush Read Mode once the 1st character comes in to prevent/minimize wheel-spinning at the start of the run.
 	✔ Add support for time. @done(25-01-11 12:15)
-		✔ Store time & date started (date +'%s') @started(25-01-11 11:25) @done(25-01-11 11:26) @lasted(1m44s)
+		✔ Store time & date started @done(25-01-11 11:26)
 		✔ Calc in text generator @done(25-01-11 12:15)
 	✔ Add support for x out of y. @done(25-01-11 13:19)
 		✔ Hardcode test count (currently 1466) @done(25-01-11 13:19)
 		✔ Add to status line @done(25-01-11 13:19)
 		✔ Calculate percentage completion @done(25-01-11 13:19)
 	✔ Add support for time remaining estimate. @done(25-01-11 12:53)
+	✔ Improve time estimation @done(25-01-12 16:13)
+	✔ Make new time start for estimation after start_int initialized @done(25-01-12 16:13)
+	- Start in Character Read Mode and switch to Flush Read Mode once the 1st character comes in to prevent/minimize wheel-spinning at the start of the run.
 	- Add support for dynamic window resizing.
 		- Add variable that stops multiple calls to display text from firing at once
 		- Add variable that caches prior changes when stopped to add them when free
 		- Add trap for WINdowCHange
 			- Put main line on hold
 			- Update status line if necessary
-	- Improve time estimation
-		- Make new time start for estimation after start_int initialized
 	- Read and write statistics to a file (e.g. Avg. Start Time, Avg. Run Time, etc.)
+
+Profile Rails Tests:
+	- Analyze the files in the given directory tree to determine how many tests there are.
+		- Take in a directory or use the current directory
+		- Find the sub-directory named `test`
+		- Find the # of files ending in `_test.rb`
+		- For each:
+			- find each line starting with whitespace, and the word `should`
+				- Regex: `(^|$'\n')[[:blank:]]*should (["'])?([_[:print:][:blank:][:punct:]]*?)(\2)? do($|$'\n')`
