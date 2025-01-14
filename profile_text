@@ -18,42 +18,62 @@ readonly V_CTRL_STUB=$'\n\v\f'
 # Horizontal Tab, Carriage Return, Backspace, Delete
 readonly H_CTRL_STUB=$'\t\r\b\x7F'
 readonly C_TRAILING_CTRL_OVERRIDERS='^-[mc]$|^--(max_col|col_at)$'
-# TODO: Output multiple
+# TODO: Allow Outputting multiple values instead of only 1 per run to get the most value out of a single run.
 # #region show_help
 show_help() {
-	cat <<- __EOF__
-	profile_text - Retrieve statistics about the input text.
+	cat << __EOF__
+Retrieve statistics about the input text.
 
-	profile_text [OPTIONS] TEXT | profile_text -h | profile_text --help
-	
-	Retrieve statistics about the input text.
-	
-	Parameters:
-		Output:
-	    	-h | --help: Display this help text.
-			-r | --rows: get the total number of rows
-			-c | --col_at INDEX: Get the # of columns on the specified row INDEX (or, if '_', the last index). Negative indices are subtracted from length (e.g. -1 = length - 1). By default, turns off appending control characters (See '--no_trailing_control').
-			--chars_at INDEX: Get the # of characters on the specified row INDEX (or, if '_', the last index). Negative indices are subtracted from length (e.g. -1 = length - 1). By default, turns off appending control characters (See '--no_trailing_control').
-			-m | --max_col: Get the maximum number of columns (i.e characters +/- offset due to control characters) in any row. By default, turns off appending control characters (See '--no_trailing_control').
-			--max_col_at: Get the row index of the maximum number of columns (i.e characters +/- offset due to control characters) in a row. By default, turns off appending control characters (See '--no_trailing_control'). # TODO: FIGURE OUT TIES
-			--max_chars_in_row: Get the maximum number of characters in any row. By default, turns off appending control characters (See '--no_trailing_control').
-			--row_at INDEX: Get the text on the row specified by INDEX (or, if '_', the last index).
-			--row_preceded_by INDEX REGEX: Does the text preceding the row specified by INDEX (or, if '_', the last index) match the given REGEX. Negative indices are subtracted from length (e.g. -1 = length - 1). If matched, returns \${BASH_REMATCH[*]} and an exit status of true; otherwise, returns nothing with an exit status of false.
-			--row_succeeded_by INDEX REGEX: Does the text following the row specified by INDEX (or, if '_', the first index) match the given REGEX. Negative indices are subtracted from length (e.g. -1 = length - 1). If matched, returns \${BASH_REMATCH[*]} and an exit status of true; otherwise, returns nothing with an exit status of false.
-			--rows_where [PRE] REGEX [POST]: Get the rows whose preceding rows match PRE (if not '*'), succeeding rows match POST (if not '*'), and body matches the given REGEX. If matched, returns each \${BASH_REMATCH[*]} (for REGEX only) and an exit status of true; otherwise, returns nothing with an exit status of false.
-		Settings:
-			--edit_mode: Act as though editing text; inverse of display_mode.
-				* Offset column placements by 1 to account for an invisible cursor
-			--display_mode: Act as though displaying text; inverse of edit_mode. Default.
-				* All outputs are based on the text entered. A row with 10 characters starting on column 0 will end on column 9
-			--initial_column_offset: The starting horizontal position of the cursor. Defaults to 0.
-			--no_trailing_control: don't append control characters to the lines they end.
-			--trailing_control: do append control characters to the lines they end.
-			--output_columns: The number of characters permitted in each line of the output. Defaults to 'tput cols'.
-			--output_rows: The number of lines of text in the output's view. Excess output will be handled with vertical overflow. Defaults to 'tput lines'.
-	EXIT STATUS:
-		0 if successful
-	__EOF__
+Usage:	profile_text [OPTIONS] TEXT
+	or: profile_text -h
+	or: profile_text --help
+
+Options:
+Output Modifiers:
+
+	-h, --help: Display this help text.
+
+	-r, --rows: get the total number of rows
+
+	-c, --col_at INDEX: Get the # of columns on the specified row INDEX (or, if '_', the last index). Negative indices are subtracted from length (e.g. -1 = length - 1). By default, turns off appending control characters (See '--no_trailing_control').
+
+	--chars_at INDEX: Get the # of characters on the specified row INDEX (or, if '_', the last index). Negative indices are subtracted from length (e.g. -1 = length - 1). By default, turns off appending control characters (See '--no_trailing_control').
+
+	-m, --max_col: Get the maximum number of columns (i.e characters +/- offset due to control characters) in any row. By default, turns off appending control characters (See '--no_trailing_control').
+
+	--max_col_at: Get the row index of the maximum number of columns (i.e characters +/- offset due to control characters) in a row. By default, turns off appending control characters (See '--no_trailing_control'). # TODO: FIGURE OUT TIES
+
+	--max_chars_in_row: Get the maximum number of characters in any row. By default, turns off appending control characters (See '--no_trailing_control').
+
+	--row_at INDEX: Get the text on the row specified by INDEX (or, if '_', the last index).
+
+	--row_preceded_by INDEX REGEX: Does the text preceding the row specified by INDEX (or, if '_', the last index) match the given REGEX. Negative indices are subtracted from length (e.g. -1 = length - 1). If matched, returns \${BASH_REMATCH[*]} and an exit status of true; otherwise, returns nothing with an exit status of false.
+
+	--row_succeeded_by INDEX REGEX: Does the text following the row specified by INDEX (or, if '_', the first index) match the given REGEX. Negative indices are subtracted from length (e.g. -1 = length - 1). If matched, returns \${BASH_REMATCH[*]} and an exit status of true; otherwise, returns nothing with an exit status of false.
+
+	--rows_where [PRE] REGEX [POST]: Get the rows whose preceding rows match PRE (if not '*'), succeeding rows match POST (if not '*'), and body matches the given REGEX. If matched, returns each \${BASH_REMATCH[*]} (for REGEX only) and an exit status of true; otherwise, returns nothing with an exit status of false.
+
+	Settings Modifiers:
+
+	--edit_mode: Act as though editing text; inverse of display_mode.
+		* Offset column placements on final (typed) row by 1 to account for an invisible cursor.
+
+	--display_mode: Act as though displaying text; inverse of edit_mode. Default.
+		* All outputs are based on the text entered. (e.g. A row with 10 characters starting on column 0 will end on column 9)
+
+	--initial_column_offset OFFSET: The starting horizontal position of the cursor. Defaults to 0.
+
+	--no_trailing_control: don't append control characters to the lines they end.
+
+	--trailing_control: do append control characters to the lines they end.
+
+	--output_columns NUMBER: The number of characters permitted in each line of the output. Defaults to 'tput cols'.
+
+	--output_rows NUMBER: The number of lines of text in the output's view. Excess output will be handled with vertical overflow. Defaults to 'tput lines'.
+
+EXIT STATUS:
+	0 if successful
+__EOF__
 }
 # #endregion show_help
 
@@ -77,7 +97,9 @@ declare flagEditMode='false'
 # declare flagDebug='false'
 declare -i p_debugLevel=0
 declare flagMaxCharMode='true'
-while (( $# > 1 )) && eval $allow_continue; do
+# while (( $# > 1 )) && eval $allow_continue; do
+# while eval $allow_continue && (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]]; do
+while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_continue; do
 	case "$1" in
 		( -h | --help )
 			show_help
@@ -302,7 +324,7 @@ declare -i c_rows=1 # c_rows_unwrapped=1
 # TODO: Finish unwrapped stuff
 declare -a rows=("") # rows_unwrapped=("")
 # declare -i initial_line_offset=0 initial_line_offset_unwrapped=0
-declare -a row_ilos=([0]=$initial_line_offset) # row_ilos_unwrapped=([0]=$initial_line_offset_unwrapped) # TODO: TRACK ROWS
+declare -a row_ilos=([0]=$initial_line_offset) # row_ilos_unwrapped=([0]=$initial_line_offset_unwrapped)
 declare -i char_offset=0 trailing_count=0
 declare uninterrupted_line="" # uninterrupted_line_unwrapped=""
 declare -i max_col=-1 max_col_at=-1
@@ -351,7 +373,6 @@ while is_not_at_end; do
 			fi
 			# echo "c_rows: $c_rows rows.length: ${#rows[@]} $t_seg"
 			rows[-1]+="$t_seg"
-			# TODO: Account for potential line terminator in column length when p_trailing_control_chars
 			# ((max_col = max_col < ${#t_seg} ? ${#t_seg} : max_col))
 			if eval $flagMaxCharMode; then
 				if ((max_col < ${#t_seg})); then

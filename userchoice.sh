@@ -36,7 +36,7 @@ Parameters:
     list of values
     -l: a list of labels to display to users. If empty, the raw values will be displayed instead. If some values don't have a corresponding label, -b | --blank_label can be used to identify them, and --replace_blank_label_with can be used to override display behavior.
 	-p | --prompt PROMPT: Sets the prompt to use. Defaults to "$DEFAULT_PROMPT".
-    -z | --zero_based: Sets the choice indicies to be zero based.
+    -z | --zero_based: Sets the choice indices to be zero based.
     -d | --decode | --decode_method METHOD: The decoding method to use for values and labels.
 		* "$DECODE_METHOD_URL" to use url decoding
 		* "$DECODE_METHOD_ESCAPE" to use escape decoding (i.e. use "\\\\" to encode escape sequences)

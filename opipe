@@ -21,7 +21,9 @@ readonly DEFAULT_STATUS_TEXT='WAITING...'
 # #region Patterns
 readonly FAIL_TEXT="FAILURE"
 readonly V_CTRL_STUB=$'\n\v\f'
-readonly START_TEXT=$'\n\n# Running:\n\n'
+readonly START_TEXT_RAILS=$'\n\n# Running:\n\n'
+readonly START_TEXT_RUBOCOP=$'Inspecting [[:digit:]]+ files\n'
+readonly START_TEXT="($START_TEXT_RAILS|$START_TEXT_RUBOCOP)"
 readonly START_PATTERN=$( if eval $ONE_CHAR_INPUT; then echo "$START_TEXT\$"; else echo "^(.*$START_TEXT)"; fi )
 readonly STATUS_CHARACTERS='.FEWC'
 readonly NL_PATTERN='[^[:print:][:blank:]]'
@@ -65,23 +67,23 @@ for ((i = 0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
 done
 unset i err_msg
 # #endregion Check if needed termcap's supported
-function format_seconds() {
-	local fmt1=''
-	local -i timeInput=0
-	if [[ "$1" =~ ^([[:digit:]]+)(\.[[:digit:]]*)$ ]]; then
-		local -ir timeInput="${BASH_REMATCH[1]}"
-		local fmt1="S${BASH_REMATCH[2]}"
-	else
-		local -ir timeInput="$1"
-		local fmt1="S"
-	fi
-	if ((timeInput > 86400)); then fmt1="$((timeInput / 86400))days %H hrs %M min %$fmt1 s"
-	elif ((timeInput > 3600)); then fmt1="%-H:%M:%$fmt1"
-	elif ((timeInput > 60)); then fmt1="%-M:%$fmt1"
-	else fmt1="%-$fmt1 seconds"
-	fi
-	date -u -d "@$timeInput" +"$fmt1"
-}
+# function format_seconds() {
+	# 	local fmt1=''
+	# 	local -i timeInput=0
+	# 	if [[ "$1" =~ ^([[:digit:]]+)(\.[[:digit:]]*)$ ]]; then
+	# 		local -ir timeInput="${BASH_REMATCH[1]}"
+	# 		local fmt1="S${BASH_REMATCH[2]}"
+	# 	else
+	# 		local -ir timeInput="$1"
+	# 		local fmt1="S"
+	# 	fi
+	# 	if ((timeInput > 86400)); then fmt1="$((timeInput / 86400))days %H hrs %M min %$fmt1 s"
+	# 	elif ((timeInput > 3600)); then fmt1="%-H:%M:%$fmt1"
+	# 	elif ((timeInput > 60)); then fmt1="%-M:%$fmt1"
+	# 	else fmt1="%-$fmt1 seconds"
+	# 	fi
+	# 	date -u -d "@$timeInput" +"$fmt1"
+	# }
 eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date >> "$LOGFILE")
 declare colored_cumulative=''
 # display_text STATE:
@@ -248,13 +250,15 @@ function modify_values() {
 }
 declare -i TIME_TESTS_BEGAN=-1
 declare TIME_TESTS_BEGAN_STRING=''
+function gen_item() { echo -n "$2: $(($1 * 100 / i_complete))% ($1)"; }
 function gen_status_text() {
 	local -i elapsed=0;((elapsed=TIME_TESTS_BEGAN > 0 ? $(date -u +'%-s') - TIME_TESTS_BEGAN : 0)); local -ir elapsed
+	local -ir remaining=$TEST_COUNT-$i_complete
 	local results="${TIME_TESTS_BEGAN_STRING}ELAPSED: $(format_seconds $elapsed) (${elapsed}s)"
-	local test_results="Completed: $i_complete ($((i_complete * 100 / TEST_COUNT))%)"
+	local test_results="Completed: $i_complete/$TEST_COUNT ($((i_complete * 100 / TEST_COUNT))%; $remaining left)"
 	if ((i_complete > 0)); then
-		test_results+=", .: $((i_successful * 100 / i_complete))% ($i_successful), F: $((i_failure * 100 / i_complete))% ($i_failure), E: $((i_error * 100 / i_complete))% ($i_error), W: $((i_warning * 100 / i_complete))% ($i_warning), C: $((i_correction * 100 / i_complete))% ($i_correction)"
-		results+="; REMAINING: $(format_seconds $((TEST_COUNT * elapsed / i_complete)))"
+		test_results+=", $(gen_item $i_successful .), $(gen_item $i_failure F), $(gen_item $i_error E), $(gen_item $i_warning W), $(gen_item $i_correction C)"
+		results+="; REMAINING: $(format_seconds $((remaining * elapsed / i_complete)))"
 		results+="; AVG: $(format_seconds "$(decimal_calc $elapsed $i_complete 1000)"))"
 	fi
 	results+=$'\n'

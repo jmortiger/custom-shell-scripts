@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 
+show_help() {
+	cat << __EOF__
+$0 NUMERATOR DENOMINATOR [MULTIPLIER SEPARATOR]
+
+Print the result of the given division operation with the specified number of trailing decimal places
+__EOF__
+}
+
 declare -ir numerator="$1"
 declare -ir denominator="$2"
 declare -ir pre=numerator/denominator
-declare -ir coarseness="$((10 ** "${#3}" / 10))"
+declare -r coarseInput="${3:-100}"
+declare -ir coarseness="$((10 ** "${#coarseInput}" / 10))"
 if ((coarseness==1)); then
 	echo -n "$pre"
 	return

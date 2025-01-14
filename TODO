@@ -44,3 +44,28 @@ Format seconds:
 # A framework to add a status line to anything
 Status Report:
 	- Retrieve old version of opipe and update it/remove contextual elements from newest version
+	- Allow update mode customization
+		- Single Char
+		- Timer
+		- Flush Output
+		- Mixed
+			- Flush output but if timer exceeded force the update
+	- Allow update throttling
+
+Cursor Position:
+	- Add help text
+
+Profile Text:
+	- Allow Outputting multiple values instead of only 1 per run to get the most value out of a single run.
+	- FIGURE OUT TIES for max_col_at
+	- Add option - Modify text in accordance w/ control characters like backspace & CR?
+	- IMPLEMENT max_chars_in_row
+	- IMPLEMENT rows_where
+	- IMPLEMENT p_debugLevel
+	- Finish optimizing for requested values
+	- Finish unwrapped stuff
+	- Add option for `final_cursor_position` that finds the resting horizontal and vertical position of the cursor (i.e. accounting for CRs, VTs, Backspaces, etc. )
+	- Check if CR on wrapped line will return to start of wrapped line or unwrapped line
+	- Finish handling trailing chars
+	- Add outputs for new options
+Archive:
