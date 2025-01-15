@@ -67,23 +67,6 @@ for ((i = 0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
 done
 unset i err_msg
 # #endregion Check if needed termcap's supported
-# function format_seconds() {
-	# 	local fmt1=''
-	# 	local -i timeInput=0
-	# 	if [[ "$1" =~ ^([[:digit:]]+)(\.[[:digit:]]*)$ ]]; then
-	# 		local -ir timeInput="${BASH_REMATCH[1]}"
-	# 		local fmt1="S${BASH_REMATCH[2]}"
-	# 	else
-	# 		local -ir timeInput="$1"
-	# 		local fmt1="S"
-	# 	fi
-	# 	if ((timeInput > 86400)); then fmt1="$((timeInput / 86400))days %H hrs %M min %$fmt1 s"
-	# 	elif ((timeInput > 3600)); then fmt1="%-H:%M:%$fmt1"
-	# 	elif ((timeInput > 60)); then fmt1="%-M:%$fmt1"
-	# 	else fmt1="%-$fmt1 seconds"
-	# 	fi
-	# 	date -u -d "@$timeInput" +"$fmt1"
-	# }
 eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date >> "$LOGFILE")
 declare colored_cumulative=''
 # display_text STATE:

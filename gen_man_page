@@ -1,17 +1,35 @@
 #!/usr/bin/env bash
 
+readonly -a EXCLUDED_EXTENSIONS=(
+	'.txt'
+	'.md'
+	'.png'
+	'.jpeg'
+	'.jpg'
+	'.gz'
+	'.tar'
+)
 show_help() {
+	local -r ORIG_IFS="$IFS"
+	IFS=",$IFS"
 	cat << __EOF__
 Generates and compresses a man file in the local directory for the given command. Depends on help2man.
 
-Usage: $0 COMMAND [SECTION]
+Usage:	$0 COMMAND [SECTION]
+	or:	$0 --all
+	or:	$0 --help
+	or:	$0 --version
+
+Options:
+	--all: runs this command for all files in the current directory that don't start with a . and don't end with an excluded extension. These include ${EXCLUDED_EXTENSIONS[*]}.
 __EOF__
+	IFS="$ORIG_IFS"
 }
 show_version() {
 	cat << __EOF__
-$0 0.1
+$0 1.2.0
 
-Copyright (C) 2025 J Mor
+Copyright (C) 2025 Justin Morris
 __EOF__
 }
 if [[ "$1" == "--help" ]]; then
@@ -20,5 +38,15 @@ if [[ "$1" == "--help" ]]; then
 elif [[ "$1" == "--version" ]]; then
 	show_version
 	exit
+elif [[ "$1" == "--all" ]]; then
+	ORIG_IFS="$IFS"
+	IFS="|"; extensions="${EXCLUDED_EXTENSIONS[*]}"; IFS="$ORIG_IFS"
+	# find . -maxdepth 1 -not -type d | grep -E -e "${extensions//\|/'$|'}" -v - | while read -r line; do
+	find . -maxdepth 1 -not -type d | grep -E -e "^\./\.|(${extensions//\|/'$|'})" -v - | while read -r line; do
+		if eval "$line --help" && eval "$line --version"; then
+			help2man -N --section="${2:-1}" "$1" | gzip - >| "./man/man${2:-1}/$1.1.gz"
+		fi
+	done
+	exit
 fi
-help2man --section="${2:-1}" "$1" | gzip - >| "./man/man${2:-1}/$1.1.gz"
+help2man -N --section="${2:-1}" "$1" | gzip - >| "./man/man${2:-1}/$1.1.gz"

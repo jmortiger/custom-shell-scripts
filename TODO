@@ -68,4 +68,13 @@ Profile Text:
 	- Check if CR on wrapped line will return to start of wrapped line or unwrapped line
 	- Finish handling trailing chars
 	- Add outputs for new options
+
+Check Number:
+	- Create option to run test cases
+	- Add hex support?
+	- Add octal support?
+	- Add dynamic base support?
+	- Add bounds support?
+	- Add fraction support?
+
 Archive:
