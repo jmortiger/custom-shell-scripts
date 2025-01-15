@@ -33,6 +33,8 @@ Print decimal calculations:
 	✔ Initial implementation @done(25-01-12 17:34)
 	✔ Customizable decimal separator @done(25-01-12 17:36)
 	✔ Customizable precision @done(25-01-12 17:37)
+	✔ Trim trailing zeros @done(25-01-15 15:36)
+	✔ Carrying the round up @done(25-01-15 16:29)
 	- Customizable formatting
 		- trim trailing zeros
 		- pad leading/trailing zeros
