@@ -2,10 +2,11 @@
 
 # cspell:ignore ntfs jmor nofail noatime automount extglob globasciiranges jmort patsub
 
-# sudo mount -t ntfs-3g -o defaults,uid=jmor,nofail,x-systemd.device-timeout=2,windows_names,noatime /dev/sda3 /mnt/win10
-# if (( $? > 0 )); then exit $?; fi
-# sudo mount --bind -o defaults,nofail,x-systemd.device-timeout=2,windows_names,noatime /mnt/win10/Users/jmort/source/repos/ /home/jmor/repos/
-# exit $?
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
 readonly AUTO_BINDS_PATH="/home/jmor/reposLocal/custom-shell-scripts/automount_binds.txt"
 readonly WINDOWS_PATH='/mnt/win10'
 readonly WINDOWS_PARTITION='/dev/sda3'

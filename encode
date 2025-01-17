@@ -32,6 +32,13 @@ __EOF__
 # Anything else will result in no encoding being used. If this is used, ensure there are no spaces in your values nor labels.
 #    -e | --error_on_fail: Set the error level on failure.
 }
+show_version() {
+	cat << __EOF__
+$0 1.0.0
+
+Copyright (C) 2025 Justin Morris
+__EOF__
+}
 #########################endregion HELP#########################
 
 #########################region ENCODE METHODS#########################
@@ -71,6 +78,10 @@ while [ "$1" != "" ]; do
     case "$1" in
         -h | --help )
             show_help
+            exit
+            ;;
+        -v | --version )
+            show_version
             exit
             ;;
         # #region Flags

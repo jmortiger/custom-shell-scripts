@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
+
 condition() {
 	if [[ $(shopt "$1") =~ on$ ]]; then
 		if [ "$2" = "off" ]; then echo -n 'false'; else echo -n 'true'; fi

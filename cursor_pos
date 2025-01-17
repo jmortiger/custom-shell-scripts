@@ -18,7 +18,8 @@ show_help() {
 p_mode=$C_MODE_BOTH
 p_delim=$C_MODE_BOTH_DELIM
 # p_timeout=''
-while [ -n "$1" ] && [ "$1" != '--' ]; do
+# while [ -n "$1" ] && [ "$1" != '--' ]; do
+while [ -n "$1" ]; do
     # # If it's an option
     # if [[ $1 =~ ^\- ]]; then
     #     useLabels='false'

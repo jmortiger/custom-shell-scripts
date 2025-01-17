@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
 echo $$
 # if [ "$1" = "-s" -o "$1" = "--suspended" ]; then
 if [ "$1" = "-f" ]; then

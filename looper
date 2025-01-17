@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
 readonly LOGFILE='/home/jmor/reposLocal/custom-shell-scripts/log.txt'
 declare -i current_count=0
 # date +'%T %D' >> $LOGFILE

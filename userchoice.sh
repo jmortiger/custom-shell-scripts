@@ -28,31 +28,38 @@ readonly DEFAULT_REPLACE_BLANK_LABEL_WITH=""
 # #region show_help
 show_help() {
     cat << __EOF__
-$NAME VAL1 VAL2... [-l | --label LABEL1 LABEL2...] [-p | --prompt PROMPT] [-z | --zero_based] [-d | --decode | --decode_method METHOD]
-
 Presents a list of choices to the user and returns their response.
 
-Parameters:
+Usage: $NAME VAL1 VAL2... [-l | --label LABEL1 LABEL2...] [-p | --prompt PROMPT] [-z | --zero_based] [-d | --decode | --decode_method METHOD]
+
+Options:
     list of values
     -l: a list of labels to display to users. If empty, the raw values will be displayed instead. If some values don't have a corresponding label, -b | --blank_label can be used to identify them, and --replace_blank_label_with can be used to override display behavior.
-	-p | --prompt PROMPT: Sets the prompt to use. Defaults to "$DEFAULT_PROMPT".
-    -z | --zero_based: Sets the choice indices to be zero based.
-    -d | --decode | --decode_method METHOD: The decoding method to use for values and labels.
+	-p, --prompt PROMPT: Sets the prompt to use. Defaults to "$DEFAULT_PROMPT".
+    -z, --zero_based: Sets the choice indices to be zero based.
+    -d, --decode, --decode_method METHOD: The decoding method to use for values and labels.
 		* "$DECODE_METHOD_URL" to use url decoding
 		* "$DECODE_METHOD_ESCAPE" to use escape decoding (i.e. use "\\\\" to encode escape sequences)
 		* "$DECODE_METHOD_UNDERSCORE" to use underscore decoding (i.e. replaces all underscores with spaces)
 		* Anything else will result in no decoding being used. If this is used, ensure there are no spaces in your values nor labels.
 		Defaults to "$DEFAULT_DECODE_METHOD"
-    -b | --blank_label VALUE: The value to use to indicate a label should be skipped. Defaults to "$DEFAULT_BLANK_LABEL".
+    -b, --blank_label VALUE: The value to use to indicate a label should be skipped. Defaults to "$DEFAULT_BLANK_LABEL".
     --replace_blank_label_with VALUE: The value to replace empty labels with. If unset, will use the corresponding entry in the values list.
-    -r | --decode_value_before_return: The return value will be decoded before returning.
-    -f | --return_on_fail[ure] VALUE: The value to be returned on failure. If unset, will return the user's input value.
-    -t | --passthrough: directly return the user's entered input; do not attempt to resolve to the corresponding value.
-	-c | --option_count_format FORMAT: The format to show the # of results in. The substring "~~#~~", if present, will be replaced with the number of results. Will be decoded according to "--decode_method". Set to an empty string to disable (e.g. $NAME -c "" option1 option2). Defaults to "$DEFAULT_OPTION_COUNT_FORMAT_DECODED".
-    -h | --help: Display this help text.
+    -r, --decode_value_before_return: The return value will be decoded before returning.
+    -f, --return_on_fail[ure] VALUE: The value to be returned on failure. If unset, will return the user's input value.
+    -t, --passthrough: directly return the user's entered input; do not attempt to resolve to the corresponding value.
+	-c, --option_count_format FORMAT: The format to show the # of results in. The substring "~~#~~", if present, will be replaced with the number of results. Will be decoded according to "--decode_method". Set to an empty string to disable (e.g. $NAME -c "" option1 option2). Defaults to "$DEFAULT_OPTION_COUNT_FORMAT_DECODED".
+    -h, --help: Display this help text.
 Error Level of $ERROR_BAD_CHOICE if user input invalid.
 __EOF__
-#    -e | --error_on_fail: Set the error level on failure.
+#    -e, --error_on_fail: Set the error level on failure.
+}
+show_version() {
+	cat << __EOF__
+$0 1.0.0
+
+Copyright (C) 2024 Justin Morris
+__EOF__
 }
 # #endregion show_help
 
@@ -68,10 +75,10 @@ option_count_format=$DEFAULT_OPTION_COUNT_FORMAT_DECODED
 LABELS=()
 VALUES=()
 not_zero_based() {
-    if $($zero_based); then
-        echo $FALSE
+    if eval "$zero_based"; then
+        echo 'false'
     else
-        echo $TRUE
+        echo 'true'
     fi
 }
 
@@ -79,70 +86,75 @@ replace_count() {
     echo "$option_count_format" | sed -E "s/~~#~~/${#VALUES[@]}/g"
 }
 
-decode() {
-	echo $($MY_DIR/decode $1 --$decode_method)
+_decode() {
+	# echo $($MY_DIR/decode $1 --$decode_method)
+	decode "$1" --"$decode_method"
 }
 
 #########################region GET OPTIONS#########################
 useLabels=$FALSE
 useValues=$TRUE
-while [ "$1" != "" ]; do
+while [ -n "$1" ]; do
     #If it's an option
-    if [[ $1 =~ ^\- ]]; then
+    if [[ "$1" =~ ^\- ]]; then
         useLabels=$FALSE
         if [[ ${#VALUES[@]} -gt 0 ]]; then
             useValues=$FALSE
         fi
     fi
-    case $1 in
+    case "$1" in
         # #region Flags
-		-l | --labels )
+		( -l | --labels )
 		    useLabels=$TRUE
 		    ;;
-		-t | --passthrough )
+		( -t | --passthrough )
 		    passthrough=$TRUE
 		    ;;
-		-z | --zero_based )
+		( -z | --zero_based )
 		    zero_based=$TRUE
 		    ;;
-		-r | --return_decoded )
+		( -r | --return_decoded )
 		    decode_value_before_return=$TRUE
 		    ;;
 		# #endregion Flags
         # #region Values
-		-d | --decode | --decode_method )
+		( -d | --decode | --decode_method )
 		    shift
 		    decode_method=$1
 		    ;;
-		-p | --prompt )
+		( -p | --prompt )
 		    shift
 		    prompt=$1
 		    ;;
-		-c | --option_count_format )
+		( -c | --option_count_format )
 		    shift
 		    option_count_format=$1
 		    ;;
-		-b | --blank_label )
+		( -b | --blank_label )
 		    shift
 		    blank_label=$1
 		    ;;
-		--replace_blank_label_with )
+		( --replace_blank_label_with )
 		    shift
 		    replace_blank_label_with=$1
 		    ;;
-		-f | --return_on_fail | --return_on_failure )
+		( -f | --return_on_fail | --return_on_failure )
 		    shift;
 		    return_on_failure=$1
 		    ;;
 		# #endregion Values
-        -h | --help )
+        ( -h | --help )
             show_help
             exit
             ;;
-        * )
-            if $($useLabels); then
+        ( -v | --version )
+            show_version
+            exit
+            ;;
+        ( * )
+            if eval "$useLabels"; then
                 LABELS[${#LABELS[@]}]=$1
-            elif $($useValues); then
+            elif eval "$useValues"; then
                 VALUES[${#VALUES[@]}]=$1
             else
                 show_help
@@ -152,8 +164,8 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
-if [[ !( "$prompt" = "" ) && !( "$prompt" = "$DEFAULT_PROMPT" ) ]]; then
-	prompt="$(decode $prompt)"
+if [ -n "$prompt" ] && [[ "$prompt" != "$DEFAULT_PROMPT" ]]; then
+	prompt="$(_decode "$prompt")"
 fi
 #########################endregion GET OPTIONS#########################
 if [[ ${#VALUES[@]} = 0 ]]; then
@@ -169,7 +181,7 @@ prompt_prefix=""
 count=0
 valid_options=()
 valid_labels=()
-for label in ${VALUES[@]}; do
+for label in "${VALUES[@]}"; do
     # readonly -a VALUES[$count]
     if [ "$prompt_prefix" != "" ]; then
         prompt_prefix="$prompt_prefix
@@ -180,20 +192,20 @@ for label in ${VALUES[@]}; do
     elif [[ $(( ${#LABELS[@]} > 0 )) && $(( ${#LABELS[@]} > $count )) && $blank_label == ${LABELS[count]} && $replace_blank_label_with != "" ]]; then
         label=$replace_blank_label_with
     fi
-    if $($(not_zero_based)); then
-        let count+=1
+    if ! eval "$zero_based"; then
+        ((count+=1))
     fi
     valid_options[${#valid_options[@]}]=$count
-    valid_labels[${#valid_labels[@]}]=$(decode $label)
-    prompt_prefix="$prompt_prefix$count: $(decode $label)"
-    if $($zero_based); then
-    	let count+=1
+    valid_labels[${#valid_labels[@]}]=$(_decode "$label")
+    prompt_prefix="$prompt_prefix$count: $(_decode "$label")"
+    if eval "$zero_based"; then
+    	((count+=1))
     fi
 done
 # readonly count prompt
-if [[ !( "$option_count_format" = "" ) ]]; then
-	if [[ !( "$option_count_format" = "$DEFAULT_OPTION_COUNT_FORMAT_DECODED" ) ]]; then
-		prompt_prefix="$(decode $(replace_count))
+if [[ ! ( "$option_count_format" = "" ) ]]; then
+	if [[ ! ( "$option_count_format" = "$DEFAULT_OPTION_COUNT_FORMAT_DECODED" ) ]]; then
+		prompt_prefix="$(_decode $(replace_count))
 $prompt_prefix"
 	else
 		prompt_prefix="$(replace_count)
@@ -208,39 +220,39 @@ $prompt" CHOICE
 #################################################
 # Parse Results
 #################################################
-if $($passthrough); then
-	echo $CHOICE
+if eval "$passthrough"; then
+	echo "$CHOICE"
 	exit
 fi
 count=0
-for o in ${valid_options[@]}; do
+for o in "${valid_options[@]}"; do
     if [ "$CHOICE" = "$o" ]; then
         SELECTION=${VALUES[count]}
-        if $($decode_value_before_return); then
-            SELECTION=$(decode $SELECTION)
+        if eval "$decode_value_before_return"; then
+            SELECTION=$(_decode "$SELECTION")
         fi
         #read -p "Value selected is $SELECTION" whatever
-        echo $SELECTION
+        echo "$SELECTION"
         exit
     fi
-    let count+=1
+    ((count+=1))
 done
 count=0
-for o in ${valid_labels[@]}; do
+for o in "${valid_labels[@]}"; do
     if [ "$CHOICE" = "$o" ]; then
         SELECTION=${VALUES[count]}
-        if $($decode_value_before_return); then
-            SELECTION=$(decode $SELECTION)
+        if eval "$decode_value_before_return"; then
+            SELECTION=$(_decode "$SELECTION")
         fi
         #read -p "Value selected is $SELECTION" whatever
-        echo $SELECTION
+        echo "$SELECTION"
         exit
     fi
-    let count+=1
+    ((count+=1))
 done
-if [ "$return_on_failure" = "$TRUE" ]; then
-    echo $CHOICE
+if eval "$return_on_failure"; then
+    echo "$CHOICE"
 else
-    echo $return_on_failure
+    echo "$return_on_failure"
 fi
 exit $ERROR_BAD_CHOICE

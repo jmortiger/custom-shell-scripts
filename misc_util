@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 
 # cspell:disable
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
 readonly MAX_INT=$(( 2**63 - 1 ))
 declare -r -i MAX_READ_INT=$(( 2**31 - 1))
 # https://unix.stackexchange.com/questions/592159/how-to-read-file-in-bash-using-a-fixed-number-of-character#comment1104513_592159

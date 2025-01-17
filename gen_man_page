@@ -11,7 +11,7 @@ readonly -a EXCLUDED_EXTENSIONS=(
 )
 show_help() {
 	local -r ORIG_IFS="$IFS"
-	IFS=",$IFS"
+	IFS=","; extensions="${EXCLUDED_EXTENSIONS[*]}"; IFS="$ORIG_IFS"
 	cat << __EOF__
 Generates and compresses a man file in the local directory for the given command. Depends on help2man.
 
@@ -21,9 +21,8 @@ Usage:	$0 COMMAND [SECTION]
 	or:	$0 --version
 
 Options:
-	--all: runs this command for all files in the current directory that don't start with a . and don't end with an excluded extension. These include ${EXCLUDED_EXTENSIONS[*]}.
+	--all: runs this command for all files in the current directory that don't start with a . and don't end with an excluded extension. These include ${extensions//,/', '}.
 __EOF__
-	IFS="$ORIG_IFS"
 }
 show_version() {
 	cat << __EOF__
@@ -39,14 +38,25 @@ elif [[ "$1" == "--version" ]]; then
 	show_version
 	exit
 elif [[ "$1" == "--all" ]]; then
+	((all=0, made=0, failed=0, skipped=0))
 	ORIG_IFS="$IFS"
 	IFS="|"; extensions="${EXCLUDED_EXTENSIONS[*]}"; IFS="$ORIG_IFS"
-	# find . -maxdepth 1 -not -type d | grep -E -e "${extensions//\|/'$|'}" -v - | while read -r line; do
-	find . -maxdepth 1 -not -type d | grep -E -e "^\./\.|(${extensions//\|/'$|'})" -v - | while read -r line; do
-		if eval "$line --help" && eval "$line --version"; then
-			help2man -N --section="${2:-1}" "$1" | gzip - >| "./man/man${2:-1}/$1.1.gz"
+	echo -n "All: $all, Successful: $made, Failed: $failed, Skipped: $skipped"
+	find . -maxdepth 1 -not -type d | grep -E -e "^\./\.|(($extensions)$)" -v - | while read -r line; do
+		((all++))
+		if eval "${line:2} --help" &>/dev/null && eval "${line:2} --version" &>/dev/null; then
+			if help2man -N "${line:2}" | gzip - >| "./man/man1/${line:2}.1.gz"; then
+				((made++))
+			else
+				((failed++))
+			fi
+		else
+			((skipped++))
 		fi
+		echo -n $'\r'; tput el
+		echo -n "All: $all, Successful: $made, Failed: $failed, Skipped: $skipped"
 	done
+	echo -n $'\n'
 	exit
 fi
 help2man -N --section="${2:-1}" "$1" | gzip - >| "./man/man${2:-1}/$1.1.gz"

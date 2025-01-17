@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
 readonly -a LINE_COMMENTS=('#' '//')
 readonly -A MULTILINE_COMMENTS=([/*]='*/')
 readonly ORIG_IFS="$IFS"

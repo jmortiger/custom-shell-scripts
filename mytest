@@ -2,6 +2,12 @@
 
 # term_size2 - Dynamically display terminal window size
 
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
+
 readonly ORIG_IFS=$IFS
 current_count=0
 
