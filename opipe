@@ -56,6 +56,7 @@ unset t_trail i
 # #endregion Determine output terminator/status line precursor (cud1 compatibility)
 # #region Check if needed termcap's supported
 for ((i = 0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
+	# if ! [[ "$TERM_CAPS_AVAILABLE" =~ ${TERM_CAPS_REQUIRED[$i]}= ]]; then
 	# shellcheck disable=SC2076
 	if ! [[ "$TERM_CAPS_AVAILABLE" =~ "${TERM_CAPS_REQUIRED[$i]}=" ]]; then
 		err_msg="Missing terminal capability ${TERM_CAPS_REQUIRED[$i]}; executing command w/o status checking"
@@ -78,12 +79,12 @@ declare colored_cumulative=''
 # To account for end of line jank, jumps to the last character's position and rewrites it in a block with the new output (as this ensures proper word wrapping & window resizing).
 function display_text() {
 	local -r l_status_text="$1"
-	# local -r whole_text="$2"
-	local delta="$3"
-	local -r deltaRaw="$delta"
-	local -r prior_whole_text="$4"
+		# local -r whole_text="$2"
+		local delta="$3"
+		local -r deltaRaw="$delta"
+		local -r prior_whole_text="$4"
 	# The last printed, non-vertical-whitespace character printed by `display_text`.
-	local last_char="${prior_whole_text: -1}" # local last_char="${last_delta: -1}"
+	local last_char="${prior_whole_text: -1}"
 	if [[ "$last_char" =~ [$V_CTRL_STUB] ]]; then local -r last_char=''; else local -r last_char; fi
 	# If there's a prior character, add it to the delta to redraw it.
 	if [[ -n "${last_char+x}" ]]; then local -r delta="$last_char$delta"; fi
@@ -156,19 +157,20 @@ declare -i i_complete=0
 	declare -i i_error=0
 	declare -i i_warning=0
 	declare -i i_correction=0
-# #1: text
+# Update the `i_...` variables & the print instructions in `print_colors` & `print_indices`
+	# based on the new text.
+	# #1: text
 	# #2 (optional): - to subtract, anything else (other than an unsigned integer) to add
 	# #3 (optional; -[[:digit:]]+): the index to start processing on; 0 if omitted
 	# ...: an index to skip + either the index to skip to (inclusive) or nothing to skip to the end.
-function modify_values() {
+function parse_status() {
 	# P1
 	local -r appended="$1"; shift
 	# #region P2
 	local operand="+"
 	case "$1" in
-		-) 	local -r operand="-";;
-		\+)	local -r operand="+";;
-		*)	local -r operand;;
+		(-) 	local -r operand="-";;
+		(\+|*)	local -r operand="+";;
 	esac
 	while [[ -n "${1+x}" ]] && [[ "$1" =~ -?[^[:digit:]] ]]; do shift; done
 	# #endregion P2
@@ -188,10 +190,10 @@ function modify_values() {
 		unset print_indices
 		declare -g -a print_indices=()
 	fi
-	for (( i=l_offset; i < ${#appended}; i+=1 )); do
+	for (( i = l_offset; i < ${#appended}; i += 1 )); do
 		if [[ -n "${1+x}" ]] && (($1 <= i)); then
 			add_instruction $curr_color $DEFAULT_COLOR_FOREGROUND $i
-			((curr_color=DEFAULT_COLOR_FOREGROUND))
+			((curr_color = DEFAULT_COLOR_FOREGROUND))
 			if [[ -n "${2+x}" ]]; then
 				((i += i < $2 ? $2 - i : 0))
 				shift 2
@@ -202,9 +204,9 @@ function modify_values() {
 		fi
 		if [[ "${appended:$i}" =~ ^$NL_PATTERN*([$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS+$NON_NL_PATTERN*)($NL_PATTERN*) ]]; then
 			add_instruction $curr_color $DEFAULT_COLOR_FOREGROUND $i
-			((curr_color=DEFAULT_COLOR_FOREGROUND))
+			((curr_color = DEFAULT_COLOR_FOREGROUND))
 			if ((${#BASH_REMATCH[2]} > 0)); then
-				((i+=${#BASH_REMATCH[0]} - 1))
+				((i += ${#BASH_REMATCH[0]} - 1))
 				continue
 			else
 				break
@@ -242,7 +244,7 @@ function gen_status_text() {
 	if ((i_complete > 0)); then
 		test_results+=", $(gen_item $i_successful .), $(gen_item $i_failure F), $(gen_item $i_error E), $(gen_item $i_warning W), $(gen_item $i_correction C)"
 		results+="; REMAINING: $(format_seconds $((remaining * elapsed / i_complete)))"
-		results+="; AVG: $(format_seconds "$(decimal_calc $elapsed $i_complete 1000)"))"
+		results+="; AVG: $(format_seconds "$(decimal_calc $elapsed $i_complete 1000)")/run / $(decimal_calc $i_complete $elapsed 1000) runs/s"
 	fi
 	results+=$'\n'
 	results+="$test_results"
@@ -294,7 +296,7 @@ function read_input_stream() {
 		read -s -r -t "$TIMEOUT_INTERVAL" -N $MAX_READ_INT -u 3 line
 	fi
 }
-function process_status() {
+function process_delta() {
 	if eval "$extglob_off"; then shopt -s extglob; fi
 	if eval "$globasciiranges_off"; then shopt -s globasciiranges; fi
 	if eval "$patsub_replacement_off"; then shopt -s patsub_replacement; fi
@@ -302,15 +304,15 @@ function process_status() {
 	eval "$DO_LOG" && (echo "$results_string" >> "$LOGFILE")
 	if eval $ONE_CHAR_INPUT; then
 		if [[ "$results_string" =~ $STATUS_LINE_PATTERN ]]; then
-			modify_values "$line" '+'
+			parse_status "$line" '+'
 		elif [[ "${results_string:0:-1}" =~ $STATUS_LINE_PATTERN ]] && [ "${results_string: -1:1}" != $'\n' ]; then
-			modify_values "${BASH_REMATCH[2]}" '-'
+			parse_status "${BASH_REMATCH[2]}" '-'
 		fi
 	else
 		if [[ "$line" =~ $SL_LEADING_NOT_PATTERN ]] && [[ "$t_prior" =~ $SL_TRAILING_PATTERN ]]; then
-			modify_values "${BASH_REMATCH[2]}" '-' 
+			parse_status "${BASH_REMATCH[2]}" '-' 
 		fi
-		modify_values "$line"
+		parse_status "$line"
 	fi
 	if eval "$extglob_off"; then shopt -u extglob; fi
 	if eval "$globasciiranges_off"; then shopt -u globasciiranges; fi
@@ -334,7 +336,7 @@ while eval $is_active; do
 		t_prior="$cumulative"
 		cumulative+="$line"
 		if ((start_int != 0)); then
-			process_status
+			process_delta
 		elif [[ $cumulative =~ $START_PATTERN ]]; then
 			eval $ONE_CHAR_INPUT; ((start_int = $? ? ${#cumulative} : ${#BASH_REMATCH[1]}))
 			declare -i -r start_int
@@ -342,7 +344,7 @@ while eval $is_active; do
 			declare -ri TIME_TESTS_BEGAN
 			declare -r TIME_TESTS_BEGAN_STRING="START DELAY: $(date -u -d "@$t__t" +"$(format_seconds $t__t)"); "
 			unset t__t
-			if ! eval $ONE_CHAR_INPUT; then process_status; fi
+			if ! eval $ONE_CHAR_INPUT; then process_delta; fi
 		fi
 		display_text "$status_text" "$cumulative" "$line" "$t_prior"
 	fi

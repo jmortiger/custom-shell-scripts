@@ -19,6 +19,7 @@ OPipe:
 			- Put main line on hold
 			- Update status line if necessary
 	- Read and write statistics to a file (e.g. Avg. Start Time, Avg. Run Time, etc.)
+	- If fixing a parsing mistake in the prior update, support redrawing w/ the correct color
 
 Profile Rails Tests:
 	- Analyze the files in the given directory tree to determine how many tests there are.
