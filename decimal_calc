@@ -84,6 +84,19 @@ declare +i l_intermediate
 if ((pre_count > 1 || pre != 0)); then l_intermediate="${l_intermediate:$pre_count}"; fi
 while [[ "${l_intermediate: -1}" == '0' ]] && ((${#l_intermediate} > 1)); do l_intermediate="${l_intermediate:0:-1}"; done
 if (( ${#l_intermediate} >= decimalDigits )); then
+	# if [[ "$l_intermediate" =~ ^(0+)(.*)(.)$ ]]; then
+	# 	((t_fractional="${BASH_REMATCH[2]}"))
+	# 	if (( ${l_intermediate: -1} < 5 )); then
+	# 		echo -n "$pre$separator${l_intermediate:0:$((decimalDigits - 1))}"
+	# 	else
+	# 		tt="$t_fractional"
+	# 		((t_fractional+=10))
+	# 		tp="$t_fractional"
+	# 		if ((${#tp} > ${#tt})); then
+	# 			echo -n "$pre$separator${l_intermediate:0:$decimalDigits}"
+	# 		fi
+	# 	fi
+	# fi
 	declare penultimate="${l_intermediate: -2:1}" last="${l_intermediate: -1:1}"; l_intermediate="${l_intermediate:0:-2}" # ((l_intermediate/=100))
 	if ((last<5)); then
 		echo -n "$pre$separator$l_intermediate$penultimate"
