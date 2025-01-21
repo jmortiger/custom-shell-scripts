@@ -1,19 +1,26 @@
 #!/usr/bin/env bash
 
+declare -ri DEFAULT_COARSENESS=100
+declare -r DEFAULT_DECIMAL='.'
 show_help() {
 	cat << __EOF__
 Print the result of the given division operation with the specified precision, trimming trailing zeros and rounding excess.
 
-Usage:	$0 NUMERATOR DENOMINATOR [MULTIPLIER SEPARATOR]
-	or:	$0 [-c COARSENESS] [-d decimal] NUMERATOR DENOMINATOR
+Usage:	$0 NUMERATOR DENOMINATOR [COARSENESS SEPARATOR]
+	or:	$0 [-c COARSENESS] [-d SEPARATOR] NUMERATOR DENOMINATOR
 	or:	$0 --help
 	or:	$0 --version
 
+Options:
+	-c, --coarseness COARSENESS: precision. Defaults to $DEFAULT_COARSENESS.
+	-d, --decimal SEPARATOR: the fractional separator. Defaults to $DEFAULT_DECIMAL
+	-h, --help: Shows this help text.
+	-v, --version: Shows version info.
 __EOF__
 }
 show_version() {
 	cat << __EOF__
-$0 1.0.0
+$0 2.0.0
 
 Copyright (C) 2025 Justin Morris
 __EOF__
@@ -67,63 +74,60 @@ if ((denominator==0)); then
 	echo -n "Divide by zero error: $numerator / $denominator" 1>&2
 	exit 1
 fi
-declare -i pre=numerator/denominator
+declare -i whole=numerator/denominator
 if (( numerator % denominator == 0 )); then
-	echo -n "$pre"
+	echo -n "$whole"
 	exit
 fi
-declare -r coarseInput="${coarseInput:-100}"
+declare -r coarseInput="${coarseInput:-$DEFAULT_COARSENESS}"
 declare -ir decimalDigits="${#coarseInput}"
 declare -ir coarseness="$((10 ** decimalDigits))"
 if ((coarseness==1)); then
-	echo -n "$pre"
+	echo -n "$whole"
 	exit
 fi
-declare -i l_intermediate=0; ((l_intermediate=numerator * coarseness / denominator, pre_count=${#pre})); 
+declare -i l_intermediate=0; ((l_intermediate=numerator * coarseness / denominator, whole_count=${#whole})); 
 declare +i l_intermediate
-if ((pre_count > 1 || pre != 0)); then l_intermediate="${l_intermediate:$pre_count}"; fi
+if ((whole_count > 1 || whole != 0)); then l_intermediate="${l_intermediate:$whole_count}"; fi
 while [[ "${l_intermediate: -1}" == '0' ]] && ((${#l_intermediate} > 1)); do l_intermediate="${l_intermediate:0:-1}"; done
 if (( ${#l_intermediate} >= decimalDigits )); then
-	# if [[ "$l_intermediate" =~ ^(0+)(.*)(.)$ ]]; then
-	# 	((t_fractional="${BASH_REMATCH[2]}"))
-	# 	if (( ${l_intermediate: -1} < 5 )); then
-	# 		echo -n "$pre$separator${l_intermediate:0:$((decimalDigits - 1))}"
-	# 	else
-	# 		tt="$t_fractional"
-	# 		((t_fractional+=10))
-	# 		tp="$t_fractional"
-	# 		if ((${#tp} > ${#tt})); then
-	# 			echo -n "$pre$separator${l_intermediate:0:$decimalDigits}"
-	# 		fi
-	# 	fi
-	# fi
-	declare penultimate="${l_intermediate: -2:1}" last="${l_intermediate: -1:1}"; l_intermediate="${l_intermediate:0:-2}" # ((l_intermediate/=100))
+	declare penultimate="${l_intermediate: -2:1}" last="${l_intermediate: -1:1}"; l_intermediate="${l_intermediate:0:-2}"
 	if ((last<5)); then
-		echo -n "$pre$separator$l_intermediate$penultimate"
+		while [[ "$penultimate" == '0' ]] && ((${#l_intermediate} > 0)); do 
+			penultimate="${l_intermediate: -1}"
+			l_intermediate="${l_intermediate:0:-1}"
+		done
+		if [ "$penultimate" = '0' ]; then
+			echo -n "$whole"
+		else
+			echo -n "$whole$separator$l_intermediate$penultimate"
+		fi
 	else
 		while ((penultimate == 9 && ${#l_intermediate} > 0)); do
 			penultimate="${l_intermediate: -1}"
 			l_intermediate="${l_intermediate:0:-1}"
 		done
-		if ((${#l_intermediate} > 0 || penultimate < 9)); then
-			echo -n "$pre$separator$l_intermediate$((penultimate+1))"
+		if ((penultimate < 9)); then
+			echo -n "$whole$separator$l_intermediate$((penultimate+1))"
+		elif ((${#l_intermediate} > 0)); then
+			echo -n "$whole$separator$l_intermediate"
 		else
-			((i=${#pre}-1))
-			l_intermediate="${pre:$i:1}"
-			while ((i >= 0 && ${pre:$i:1} == 9 && ${#l_intermediate} > 0)); do
-				l_intermediate="${pre:$i:1}"
-				pre="${pre:0:$i}0${pre:$((i+1))}"
+			((i=${#whole}-1))
+			l_intermediate="${whole:$i:1}"
+			while ((i >= 0 && ${whole:$i:1} == 9 && ${#l_intermediate} > 0)); do
+				l_intermediate="${whole:$i:1}"
+				whole="${whole:0:$i}0${whole:$((i+1))}"
 				((i--))
 			done
-			if ((i < 0 && ${pre:0:1} == 9)); then
-				echo -n "1$pre"
+			if ((i < 0 && ${whole:0:1} == 9)); then
+				echo -n "1$whole"
 			else
-				echo -n "${pre:0:$i}$((${pre:$i:1} + 1))${pre:$((i+1))}"
+				echo -n "${whole:0:$i}$((${whole:$i:1} + 1))${whole:$((i+1))}"
 			fi
 		fi
 	fi
 else
-	echo -n "$pre$separator${l_intermediate:0:$decimalDigits}"
+	echo -n "$whole$separator${l_intermediate:0:$decimalDigits}"
 fi
 
 exit
