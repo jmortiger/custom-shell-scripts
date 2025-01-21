@@ -32,6 +32,8 @@ Output Modifiers:
 
 	-h, --help: Display this help text.
 
+	-v, --version: Display version info.
+
 	-r, --rows: get the total number of rows
 
 	-c, --col_at INDEX: Get the # of columns on the specified row INDEX (or, if '_', the last index). Negative indices are subtracted from length (e.g. -1 = length - 1). By default, turns off appending control characters (See '--no_trailing_control').
@@ -85,8 +87,6 @@ __EOF__
 
 readonly ORIG_IFS=$IFS
 # #region PARAMS
-allow_continue='true'
-shopt -s 'extglob'
 # readonly extglob_off=$( if [[ $(shopt extglob) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
 # if eval $extglob_off; then; shopt -s 'extglob'; fi
 declare -i TERM_COLS=$(tput cols) TERM_ROWS=$(tput lines)
@@ -99,6 +99,8 @@ declare flagEditMode='false'
 # declare flagDebug='false'
 declare -i p_debugLevel=0
 declare flagMaxCharMode='true'
+shopt -s 'extglob'
+allow_continue='true'
 # while (( $# > 1 )) && eval $allow_continue; do
 # while eval $allow_continue && (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]]; do
 while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_continue; do
