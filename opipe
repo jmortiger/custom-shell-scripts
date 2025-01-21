@@ -39,7 +39,7 @@ declare -r STATUS_MODE_OUT='rmso'
 declare -ir DEFAULT_COLOR_FOREGROUND=7
 # The # of empty lines between the end of the output and the status line.
 declare -ir DEFAULT_STATUS_SPACING=2
-declare -ri TEST_COUNT=1474
+declare -ri TEST_COUNT=1478
 declare -r TIMEOUT_INTERVAL='.3'
 # The time in seconds after which an update will be forced.
 declare -ir FORCE_REFRESH_INTERVAL=5
@@ -268,7 +268,7 @@ function gen_status_text() {
 	local test_results="Completed: $i_complete/$TEST_COUNT ($((i_complete * 100 / TEST_COUNT))%; $remaining left)"
 	if ((i_complete > 0)); then
 		test_results+=", $(gen_item $i_successful .), $(gen_item $i_failure F), $(gen_item $i_error E), $(gen_item $i_warning W), $(gen_item $i_correction C)"
-		results+="; REMAINING: $(format_seconds $((remaining * elapsed / i_complete)))"
+		results+="; REMAINING: $(format_seconds "$(decimal_calc $((remaining * elapsed)) $i_complete 1000)")"
 		results+="; AVG: $(format_seconds "$(decimal_calc $elapsed $i_complete 1000)")/run / $(decimal_calc $i_complete $elapsed 1000) runs/s"
 	fi
 	results+=$'\n'
