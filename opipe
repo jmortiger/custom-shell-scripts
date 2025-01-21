@@ -400,10 +400,10 @@ exec 3>&-
 output="Exitcode: $exitcode
 Iterations: $c_iterations
 start_int: $start_int
-Cumulative length: ${#cumulative}
-Cumulative Output:
-$colored_cumulative"
+Cumulative length: ${#cumulative}"
 if eval "$DO_LOG"; then output+="
+Cumulative Output:
+$colored_cumulative
 Raw output:
 $cumulative
 "; fi

@@ -37,6 +37,7 @@ Print decimal calculations:
 	✔ Customizable precision @done(25-01-12 17:37)
 	✔ Trim trailing zeros @done(25-01-15 15:36)
 	✔ Carrying the round up @done(25-01-15 16:29)
+	✔ Add test cases @done(25-01-21 13:58)
 	- Customizable formatting
 		- trim trailing zeros
 		- pad leading/trailing zeros
