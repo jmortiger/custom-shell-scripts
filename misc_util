@@ -57,7 +57,30 @@ readonly SIGSYS=31
 readonly SIGUNUSED=31
 # cspell:enable
 # #endregion ########## SIGNALS ##########
-
+##region################### TPUT COLORS ###################
+declare -rA TPUT_COLOR=(
+	[BLACK]=0
+	[RED]=1
+	[GREEN]=2
+	[YELLOW]=3
+	[BLUE]=4
+	[MAGENTA]=5
+	[CYAN]=6
+	[WHITE]=7
+	[NOT_USED]=8
+	[RESET_TO_DEFAULT_COLOR]=9
+)
+declare -ri TPUT_COLOR_BLACK=0
+declare -ri TPUT_COLOR_RED=1
+declare -ri TPUT_COLOR_GREEN=2
+declare -ri TPUT_COLOR_YELLOW=3
+declare -ri TPUT_COLOR_BLUE=4
+declare -ri TPUT_COLOR_MAGENTA=5
+declare -ri TPUT_COLOR_CYAN=6
+declare -ri TPUT_COLOR_WHITE=7
+declare -ri TPUT_COLOR_NOT_USED=8
+declare -ri TPUT_COLOR_RESET_TO_DEFAULT_COLOR=9
+##endregion################ TPUT COLORS ###################
 #########################region GET OPTIONS#########################
 # #region ########## METHOD 1 ##########
 useLabels='false'
