@@ -9,7 +9,7 @@ else
 	MY_DIR="Failed to get dir"
 fi
 # echo "$MY_DIR"
-declare -r DEFAULT_TEST_CASES_DIRECTORY="$MY_DIR/"
+declare -r DEFAULT_TEST_CASES_DIRECTORY="$MY_DIR/test/"
 declare -r DEFAULT_TEST_CASES_SUFFIX="_test_cases"
 declare -r DEFAULT_TEST_CASES_EXTENSION=".txt"
 show_help() {
