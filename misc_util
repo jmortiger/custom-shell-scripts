@@ -8,6 +8,34 @@ elif [ "$1" = '--version' ]; then
 fi
 # #endregion ########## DON'T GEN DOCUMENTATION ##########
 
+##region########################################### GET PATH, DIR, & NAME ###########################################
+# declare -r MY_PATH="$0"
+readonly MY_PATH=$(realpath "$0")
+MY_DIR=''
+MY_NAME=''
+if [[ "$MY_PATH" =~ ^(.*)/([^/]+)$ ]]; then
+	readonly MY_DIR="${BASH_REMATCH[1]}"
+	readonly MY_NAME="${BASH_REMATCH[2]}"
+else
+	readonly MY_DIR="Failed to get dir"
+	readonly MY_NAME="$0"
+fi
+##endregion######################################## GET PATH, DIR, & NAME ###########################################
+
+##region################################# EXIT WITH ERROR AND LINE #################################
+readonly MATCH_LINE='^[[:blank:]]*exit_error .*?'
+exit_error() {
+	line=$(grep -m 1 -n -E -e "$MATCH_LINE($1)" "$MY_PATH")
+	if [[ "$line" =~ ^([[:digit:]]+) ]]; then
+		line="${BASH_REMATCH[1]}: "
+	else
+		line=''
+	fi
+	echo "$MY_NAME: $line$*" 1>&2
+	exit 1
+}
+##endregion############################## EXIT WITH ERROR AND LINE #################################
+
 readonly MAX_INT=$(( 2**63 - 1 ))
 declare -r -i MAX_READ_INT=$(( 2**31 - 1))
 # https://unix.stackexchange.com/questions/592159/how-to-read-file-in-bash-using-a-fixed-number-of-character#comment1104513_592159
