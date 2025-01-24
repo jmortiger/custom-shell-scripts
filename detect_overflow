@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
+show_help() {
+	cat << __EOF__
+Detect integer overflow in math operations.
+
+Usage:	$0 LHS OPERATOR RHS
+	or:	$0 --help
+	or:	$0 --version
+
+Options:
+	
+__EOF__
+}
+show_version() {
+	cat << __EOF__
+$0 1.0.0
+
+Copyright (C) 2025 Justin Morris
+__EOF__
+}
+
+declare -i lhs=0
+declare -i rhs=0
+declare operator=''
+shopt -s 'extglob'
+allowContinue='true'
+declare -n opt1=lhs opt2=operator opt3=rhs
+while eval "$allowContinue" && (( $# > 0 )); do
+	case "$1" in
+		(-h | --help)
+			show_help
+			exit
+			;;
+		(-v | --version)
+			show_version
+			exit
+			;;
+		(*)
+			if [[ -n "${opt1+x}" ]]; then
+				if [[ -n "${opt2+x}" ]]; then
+					if [[ -n "${opt3+x}" ]]; then
+						exit 1
+					elif [[ "$1" =~ ^-?[[:digit:]]+$ ]]; then
+						opt3="$1"
+						allowContinue='false'
+					else
+						exit 1
+					fi
+				else
+					opt2="$1"
+				fi
+			elif [[ "$1" =~ ^-?[[:digit:]]+$ ]]; then
+				opt1="$1"
+			else
+				exit 1
+			fi
+			shift
+			# allowContinue='false'
+			;;
+	esac
+done
+
+same_sign() {
+	local -i root=0
+	for param in "$@"; do
+		if (( param != 0 )); then
+			if ((param < 0 && root > 0)) || ((param > 0 && root < 0)); then
+				false
+				return $?
+			fi
+			((root=param))
+		fi
+	done
+	true
+	return $?
+}
+is_positive() {
+	for param in "$@"; do
+		if ((param < 0)); then
+			false
+			return $?
+		fi
+	done
+	true
+	return $?
+}
+is_negative() {
+	for param in "$@"; do
+		if ((param > 0)); then
+			false
+			return $?
+		fi
+	done
+	true
+	return $?
+}
+
+declare -r lhs operator rhs
+
+if ((lhs < 0))
+
+if ! eval is_negative "$numerator" "$l_intermediate" && ! eval is_positive "$numerator" "$l_intermediate"; then
+	exit_error "OVERFLOW ($whole $l_intermediate)"
+fi
+((l_intermediate /= denominator)); 
+# if eval is_negative "$numerator" "$denominator" "$l_intermediate"; then
+#	exit_error "OVERFLOW ($whole $l_intermediate)"
+# elif ! eval is_positive "$numerator" "$denominator" "$l_intermediate"; then
+# 	if ! eval is_positive "$numerator" "$denominator" || ! eval is_negative "$numerator" "$denominator"; then
+#	exit_error "OVERFLOW ($whole $l_intermediate)"
+# 	fi
+# fi
