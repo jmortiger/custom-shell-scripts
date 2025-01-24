@@ -78,7 +78,7 @@ while [[ -n "${1+x}" ]]; do
 	esac
 done
 
-echo "testCommand: $testCommand testFile: $testFile testPath: $testPath"
+# echo "testCommand: $testCommand testFile: $testFile testPath: $testPath"
 if (( ${#testFile} == 0 )); then
 	declare -r testFile="$testCommand"
 fi
@@ -118,9 +118,11 @@ else
 		exit 1
 	fi
 fi
+# echo "testCommand: $testCommand testFile: $testFile testPath: $testPath"
 
 declare -r ORIG_IFS="$IFS"
 declare -A TESTS=()
+declare -a TEST_ORDER=()
 declare -A TEST_LABELS=()
 do_read() {
 	local params=''
@@ -138,6 +140,7 @@ do_read() {
 		fi
 		# if [[ "$params" =~ /$ ]]; then params="${params:0:-1}"; fi
 		# if [[ "$results" =~ /$ ]]; then results="${results:0:-1}"; fi
+		TEST_ORDER+=("$params")
 		TESTS[$params]="$results"
 		TEST_LABELS[$params]="$label"
 		label=''
@@ -150,12 +153,13 @@ do_read < "$testPath"
 IFS="$ORIG_IFS"
 succeeded='true'
 echo -n $'\n\n# Running:\n\n'
-for params in "${!TESTS[@]}"; do
+# for params in "${!TESTS[@]}"; do
+for params in "${TEST_ORDER[@]}"; do
 	# shellcheck disable=SC2086
 	output="$(decimal_calc $params)"
 	if [ "$output" != "${TESTS[$params]}" ]; then
 		echo "$(tput setaf 1)F$(tput setaf 7)"
-		echo "${TEST_LABELS[$params]}decimal_calc $params: $output != ${TESTS[$params]}" 1>&2
+		echo "${TEST_LABELS[$params]}decimal_calc $params: Result ($output) != Expected (${TESTS[$params]})" 1>&2
 		succeeded='false'
 	else
 		echo -n "$(tput setaf 2).$(tput setaf 7)"
