@@ -6,10 +6,15 @@
 # https://www.kylheku.com/cgit/basta/about/
 
 declare -ri TIME_START=$(date -u +'%-s')
-# #region CONSTANTS
-readonly ONE_CHAR_INPUT='false'
-readonly DO_LOG='false'
+##region########################################### CONSTANTS ###########################################
 readonly LOGFILE="$HOME/reposLocal/custom-shell-scripts/log.txt"
+_log() {
+	if eval "$DO_LOG"; then
+		for item in "$@"; do
+			eval "$DO_LOG" && (echo -n "$item" >> "$LOGFILE")
+		done
+	fi
+}
 # https://man7.org/linux/man-pages/man7/signal.7.html
 	# readonly SIGCHLD=17
 	# readonly SIGWINCH=28
@@ -18,49 +23,50 @@ readonly LOGFILE="$HOME/reposLocal/custom-shell-scripts/log.txt"
 	readonly SIGTERM=15
 readonly MAX_READ_INT=$(( 2**31 - 1))
 readonly DEFAULT_STATUS_TEXT='WAITING...'
-# #region Patterns
-readonly FAIL_TEXT="FAILURE"
-readonly V_CTRL_STUB=$'\n\v\f'
-readonly START_TEXT_RAILS=$'\n\n# Running:\n\n'
-readonly START_TEXT_RUBOCOP=$'Inspecting [[:digit:]]+ files\n'
-readonly START_TEXT="($START_TEXT_RAILS|$START_TEXT_RUBOCOP)"
-readonly START_PATTERN=$( if eval $ONE_CHAR_INPUT; then echo "$START_TEXT\$"; else echo "^(.*$START_TEXT)"; fi )
-readonly STATUS_CHARACTERS='.FEWC'
-readonly NL_PATTERN='[^[:print:][:blank:]]'
-readonly NON_NL_PATTERN='[[:print:][:blank:]]'
-readonly NON_NL_NOR_STATUS_CHARACTERS=$'[^\n\v\f.FEWC]'
-readonly STATUS_LINE_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"
-readonly SL_TRAILING_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"
-readonly SL_LEADING_NOT_PATTERN="^[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS"
-# #endregion Patterns
-# #region Prospective Parameters
+##region########################################### PROSPECTIVE PARAMETERS ###########################################
+readonly ONE_CHAR_INPUT='false'
+readonly DO_LOG='false'
 declare -r STATUS_MODE_IN='smso'
 declare -r STATUS_MODE_OUT='rmso'
 declare -ir DEFAULT_COLOR_FOREGROUND=7
 # The # of empty lines between the end of the output and the status line.
 declare -ir DEFAULT_STATUS_SPACING=2
-declare -ri TEST_COUNT=1478
+declare -ir ASSUMED_TEST_COUNT=1478
 declare -r TIMEOUT_INTERVAL='.3'
 # The time in seconds after which an update will be forced.
 declare -ir FORCE_REFRESH_INTERVAL=5
-# #endregion Prospective Parameters
-readonly -a TERM_CAPS_REQUIRED=('cud1' 'cuu1' 'hpa' 'el' 'ed' "$STATUS_MODE_IN" "$STATUS_MODE_OUT" 'cr')
+##endregion######################################## PROSPECTIVE PARAMETERS ###########################################
+##region########################################### PATTERNS ###########################################
+readonly FAIL_TEXT="FAILURE"
+readonly V_CTRL_STUB=$'\n\v\f'
+readonly START_TEXT_RAILS=$'\n\n# Running:\n\n'
+readonly START_TEXT_RUBOCOP=$'Inspecting ([[:digit:]]+) files\n'
+readonly START_TEXT="($START_TEXT_RAILS|$START_TEXT_RUBOCOP)"
+readonly START_PATTERN=$( if eval $ONE_CHAR_INPUT; then echo "($START_TEXT)\$"; else echo "^(.*$START_TEXT)"; fi )
+readonly STATUS_CHARACTERS='.FEWC'
+readonly NL_PATTERN='[^[:print:][:blank:]]'
+readonly NON_NL_PATTERN='[[:print:][:blank:]]'
+readonly NON_NL_NOR_STATUS_CHARACTERS=$'[^\n\v\f.FEWC]'
+readonly STATUS_LINE_PATTERN="(^|$NL_PATTERN)([$STATUS_CHARACTERS]+)$"; declare -rn SL_TRAILING_PATTERN=STATUS_LINE_PATTERN
+readonly SL_LEADING_NOT_PATTERN="^[$STATUS_CHARACTERS]*$NON_NL_NOR_STATUS_CHARACTERS"
+##endregion######################################## PATTERNS ###########################################
+readonly -a TERM_CAPS_REQUIRED=('cud1' 'cuu1' 'hpa' 'el' 'ed' "$STATUS_MODE_IN" "$STATUS_MODE_OUT" 'cr' 'civis' 'cnorm')
 readonly TERM_CAPS_AVAILABLE="$(infocmp)"
-# #endregion CONSTANTS
+##endregion######################################## CONSTANTS ###########################################
 
-# #region Check if needed termcap's supported
+##region####################### Check if needed termcap's supported #######################
 for ((i = 0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
 	# if ! [[ "$TERM_CAPS_AVAILABLE" =~ ${TERM_CAPS_REQUIRED[$i]}= ]]; then
 	# shellcheck disable=SC2076
 	if ! [[ "$TERM_CAPS_AVAILABLE" =~ "${TERM_CAPS_REQUIRED[$i]}=" ]]; then
 		err_msg="Missing terminal capability ${TERM_CAPS_REQUIRED[$i]}; executing command w/o status checking"
 		echo "$err_msg"
-		eval "$DO_LOG" && (echo "$err_msg" >> "$LOGFILE")
+		_log "$err_msg" $'\n'
 		exec "$@"
 		exit
 	fi
 done; unset i err_msg
-# #endregion Check if needed termcap's supported
+##endregion#################### Check if needed termcap's supported #######################
 
 # #region Determine output terminator/status line precursor (cud1 compatibility)
 declare t_trail=$'\r'; t_trail+="$(tput $STATUS_MODE_IN)"
@@ -74,7 +80,19 @@ readonly dt_pre_sl
 unset t_trail i
 # #endregion Determine output terminator/status line precursor (cud1 compatibility)
 
-eval "$DO_LOG" && (echo -n $'\n' >> "$LOGFILE") && (date >> "$LOGFILE")
+##region########################################### CHECK ARGS FOR TEST FILES ###########################################
+
+# The # of tests that will be executed in this run.
+declare -i TEST_COUNT=0
+for arg in "$@"; do
+	if [ -f "$arg" ] || [ -d "$arg" ]; then
+		((TEST_COUNT+=$(count_ruby_tests "$arg")))
+	# elif [[ "$arg" =~ ^(.+\.rb):([[:digit:]]+)$ ]]
+	fi
+done
+##endregion######################################## CHECK ARGS FOR TEST FILES ###########################################
+
+_log $'\n' "$(date)"
 declare colored_cumulative=''
 # display_text STATE:
 	# The last status text printed by `display_text`; used to determine how many lines to shift up in the next iteration.
@@ -265,11 +283,12 @@ function gen_status_text() {
 	local -i elapsed=0;((elapsed=TIME_TESTS_BEGAN > 0 ? $(date -u +'%-s') - TIME_TESTS_BEGAN : 0)); local -ir elapsed
 	local -ir remaining=$TEST_COUNT-$i_complete
 	local results="${TIME_TESTS_BEGAN_STRING}ELAPSED: $(format_seconds $elapsed) (${elapsed}s)"
-	local test_results="Completed: $i_complete/$TEST_COUNT ($((i_complete * 100 / TEST_COUNT))%; $remaining left)"
+	local test_results="Completed: $i_complete/$TEST_COUNT ($((TEST_COUNT == 0 ? 0 : i_complete * 100 / TEST_COUNT))%; $remaining left)"
 	if ((i_complete > 0)); then
 		test_results+=", $(gen_item $i_successful .), $(gen_item $i_failure F), $(gen_item $i_error E), $(gen_item $i_warning W), $(gen_item $i_correction C)"
 		results+="; REMAINING: $(format_seconds "$(decimal_calc $((remaining * elapsed)) $i_complete 1000)")"
-		results+="; AVG: $(format_seconds "$(decimal_calc $elapsed $i_complete 1000)")/run / $(decimal_calc $i_complete $elapsed 1000) runs/s"
+		results+="; AVG: $(format_seconds "$(decimal_calc $elapsed $i_complete 1000)")/run"
+		if ((elapsed > 0)); then results+=" / $(decimal_calc $i_complete $elapsed 1000) runs/s"; fi
 	fi
 	results+=$'\n'
 	results+="$test_results"
@@ -361,7 +380,7 @@ while eval $is_active; do
 			if [[ -z "${exitcode+x}" ]]; then wait $sub_pid && declare -ir exitcode; fi
 		fi
 	else
-		eval "$DO_LOG" && (echo "Newest input (raw): $line" >> "$LOGFILE")
+		_log "Newest input (raw): $line" $'\n'
 		((lastUpdate=currTime))
 	fi
 	if eval $is_active && [ -n "$line" ]; then
@@ -370,6 +389,13 @@ while eval $is_active; do
 		if ((start_int != 0)); then
 			process_delta
 		elif [[ $cumulative =~ $START_PATTERN ]]; then
+			if [ -n "${BASH_REMATCH[3]}" ]; then
+				declare -ri TEST_COUNT="${BASH_REMATCH[3]}"
+			elif ((TEST_COUNT != 0)); then
+				declare -ri TEST_COUNT
+			else
+				declare -ri TEST_COUNT=$ASSUMED_TEST_COUNT
+			fi
 			eval $ONE_CHAR_INPUT; ((start_int = $? ? ${#cumulative} : ${#BASH_REMATCH[1]}))
 			declare -ri start_int
 			((TIME_TESTS_BEGAN=currTime, t__t=TIME_START - TIME_TESTS_BEGAN))
@@ -397,7 +423,8 @@ done
 if [[ -z "${exitcode+x}" ]]; then wait $sub_pid && declare -ir exitcode; fi
 tput cnorm
 exec 3>&-
-output="Exitcode: $exitcode
+output="
+Exitcode: $exitcode
 Iterations: $c_iterations
 start_int: $start_int
 Cumulative length: ${#cumulative}"
@@ -408,6 +435,6 @@ Raw output:
 $cumulative
 "; fi
 echo "$output"
-eval "$DO_LOG" && (echo "$output" >> "$LOGFILE")
+_log "$output" $'\n'
 exit
 # #endregion Cleanup and exit
