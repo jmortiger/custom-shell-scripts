@@ -134,7 +134,7 @@ do_read() {
 		if (( ${#params} <= 0 && ${#results} <= 0 )); then
 			break
 		elif (( ${#params} <= 0 || ${#results} <= 0 )); then
-			label="$params"
+			label+="$params"
 			label+=$'\n'
 			continue
 		fi
