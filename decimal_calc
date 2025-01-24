@@ -1,8 +1,22 @@
 #!/usr/bin/env bash
 
-declare -r MY_NAME="$0"
+# declare -r MY_PATH="$0"
+readonly MY_PATH=$(realpath "$0")
+MY_NAME=''
+if [[ "$MY_PATH" =~ ^(.*)/([^/]+)$ ]]; then
+	readonly MY_NAME="${BASH_REMATCH[2]}"
+else
+	readonly MY_NAME="$0"
+fi
+readonly MATCH_LINE='^[[:blank:]]*exit_error .*?'
 exit_error() {
-	echo "$MY_NAME: $*" 1>&2
+	line=$(grep -m 1 -n -E -e "$MATCH_LINE($1)" "$MY_PATH")
+	if [[ "$line" =~ ^([[:digit:]]+) ]]; then
+		line="${BASH_REMATCH[1]}: "
+	else
+		line=''
+	fi
+	echo "$MY_NAME: $line$*" 1>&2
 	exit 1
 }
 declare -ri DEFAULT_COARSENESS=100
@@ -75,7 +89,7 @@ done
 
 declare -ir numerator denominator
 if ((denominator == 0)); then
-	exit_error "Divide by zero error: $numerator / $denominator"
+	exit_error 'Divide by zero error: ' "$numerator / $denominator"
 fi
 if ((numerator == 0)); then
 	echo -n '0'
@@ -111,7 +125,7 @@ fi
 declare -i whole_count=0; declare +i whole; ((whole_count=${#whole})); declare -i whole
 declare -i l_intermediate=0; ((l_intermediate=n * coarseness)); 
 if ((l_intermediate < n)); then
-	exit_error "OVERFLOW ($whole $l_intermediate) ($numerator / $denominator)"
+	exit_error 'OVERFLOW ' "($whole $l_intermediate) ($numerator / $denominator)"
 fi
 ((l_intermediate /= d)); 
 if ((l_intermediate==0)); then
@@ -126,7 +140,7 @@ if ((${#l_intermediate} == whole_count)); then
 	echo -n "$sign$whole";
 	exit
 elif ((${#l_intermediate} < whole_count)); then
-	exit_error "UNDEFINED BEHAVIOR (too small a fraction?); $numerator / $denominator"
+	exit_error 'UNDEFINED BEHAVIOR (too small a fraction?): ' "$numerator / $denominator"
 elif ((${#l_intermediate} > whole_count )); then
 	if ((${#l_intermediate} - whole_count >= decimalDigits)); then
 		((t_last=${l_intermediate: -1}))
@@ -159,4 +173,4 @@ elif ((${#l_intermediate} > whole_count )); then
 		exit
 	fi
 fi
-exit_error "Should not be able to reach this point"
+exit_error 'Should not be able to reach this point: ' "$numerator / $denominator"
