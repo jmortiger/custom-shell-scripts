@@ -43,6 +43,9 @@ done
 if [[ "$1" =~ ^([[:digit:]]+)(\.[[:digit:]]*)$ ]]; then
 	declare -ir timeInput="${BASH_REMATCH[1]}"
 	declare formatStr="S${BASH_REMATCH[2]}"
+elif [[ "$1" =~ ^(\.[[:digit:]]+)$ ]]; then
+	declare -ir timeInput=0
+	declare formatStr="S${BASH_REMATCH[1]}"
 else
 	declare -ir timeInput="$1"
 	declare formatStr="S"
