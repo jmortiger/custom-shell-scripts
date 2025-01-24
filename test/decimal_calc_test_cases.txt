@@ -24,3 +24,81 @@
 1234567899899 1000000 100000>1234567.8999
 # Still Round and carry til not 9 12345678998990/10000000=1234567.899899 12345678998990*100000/10000000=123456789989.9 100000
 45678998990 10000000 100000>4567.8999
+# With 2 negatives, Trim trailing zeros
+# With 2 negatives, Simple
+-10203040 -100 100>102030.4
+# With 2 negatives, Multiple
+-10203040000 -100000 100>102030.4
+-10203040 -1000 10>10203
+# With 2 negatives, Don't trim non-fractional component
+-10200040 -1000 10>10200
+# With 2 negatives, Don't trim too far
+-10203040 -1000 100>10203.04
+# With 2 negatives, Don't round
+-123456789 -100 100>1234567.89
+# With 2 negatives, Still Don't round
+-1234567890 -1000 100>1234567.89
+# With 2 negatives, Round up 1 time 123456789/1000=123456.789 
+-123456789 -1000 100>123456.79
+# With 2 negatives, Still Round up 1 time
+-1234567890 -10000 100>123456.79
+# With 2 negatives, Round and carry 1 time 1234567899/1000=1234567.899
+-1234567899 -1000 100>1234567.9
+# With 2 negatives, Still Round and carry 1 time
+-12345678990 -10000 100>1234567.9
+# With 2 negatives, Round and carry til not 9 1234567899899/1000000=1234567.899899
+-1234567899899 -1000000 100000>1234567.8999
+# With 2 negatives, Still Round and carry til not 9 12345678998990/10000000=1234567.899899 12345678998990*100000/10000000=123456789989.9 100000
+-45678998990 -10000000 100000>4567.8999
+# With negative denominator, Trim trailing zeros
+# With negative denominator, Simple
+10203040 -100 100>-102030.4
+# With negative denominator, Multiple
+10203040000 -100000 100>-102030.4
+10203040 -1000 10>-10203
+# With negative denominator, Don't trim non-fractional component
+10200040 -1000 10>-10200
+# With negative denominator, Don't trim too far
+10203040 -1000 100>-10203.04
+# With negative denominator, Don't round
+123456789 -100 100>-1234567.89
+# With negative denominator, Still Don't round
+1234567890 -1000 100>-1234567.89
+# With negative denominator, Round up 1 time 123456789/1000=123456.789 
+123456789 -1000 100>-123456.79
+# With negative denominator, Still Round up 1 time
+1234567890 -10000 100>-123456.79
+# With negative denominator, Round and carry 1 time 1234567899/1000=1234567.899
+1234567899 -1000 100>-1234567.9
+# With negative denominator, Still Round and carry 1 time
+12345678990 -10000 100>-1234567.9
+# With negative denominator, Round and carry til not 9 1234567899899/1000000=1234567.899899
+1234567899899 -1000000 100000>-1234567.8999
+# With negative denominator, Still Round and carry til not 9 12345678998990/10000000=1234567.899899 12345678998990*100000/10000000=123456789989.9 100000
+45678998990 -10000000 100000>-4567.8999
+# With negative numerator, Trim trailing zeros
+# With negative numerator, Simple
+-10203040 100 100>-102030.4
+# With negative numerator, Multiple
+-10203040000 100000 100>-102030.4
+-10203040 1000 10>-10203
+# With negative numerator, Don't trim non-fractional component
+-10200040 1000 10>-10200
+# With negative numerator, Don't trim too far
+-10203040 1000 100>-10203.04
+# With negative numerator, Don't round
+-123456789 100 100>-1234567.89
+# With negative numerator, Still Don't round
+-1234567890 1000 100>-1234567.89
+# With negative numerator, Round up 1 time 123456789/1000=123456.789 
+-123456789 1000 100>-123456.79
+# With negative numerator, Still Round up 1 time
+-1234567890 10000 100>-123456.79
+# With negative numerator, Round and carry 1 time 1234567899/1000=1234567.899
+-1234567899 1000 100>-1234567.9
+# With negative numerator, Still Round and carry 1 time
+-12345678990 10000 100>-1234567.9
+# With negative numerator, Round and carry til not 9 1234567899899/1000000=1234567.899899
+-1234567899899 1000000 100000>-1234567.8999
+# With negative numerator, Still Round and carry til not 9 12345678998990/10000000=1234567.899899 12345678998990*100000/10000000=123456789989.9 100000
+-45678998990 10000000 100000>-4567.8999

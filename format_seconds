@@ -14,13 +14,14 @@ __EOF__
 }
 show_version() {
 	cat << __EOF__
-$0 2.0.0
+$0 3.0.0
 
 Copyright (C) 2025 Justin Morris
 __EOF__
 }
 
 declare formatStr=''
+declare sign=''
 declare -i timeInput=0
 shopt -s 'extglob'
 allowContinue='true'
@@ -40,13 +41,16 @@ while eval "$allowContinue" && (( $# > 0 )); do
 	esac
 done
 
-if [[ "$1" =~ ^([[:digit:]]+)(\.[[:digit:]]*)$ ]]; then
-	declare -ir timeInput="${BASH_REMATCH[1]}"
-	declare formatStr="S${BASH_REMATCH[2]}"
-elif [[ "$1" =~ ^(\.[[:digit:]]+)$ ]]; then
+if [[ "$1" =~ ^(-?)([[:digit:]]+)(\.[[:digit:]]*)$ ]]; then
+	declare -r sign="${BASH_REMATCH[1]}"
+	declare -ir timeInput="${BASH_REMATCH[2]}"
+	declare formatStr="S${BASH_REMATCH[3]}"
+elif [[ "$1" =~ ^(-?)(\.[[:digit:]]+)$ ]]; then
+	declare -r sign="${BASH_REMATCH[1]}"
 	declare -ir timeInput=0
-	declare formatStr="S${BASH_REMATCH[1]}"
+	declare formatStr="S${BASH_REMATCH[2]}"
 else
+	declare -r sign=''
 	declare -ir timeInput="$1"
 	declare formatStr="S"
 fi
@@ -55,4 +59,4 @@ elif ((timeInput > 3600)); then formatStr="%-H:%M:%$formatStr"
 elif ((timeInput > 60)); then formatStr="%-M:%$formatStr"
 else formatStr="%-${formatStr}s"
 fi
-date -u -d "@$timeInput" +"$formatStr"
+date -u -d "@$timeInput" +"$sign$formatStr"

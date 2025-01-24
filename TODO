@@ -22,14 +22,15 @@ OPipe:
 	- Read and write statistics to a file (e.g. Avg. Start Time, Avg. Run Time, etc.)
 	- If fixing a parsing mistake in the prior update, support redrawing w/ the correct color
 
-Profile Rails Tests:
-	- Analyze the files in the given directory tree to determine how many tests there are.
-		- Take in a directory or use the current directory
-		- Find the sub-directory named `test`
-		- Find the # of files ending in `_test.rb`
-		- For each:
-			- find each line starting with whitespace, and the word `should`
-				- Regex: `(^|$'\n')[[:blank:]]*should (["'])?([_[:print:][:blank:][:punct:]]*?)(\2)? do($|$'\n')`
+Count Ruby Tests:
+	✔ Analyze the files in the given directory tree to determine how many tests there are. @done
+		✔ Take in a directory or use the current directory @done
+		✔ Find the sub-directory named `test` @done
+		✔ Find the # of files ending in `_test.rb` @done
+		✔ For each: @done
+			✔ find each line starting with whitespace, and the word `should` @done
+				✔ Regex: `(^|$'\n')[[:blank:]]*should (["'])?([_[:print:][:blank:][:punct:]]*?)(\2)? do($|$'\n')` @done
+	- Count static loops
 
 Print decimal calculations:
 	✔ Initial implementation @done(25-01-12 17:34)
@@ -38,8 +39,8 @@ Print decimal calculations:
 	✔ Trim trailing zeros @done(25-01-15 15:36)
 	✔ Carrying the round up @done(25-01-15 16:29)
 	✔ Add test cases @done(25-01-21 13:58)
+	✔ Support negatives @done(25-01-24 12:20)
 	- Customizable formatting
-		- trim trailing zeros
 		- pad leading/trailing zeros
 
 Format seconds:
@@ -85,5 +86,6 @@ Check Number:
 Test Runner:
 	- Test groups
 	- Multiline test inputs
+	- Improve test file path detection (reduce redundancy)
 
 Archive:

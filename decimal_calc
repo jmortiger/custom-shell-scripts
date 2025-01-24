@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 declare -r MY_NAME="$0"
 exit_error() {
 	echo "$MY_NAME: $*" 1>&2
@@ -26,7 +25,7 @@ __EOF__
 }
 show_version() {
 	cat << __EOF__
-$0 2.0.0
+$0 3.0.0
 
 Copyright (C) 2025 Justin Morris
 __EOF__
@@ -74,79 +73,49 @@ while [[ -n "${1+x}" ]]; do
 	esac
 done
 
-same_sign() {
-	local -i root=0
-	for param in "$@"; do
-		if (( param != 0 )); then
-			if ((param < 0 && root > 0)) || ((param > 0 && $root < 0)); then
-				false
-				return $?
-			fi
-			((root=param))
-		fi
-	done
-	true
-	return $?
-}
-is_positive() {
-	for param in "$@"; do
-		if ((param < 0)); then
-			false
-			return $?
-		fi
-	done
-	true
-	return $?
-}
-is_negative() {
-	for param in "$@"; do
-		if ((param > 0)); then
-			false
-			return $?
-		fi
-	done
-	true
-	return $?
-}
-
-declare -ir numerator
-declare -ir denominator
-if ((denominator==0)); then
+declare -ir numerator denominator
+if ((denominator == 0)); then
 	exit_error "Divide by zero error: $numerator / $denominator"
 fi
 if ((numerator == 0)); then
 	echo -n '0'
 	exit
 fi
-declare -i whole=numerator/denominator
+declare -i n=0 d=0
+declare sign=''
+# Can't be 0 here; simplifies checks
+if ((numerator > 0 && denominator > 0)); then
+	declare -r n=$numerator d=$denominator sign=''
+elif ((numerator < 0 && denominator < 0)); then
+	declare -r n=$((numerator * -1)) d=$((denominator * -1)) sign=''
+else
+	if ((numerator < 0)); then
+		declare -r n=$((numerator * -1)) d=$denominator sign='-'
+	else
+		declare -r d=$((denominator * -1)) n=$numerator sign='-'
+	fi
+fi
+declare -i whole=n/d
+# If there's no remainder
 if (( numerator % denominator == 0 )); then
-	echo -n "$whole"
+	echo -n "$sign$whole"
 	exit
 fi
 declare -r coarseInput="${coarseInput:-$DEFAULT_COARSENESS}"
 declare -ir decimalDigits="${#coarseInput}"
 declare -ir coarseness="$((10 ** decimalDigits))"
 if ((coarseness==1)); then
-	echo -n "$whole"
+	echo -n "$sign$whole"
 	exit
 fi
 declare -i whole_count=0; declare +i whole; ((whole_count=${#whole})); declare -i whole
-declare -i l_intermediate=0; ((l_intermediate=numerator * coarseness)); 
-if ! eval is_negative "$numerator" "$l_intermediate" && ! eval is_positive "$numerator" "$l_intermediate"; then
-	exit_error "OVERFLOW ($whole $l_intermediate)"
+declare -i l_intermediate=0; ((l_intermediate=n * coarseness)); 
+if ((l_intermediate < n)); then
+	exit_error "OVERFLOW ($whole $l_intermediate) ($numerator / $denominator)"
 fi
-((l_intermediate /= denominator)); 
-# if eval is_negative "$numerator" "$denominator" "$l_intermediate"; then
-#	exit_error "OVERFLOW ($whole $l_intermediate)"
-# elif ! eval is_positive "$numerator" "$denominator" "$l_intermediate"; then
-# 	if ! eval is_positive "$numerator" "$denominator" || ! eval is_negative "$numerator" "$denominator"; then
-#	exit_error "OVERFLOW ($whole $l_intermediate)"
-# 	fi
-# fi
-# echo "$whole"
-# echo "$l_intermediate"
+((l_intermediate /= d)); 
 if ((l_intermediate==0)); then
-	echo -n "$whole"
+	echo -n "$sign$whole"
 	exit
 fi
 declare +i l_intermediate
@@ -154,7 +123,7 @@ while [[ "${l_intermediate: -1}" == '0' ]] && ((${#l_intermediate} > whole_count
 	l_intermediate="${l_intermediate:0:-1}"
 done
 if ((${#l_intermediate} == whole_count)); then
-	echo -n "$whole";
+	echo -n "$sign$whole";
 	exit
 elif ((${#l_intermediate} < whole_count)); then
 	exit_error "UNDEFINED BEHAVIOR (too small a fraction?); $numerator / $denominator"
@@ -179,72 +148,15 @@ elif ((${#l_intermediate} > whole_count )); then
 		done
 	fi
 	if ((${#l_intermediate} == whole_count)); then
-		echo -n "$l_intermediate"
+		echo -n "$sign$l_intermediate"
 		exit
 	else
 		if ((whole_count > 1 || whole != 0)); then
-			echo -n "$whole$separator${l_intermediate:$whole_count}"
+			echo -n "$sign$whole$separator${l_intermediate:$whole_count}"
 		else
-			echo -n "$separator${l_intermediate}"
+			echo -n "$sign$separator${l_intermediate}"
 		fi
 		exit
 	fi
 fi
-# if ((whole_count + decimalDigits < ${#l_intermediate})); then
-# if ((whole_count > 1 || whole != 0)); then
-# 	((t_l=${l_intermediate:0:-1}, t_last=${l_intermediate: -1}))
-# 	if ((t_last<5)); then
-# 		if [ "$l_intermediate" = 0 ]; then
-# 			echo -n "$whole"
-# 		else
-# 			echo -n "$whole$separator$l_intermediate"
-# 		fi
-# 	else
-# 		((t_l+=1))
-# 		declare +i l_intermediate="$t_l"
-# 	fi
-# fi
-# if ((whole_count > 1 || whole != 0)); then l_intermediate="${l_intermediate:$whole_count}"; fi
-# while [[ "${l_intermediate: -1}" == '0' ]] && ((${#l_intermediate} > 1)); do l_intermediate="${l_intermediate:0:-1}"; done
-# if (( ${#l_intermediate} >= decimalDigits )); then
-# 	declare penultimate="${l_intermediate: -2:1}" last="${l_intermediate: -1:1}"; l_intermediate="${l_intermediate:0:-2}"
-# 	if ((last<5)); then
-# 		while [[ "$penultimate" == '0' ]] && ((${#l_intermediate} > 0)); do 
-# 			penultimate="${l_intermediate: -1}"
-# 			l_intermediate="${l_intermediate:0:-1}"
-# 		done
-# 		if [ "$penultimate" = '0' ]; then
-# 			echo -n "$whole"
-# 		else
-# 			echo -n "$whole$separator$l_intermediate$penultimate"
-# 		fi
-# 	else
-# 		while ((penultimate == 9 && ${#l_intermediate} > 0)); do
-# 			penultimate="${l_intermediate: -1}"
-# 			l_intermediate="${l_intermediate:0:-1}"
-# 		done
-# 		if ((penultimate < 9)); then
-# 			echo -n "$whole$separator$l_intermediate$((penultimate+1))"
-# 		elif ((${#l_intermediate} > 0)); then
-# 			echo -n "$whole$separator$l_intermediate"
-# 		else
-# 			declare +i whole
-# 			((i=${#whole}-1))
-# 			l_intermediate="${whole:$i:1}"
-# 			while ((i >= 0 && ${whole:$i:1} == 9 && ${#l_intermediate} > 0)); do
-# 				l_intermediate="${whole:$i:1}"
-# 				whole="${whole:0:$i}0${whole:$((i+1))}"
-# 				((i--))
-# 			done
-# 			if ((i < 0 && ${whole:0:1} == 9)); then
-# 				echo -n "1$whole"
-# 			else
-# 				echo -n "${whole:0:$i}$((${whole:$i:1} + 1))${whole:$((i+1))}"
-# 			fi
-# 		fi
-# 	fi
-# else
-# 	echo -n "$whole$separator${l_intermediate:0:$decimalDigits}"
-# fi
-
-# exit
+exit_error "Should not be able to reach this point"
