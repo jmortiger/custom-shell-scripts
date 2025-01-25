@@ -287,7 +287,7 @@ function gen_status_text() {
 	if ((i_complete > 0)); then
 		test_results+=", $(gen_item $i_successful .), $(gen_item $i_failure F), $(gen_item $i_error E), $(gen_item $i_warning W), $(gen_item $i_correction C)"
 		results+="; REMAINING: $(format_seconds "$(decimal_calc $((remaining * elapsed)) $i_complete 1000)")"
-		results+="; AVG: $(format_seconds "$(decimal_calc $elapsed $i_complete 1000)")/run"
+		results+="; AVG: $(decimal_calc $elapsed $i_complete 1000) s/run"
 		if ((elapsed > 0)); then results+=" / $(decimal_calc $i_complete $elapsed 1000) runs/s"; fi
 	fi
 	results+=$'\n'
