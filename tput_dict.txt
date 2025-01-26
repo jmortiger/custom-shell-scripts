@@ -1,2 +1,4 @@
+rmcup
+setaf
 smcup
 tput
