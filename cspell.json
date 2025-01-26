@@ -1,0 +1,10 @@
+{
+	"dictionaries": ["tput_dict"],
+	"dictionaryDefinitions": [
+	  {
+		"name": "tput_dict",
+		"path": "./tput_dict.txt",
+		"addWords": true,
+	  }
+	]
+  }

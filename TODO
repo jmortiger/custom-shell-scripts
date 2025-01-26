@@ -88,5 +88,19 @@ Test Runner:
 	- Test groups
 	- Multiline test inputs
 	- Improve test file path detection (reduce redundancy)
+	- Add assertions
+		- equals
+		- not equals
+		- error
+		- not_error
+
+Type Test:
+	- Basic implementation
+		- Uses randomly generated words
+		- displays the typed characters beneath the prompted characters
+		- shows status line of current stats
+	- Uses a resource list of words
+	- Option to use generated words or valid words
+	- Uses a resource list of words
 
 Archive:
