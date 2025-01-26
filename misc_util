@@ -9,16 +9,15 @@ fi
 # #endregion ########## DON'T GEN DOCUMENTATION ##########
 
 ##region########################################### GET PATH, DIR, & NAME ###########################################
-# declare -r MY_PATH="$0"
 readonly MY_PATH=$(realpath "$0")
 MY_DIR=''
 MY_NAME=''
 if [[ "$MY_PATH" =~ ^(.*)/([^/]+)$ ]]; then
-	readonly MY_DIR="${BASH_REMATCH[1]}"
-	readonly MY_NAME="${BASH_REMATCH[2]}"
+	readonly MY_DIR="${BASH_REMATCH[1]}" MY_NAME="${BASH_REMATCH[2]}"
 else
-	readonly MY_DIR="Failed to get dir"
-	readonly MY_NAME="$0"
+	readonly MY_DIR="$HOME" MY_NAME="$0"
+	echo "$MY_NAME: Failed to get dir" 1>&2
+	exit 1
 fi
 ##endregion######################################## GET PATH, DIR, & NAME ###########################################
 

@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
+declare retVal='--name'
+if [[ "$1" =~ -([pdna]|-(path|dir|directory|name|all)) ]]; then
+	retVal="$1"
+	shift
+fi
+declare -r retVal
+if [ -e "$1" ]; then
+	readonly MY_PATH="$1"
+else
+	readonly MY_PATH=$(realpath "$0")
+fi
+MY_DIR=''
+MY_NAME=''
+if [[ "$MY_PATH" =~ ^(.*)/([^/]+)$ ]]; then
+	readonly MY_DIR="${BASH_REMATCH[1]}" MY_NAME="${BASH_REMATCH[2]}"
+	case "$retVal" in
+		(-p | --path)
+			echo "$MY_PATH"
+			exit
+			;;
+		(-d | --dir | --directory)
+			echo "$MY_DIR"
+			exit
+			;;
+		(-n | --name)
+			echo "$MY_NAME"
+			exit
+			;;
+		(-a | --all)
+			declare -A MY=(
+				[PATH]="$MY_PATH"
+				[DIR]="$MY_DIR"
+				[NAME]="$MY_NAME"
+			)
+			declare -p MY
+			exit
+			;;
+		(*) ;;
+	esac
+else
+	readonly MY_DIR="$HOME" MY_NAME="$0"
+	echo "$MY_NAME: Failed to get dir" 1>&2
+	exit 1
+fi
