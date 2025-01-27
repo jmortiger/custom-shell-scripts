@@ -1,4 +1,0 @@
-rmcup
-setaf
-smcup
-tput

@@ -3,13 +3,16 @@
 	"dictionaryDefinitions": [
 	  {
 		"name": "tput_dict",
-		"path": "./tput_dict.txt",
+		"path": "./.cspell/tput_dict.txt",
 		"addWords": true,
 	  },
 	  {
 		"name": "bash_ext_dict",
-		"path": "./bash_ext_dict.txt",
+		"path": "./.cspell/bash_ext_dict.txt",
 		"addWords": true,
 	  }
+	],
+	"ignorePaths": [
+		"./words.txt"
 	]
   }
