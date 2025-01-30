@@ -1,4 +1,8 @@
+civis
+cnorm
 rmcup
+rmso
 setaf
 smcup
+smso
 tput

@@ -103,4 +103,11 @@ Type Test:
 	- Option to use generated words or valid words
 	- Uses a resource list of words
 
+Misc:
+	- Make error_exit w/ call stack using
+		- https://www.gnu.org/software/bash/manual/bash.html#index-FUNCNAME
+		- https://www.gnu.org/software/bash/manual/bash.html#index-caller
+		- https://www.gnu.org/software/bash/manual/bash.html#index-BASH_005fLINENO
+		- https://www.gnu.org/software/bash/manual/bash.html#index-BASH_005fSOURCE
+		- https://www.gnu.org/software/bash/manual/bash.html#index-LINENO
 Archive:

@@ -38,13 +38,17 @@ __EOF__
 }
 ##endregion######################################## SHOW HELP & VERSION ###########################################
 readonly LOGFILE="$MY_DIR/$MY_NAME.log.txt"
+readonly WORDS_FILE="$MY_DIR/words.txt"
 # readonly -a DEFAULT_CHARACTER_LIST=(
 # 	q w e r t y u i o p a
 # )
+declare -i max_dict_size=200
 declare -i max_word_length=7
 declare -i rows=3
 declare -i columns=$(tput cols)
 declare characters=' '
+declare -a words=()
+declare f_genWords='true'
 declare -n opt1=characters opt2=testPath opt3=characters
 while [[ -n "${1+x}" ]]; do
 	case "$1" in
@@ -84,6 +88,9 @@ while [[ -n "${1+x}" ]]; do
 			;;
 	esac
 done
+if ! eval "$f_genWords"; then
+	mapfile -t words < <(grep -m $max_dict_size -E --text -e "^[$characters]{1,$max_word_length}$" "$WORDS_FILE")
+fi
 declare -a newTestLines=()
 declare -a testLines=()
 ##region########################################### GENERATE TEST SEQUENCE ###########################################
@@ -92,9 +99,67 @@ function gen_test_sequence() {
 	declare -g newTestLines=()
 	local l_current_word=''
 	# local -i l_iter=0
+	# local -r matcherStart='(^| )'
+	# local -r matcherEnd='( |$)'
 	for ((j = 0; j < rows; j++)); do
 		for ((i = 0; i < columns; i++)); do
 			# ((l_iter++))
+			if ((${#words[@]} > 0)); then
+				# local badIndices=''
+				local -a badIndices=()
+				while true; do
+					((t_ind=-1, loop = 0))
+					# while ((t_ind < 0)) || [[ "$badIndices" =~ $matcherStart$t_ind$matcherEnd ]]; do
+					while ((t_ind < 0)) || array_includes "$t_ind" "${badIndices[@]}"; do
+						((loop++, t_ind = RANDOM % ${#words[@]}))
+						if ((loop >= 100)); then break; fi
+					done
+					l_current_word="${words[$t_ind]}"
+					local -i newLength=0
+					((newLength = ${#newTestLines[j]} + ${#l_current_word}))
+					# If it overflows the line...
+					if ((newLength > columns)); then
+						# ...and there's another line...
+						if ((j + 1 < rows)); then
+							# TODO: visual but not typed dash
+							((newLength %= columns - 1, l_wordSlice=${#l_current_word} - newLength))
+							newTestLines[j]+="${l_current_word:0:$l_wordSlice}-"
+							((j++))
+							newTestLines[j]+="${l_current_word: -$newLength} "
+							((i=newLength))
+							break
+						# ...and there's not another line...
+						else
+							# ...and we've tried too many options...
+							if ((loop >= 100)); then
+								# TODO: Graceful early exit
+								break 2
+							# ...try another word
+							else
+								# badIndices+=" $t_ind"
+								badIndices+=("$t_ind")
+								continue
+							fi
+						fi
+					# If it perfectly fills the line
+					elif ((newLength == columns)); then
+						newTestLines[j]+="$l_current_word"
+						# Start w/ a space...
+						if ((j + 1 < rows)); then
+							((j++, i = 0))
+							newTestLines[j]+=' '
+							break
+						# ...or we're done
+						else
+							break 3
+						fi
+					else
+						newTestLines[j]+="$l_current_word"
+						break
+					fi
+				done
+				continue
+			fi
 			if ((${#l_current_word} >= max_word_length)); then
 				l_current_word=''
 				newTestLines[j]+=' '
@@ -146,29 +211,40 @@ done
 echo -n -E "$toWrite"
 tput cup 1 0
 shopt -s globasciiranges extglob
+# exec 3<&0
+# exec <&3
+declare -r ORIG_IFS="$IFS"
+IFS=$'\n'
 while ((currRow < rows)); do
-	# for ((i = 0; i < rows; i++)); do
-	# 	echo "${testLines[$i]}"
-	# 	echo -n $'\n'
-	# done
 	declare currCol=$(get_currCol)
 	declare currLine="${testLines[$currRow]}"
-	if read -s -r -N 1 newChar && ((${#newChar} == 1)) && [[ "$newChar" =~ ^[[:print:]]$ ]]; then
-		inputs[currRow]+="${newChar}"
-		if [ "$newChar" = "${currLine:$currCol:1}" ]; then
-			tput setaf 2
-		else
-			tput setaf 1
-			if [ "$newChar" = ' ' ]; then newChar='_'; fi
-		fi
-		echo -n "$newChar"
-		tput setaf 7
-		if ((${#inputs[$currRow]} == columns)); then
-			((currRow++))
-			tput cud 2
-			echo -n $'\r'
-		fi
-	fi
+	# if read -s -r -t .3 newChar && [[ "$newChar" =~ ^[[:print:]]$ ]]; then
+	newChar=''
+	read -s -r -n 1 -t .2 newChar
+	# if read -s -r -t .2 newChar; then
+		# while read -s -r -t 0; do read -s -r -N 1; newChar+="$REPLY"; done
+		while ((0 < ${#newChar})); do
+			if [[ "${newChar:0:1}" =~ ^[^[:print:]' ']$ ]]; then
+				newChar="${newChar:1}"
+				continue
+			fi
+			inputs[currRow]+="${newChar:0:1}"
+			if [ "${newChar:0:1}" = "${currLine:$currCol:1}" ]; then
+				tput setaf 2
+			else
+				tput setaf 1
+				if [ "${newChar:0:1}" = ' ' ]; then newChar="_${newChar:1}"; fi
+			fi
+			echo -n "${newChar:0:1}"
+			tput setaf 7
+			if ((${#inputs[$currRow]} == columns)); then
+				((currRow++))
+				tput cud 2
+				echo -n $'\r'
+			fi
+			newChar="${newChar:1}"
+		done
+	# fi
 	# for ((i = 0; i <= currRow; i++)); do
 	# 	echo "${inputs[$i]}"
 	# 	echo -n $'\n'

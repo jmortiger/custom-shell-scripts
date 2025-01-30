@@ -21,9 +21,11 @@ else
 fi
 ##endregion######################################## GET PATH, DIR, & NAME ###########################################
 
-##region################################# EXIT WITH ERROR AND LINE #################################
+# New uses $LINENO/BASH_LINENO
+##region################################# OLD EXIT WITH ERROR AND LINE #################################
 readonly MATCH_LINE='^[[:blank:]]*exit_error .*?'
-exit_error() {
+exit_error_old() {
+	if [[ "$1" =~ ^[[:digit:]]+$ ]]; then local -ir errorCode=$1; shift; else local -ir errorCode=1; fi
 	line=$(grep -m 1 -n -E -e "$MATCH_LINE($1)" "$MY_PATH")
 	if [[ "$line" =~ ^([[:digit:]]+) ]]; then
 		line="${BASH_REMATCH[1]}: "
@@ -31,9 +33,20 @@ exit_error() {
 		line=''
 	fi
 	echo "$MY_NAME: $line$*" 1>&2
-	exit 1
+	exit $errorCode
 }
-##endregion############################## EXIT WITH ERROR AND LINE #################################
+##endregion############################## OLD EXIT WITH ERROR AND LINE #################################
+
+##region################################# NEW EXIT WITH ERROR AND LINE #################################
+exit_error() {
+	if [[ "$1" =~ ^[[:digit:]]+$ ]]; then local -ir errorCode=$1; shift; else local -ir errorCode=1; fi
+	mapfile -t val < caller 0
+	# echo "$MY_NAME: $line$*" 1>&2
+	t_out="$MY_NAME: $*"$'\n'"${val[0]}"
+	echo "$t_out" 1>&2
+	exit $errorCode
+}
+##endregion############################## NEW EXIT WITH ERROR AND LINE #################################
 
 readonly MAX_INT=$(( 2**63 - 1 ))
 declare -r -i MAX_READ_INT=$(( 2**31 - 1))
