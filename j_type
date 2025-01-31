@@ -196,12 +196,6 @@ tput smcup
 tput clear
 # echo -n $'\n'
 
-declare -a inputs=('')
-declare -i currRow=0
-get_currCol() {
-	local temp="${inputs[$currRow]}"
-	echo "${#temp}"
-}
 toWrite=''
 for ((i = 0; i < rows; i++)); do
 	toWrite+="${testLines[$i]}"
@@ -215,39 +209,27 @@ shopt -s globasciiranges extglob
 # exec <&3
 declare -r ORIG_IFS="$IFS"
 IFS=$'\n'
+declare -a inputs=('')
+declare -i currRow=0
+declare inputStream=''
+declare -i currCol=0
+declare -r -i MAX_READ_INT=$(( 2**31 - 1))
+read -s -n $MAX_READ_INT -r -t .01
+inputStream+="$REPLY"
 while ((currRow < rows)); do
-	declare currCol=$(get_currCol)
-	declare currLine="${testLines[$currRow]}"
-	# if read -s -r -t .3 newChar && [[ "$newChar" =~ ^[[:print:]]$ ]]; then
-	newChar=''
-	read -s -r -n 1 -t .2 newChar
-	# if read -s -r -t .2 newChar; then
-		# while read -s -r -t 0; do read -s -r -N 1; newChar+="$REPLY"; done
-		while ((0 < ${#newChar})); do
-			if [[ "${newChar:0:1}" =~ ^[^[:print:]' ']$ ]]; then
-				newChar="${newChar:1}"
-				continue
-			fi
-			inputs[currRow]+="${newChar:0:1}"
-			if [ "${newChar:0:1}" = "${currLine:$currCol:1}" ]; then
-				tput setaf 2
-			else
-				tput setaf 1
-				if [ "${newChar:0:1}" = ' ' ]; then newChar="_${newChar:1}"; fi
-			fi
-			echo -n "${newChar:0:1}"
-			tput setaf 7
-			if ((${#inputs[$currRow]} == columns)); then
-				((currRow++))
-				tput cud 2
-				echo -n $'\r'
-			fi
-			newChar="${newChar:1}"
-		done
-	# fi
-	# for ((i = 0; i <= currRow; i++)); do
-	# 	echo "${inputs[$i]}"
-	# 	echo -n $'\n'
-	# done
+	while ((${#inputStream} > 0)); do
+		newChar="${inputStream:0:1}"
+		inputStream="${inputStream:1}"
+		j_type_helper $columns $currCol "${testLines[$currRow]}" "$newChar" &
+		inputs[currRow]+="$newChar"
+		if ((currCol == columns)); then
+			((currRow++))
+			((currCol = 0))
+		else
+			((currCol++))
+		fi
+	done
+	read -s -n $MAX_READ_INT -r -t .01
+	inputStream+="$REPLY"
 done
 tput rmcup
