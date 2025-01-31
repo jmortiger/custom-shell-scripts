@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+
+# declare -r MY_PATH="$0"
+readonly MY_PATH=$(realpath "$0")
+MY_NAME=''
+if [[ "$MY_PATH" =~ ^(.*)/([^/]+)$ ]]; then
+	readonly MY_NAME="${BASH_REMATCH[2]}"
+else
+	readonly MY_NAME="$0"
+fi
+readonly MATCH_LINE='^[[:blank:]]*exit_error .*?'
+exit_error() {
+	if [[ "$1" =~ ^[[:digit:]]+$ ]]; then local -ir errorCode=$1; shift; else local -ir errorCode=1; fi
+	line=$(grep -m 1 -n -E -e "$MATCH_LINE($1)" "$MY_PATH")
+	if [[ "$line" =~ ^([[:digit:]]+) ]]; then
+		line="${BASH_REMATCH[1]}: "
+	else
+		line=''
+	fi
+	echo "$MY_NAME: $line$*" 1>&2
+	exit $errorCode
+}
+show_help() {
+	cat << __EOF__
+Perform the given comparison operation.
+
+Usage:	$0 LHS OPERATOR RHS
+	or:	$0 --help
+	or:	$0 --version
+
+Options:
+	-h, --help: Shows this help text.
+	-v, --version: Shows version info.
+__EOF__
+}
+show_version() {
+	cat << __EOF__
+$0 1.0.0
+
+Copyright (C) 2025 Justin Morris
+__EOF__
+}
+
+shopt -s 'extglob'
+allowContinue='true'
+while eval "$allowContinue" && (( $# > 0 )); do
+	case "$1" in
+		(-h | --help)
+			show_help
+			exit
+			;;
+		(-v | --version)
+			show_version
+			exit
+			;;
+		(*)
+			allowContinue='false'
+			;;
+	esac
+done
+
+declare -i sign1=0
+declare -i whole1=0
+declare -i frac1=0
+if [[ "$1" =~ ^(-?)([[:digit:]]+)\.([[:digit:]]*)$ ]]; then
+	((sign1 = ${#BASH_REMATCH[1]} > 0 ? -1 : 1, whole1 = BASH_REMATCH[2] * sign1, frac1 = BASH_REMATCH[3] * sign1))
+elif [[ "$1" =~ ^(-?)\.([[:digit:]]+)$ ]]; then
+	((sign1 = ${#BASH_REMATCH[1]} > 0 ? -1 : 1, whole1 = 0, frac1 = BASH_REMATCH[2] * sign1))
+else
+	exit 127
+fi
+declare -ir sign1 whole1 frac1
+shift
+declare -r op="$2"
+shift
+declare -i sign2=0
+declare -i whole2=0
+declare -i frac2=0
+if [[ "$1" =~ ^(-?)([[:digit:]]+)\.([[:digit:]]*)$ ]]; then
+	((sign2 = ${#BASH_REMATCH[1]} > 0 ? -1 : 1, whole2 = BASH_REMATCH[2] * sign2, frac2 = BASH_REMATCH[3] * sign2))
+elif [[ "$1" =~ ^(-?)\.([[:digit:]]+)$ ]]; then
+	((sign2 = ${#BASH_REMATCH[1]} > 0 ? -1 : 1, whole2 = 0, frac2 = BASH_REMATCH[2] * sign2))
+else
+	exit 127
+fi
+declare -ir sign2 whole2 frac2
+
+if ((whole1 == whole2 && frac1 == frac2 )); then
+	if [ "$op" = '==' ] || [ "$op" = '<=' ] || [ "$op" = '>=' ] || [ "$op" = '=' ] || [ "$op" = '=<' ] || [ "$op" = '=>' ]; then
+		exit 0
+	else
+		exit 1
+	fi
+elif ((whole1 > whole2)) || ((whole1 == whole2 && frac1 > frac2)); then
+	if [ "$op" = '>' ] || [ "$op" = '>=' ] || [ "$op" = '=>' ]; then
+		exit 0
+	else
+		exit 1
+	fi
+# elif ((whole1 < whole2)) || ((whole1 == whole2 && frac1 < frac2)); then
+else
+	if [ "$op" = '<' ] || [ "$op" = '<=' ] || [ "$op" = '=<' ]; then
+		exit 0
+	else
+		exit 1
+	fi
+fi

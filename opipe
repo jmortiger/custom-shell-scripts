@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# cspell:ignore logfile jmor FEWC smso rmso civis rmcup smcup cnorm extglob patsub exitcode globasciiranges setaf ABDG SIGCHLD SIGWINCH infocmp
+# cspell:ignore logfile jmor FEWC exitcode ABDG SIGCHLD SIGWINCH infocmp
 
 # https://www.kylheku.com/cgit/basta/tree/basta.sh?id=7fbdc5a088c37bd24da5954474a189cd4c890dce
 # https://www.kylheku.com/cgit/basta/about/
@@ -280,7 +280,12 @@ declare -i TIME_TESTS_BEGAN=-1
 declare TIME_TESTS_BEGAN_STRING=''
 function gen_item() { echo -n "$2: $(($1 * 100 / i_complete))% ($1)"; }
 function gen_status_text() {
-	local -i elapsed=0;((elapsed=TIME_TESTS_BEGAN > 0 ? $(date -u +'%-s') - TIME_TESTS_BEGAN : 0)); local -ir elapsed
+	if [ -n "$1" ]; then
+		local -i l_currentTime="$1"
+	else
+		local -i l_currentTime="$(date -u +'%-s')"
+	fi
+	local -i elapsed=0;((elapsed=TIME_TESTS_BEGAN > 0 ? l_currentTime - TIME_TESTS_BEGAN : 0)); local -ir elapsed
 	local -ir remaining=$TEST_COUNT-$i_complete
 	local results="${TIME_TESTS_BEGAN_STRING}ELAPSED: $(format_seconds $elapsed) (${elapsed}s)"
 	local test_results="Completed: $i_complete/$TEST_COUNT ($((TEST_COUNT == 0 ? 0 : i_complete * 100 / TEST_COUNT))%; $remaining left)"
@@ -296,6 +301,8 @@ function gen_status_text() {
 }
 exec 3< <("$@")
 declare -i -r sub_pid=$!
+# https://www.gnu.org/software/bash/manual/bash.html#Signals
+# https://www.gnu.org/software/bash/manual/bash.html#index-PIPESTATUS
 # #region Exit handling
 is_active="true"
 function do_stop() {
@@ -408,10 +415,10 @@ while eval $is_active; do
 	elif eval $is_active && ((currTime - lastUpdate > FORCE_REFRESH_INTERVAL)); then
 		tput setaf 1
 		if ((TIME_TESTS_BEGAN > 0)); then
-			display_text "$(gen_status_text)" "$cumulative" "$line" "$cumulative"
+			display_text "$(gen_status_text $currTime)" "$cumulative" '' "$cumulative"
 		else
-			((TIME_TESTS_BEGAN = currTime))
-			display_text "$(gen_status_text)" "$cumulative" "$line" "$cumulative"
+			((TIME_TESTS_BEGAN = TIME_START))
+			display_text "$(gen_status_text $currTime)" "$cumulative" '' "$cumulative"
 			((TIME_TESTS_BEGAN = -1))
 		fi
 		((lastUpdate=currTime))

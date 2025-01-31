@@ -33,15 +33,15 @@ if [[ "$MY_PATH" =~ ^(.*)/([^/]+)$ ]]; then
 			echo "$MY_NAME"
 			exit
 			;;
-		(-a | --all)
-			declare -A MY=(
-				[PATH]="$MY_PATH"
-				[DIR]="$MY_DIR"
-				[NAME]="$MY_NAME"
-			)
-			declare -p MY
-			exit
-			;;
+		# (-a | --all)
+		# 	declare -A MY=(
+		# 		[PATH]="$MY_PATH"
+		# 		[DIR]="$MY_DIR"
+		# 		[NAME]="$MY_NAME"
+		# 	)
+		# 	declare -p MY
+		# 	exit
+		# 	;;
 		(*) ;;
 	esac
 else

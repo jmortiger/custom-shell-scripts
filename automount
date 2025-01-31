@@ -11,8 +11,8 @@ readonly AUTO_BINDS_PATH="/home/jmor/reposLocal/custom-shell-scripts/automount_b
 readonly WINDOWS_PATH='/mnt/win10'
 readonly WINDOWS_PARTITION='/dev/sda3'
 declare -i ec=0
-if cd '/mnt/win10/Users/'; then
-	read -r -p 'Already mounted. Proceed with binds? (y/n)' proceed
+if cd '/mnt/win10/Users/' &>"/dev/null"; then
+	read -r -N 1 -p 'Already mounted. Proceed with binds? (y/n)' proceed
 	if [ "$proceed" = 'y' ] || [ "$proceed" = 'Y' ]; then
 		echo 'Proceeding...'
 	else
@@ -22,7 +22,6 @@ else
 	sudo mount -t ntfs-3g -o defaults,uid=jmor,nofail,x-systemd.device-timeout=2,windows_names,noatime "$WINDOWS_PARTITION" "$WINDOWS_PATH"
 	ec=$?
 	if (( ec != 0 )); then
-		# sleep 2
 		exit $ec
 	fi
 fi
