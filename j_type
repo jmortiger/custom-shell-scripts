@@ -40,8 +40,11 @@ __EOF__
 readonly LOGFILE="$MY_DIR/$MY_NAME.log.txt"
 readonly WORDS_FILE="$MY_DIR/words.txt"
 # readonly -a DEFAULT_CHARACTER_LIST=(
-# 	q w e r t y u i o p a
-# )
+# 	asdfghjkl;wertyuio
+# 	aeiou
+# 	tyur
+# )asdfghjkl;wertyuioaeioutyurtyurtyurtyur
+##region########################################### PARAMETERS ###########################################
 declare -i max_dict_size=200
 declare -i max_word_length=7
 declare -i rows=3
@@ -65,11 +68,6 @@ while [[ -n "${1+x}" ]]; do
 		# 	coarseInput="$1"
 		# 	shift
 		# 	;;
-		# (-d | --decimal)
-		# 	shift
-		# 	separator="$1"
-		# 	shift
-		# 	;;
 		(*)
 			# if [[ -n "${opt1+x}" ]]; then
 			# 	if [[ -n "${opt2+x}" ]]; then
@@ -89,11 +87,14 @@ while [[ -n "${1+x}" ]]; do
 	esac
 done
 if ! eval "$f_genWords"; then
-	mapfile -t words < <(grep -m $max_dict_size -E --text -e "^[$characters]{1,$max_word_length}$" "$WORDS_FILE")
+	mapfile -t words < <(grep --max-count=$max_dict_size -E --text -e "^[$characters]{1,$max_word_length}$" "$WORDS_FILE")
 fi
+##endregion######################################## PARAMETERS ###########################################
 declare -a newTestLines=()
 declare -a testLines=()
 ##region########################################### GENERATE TEST SEQUENCE ###########################################
+# Dependent on:
+# * newTestLines
 function gen_test_sequence() {
 	RANDOM=$$
 	declare -g newTestLines=()
@@ -213,14 +214,40 @@ declare -a inputs=('')
 declare -i currRow=0
 declare inputStream=''
 declare -i currCol=0
+_output() {
+	local -i columns=$1; shift
+	local -i currCol=$1; shift
+	local currChar="${1:$currCol:1}"; shift
+	local inputChar="$1"; shift
+	if [ "$inputChar" = "$currChar" ]; then
+		tput setaf 2
+	else
+		tput setaf 1
+		if [ "$inputChar" = ' ' ]; then
+			tput smso
+			# inputChar+="$(tput rmso)"
+			inputChar="_$(tput rmso)"
+		fi
+	fi
+	echo -n "$inputChar"
+	# if [ "$inputChar" = ' ' ]; then tput rmso; fi
+	tput setaf 7
+	if ((currCol + 1 == columns)); then
+		tput cud 2
+		echo -n $'\r'
+	fi
+}
 declare -r -i MAX_READ_INT=$(( 2**31 - 1))
-read -s -n $MAX_READ_INT -r -t .01
-inputStream+="$REPLY"
+_poll() {
+	read -s -n $MAX_READ_INT -r -t .01
+	inputStream+="$REPLY"
+}
+_poll
 while ((currRow < rows)); do
 	while ((${#inputStream} > 0)); do
 		newChar="${inputStream:0:1}"
 		inputStream="${inputStream:1}"
-		j_type_helper $columns $currCol "${testLines[$currRow]}" "$newChar" &
+		_output $columns $currCol "${testLines[$currRow]}" "$newChar" &
 		inputs[currRow]+="$newChar"
 		if ((currCol == columns)); then
 			((currRow++))
@@ -229,7 +256,6 @@ while ((currRow < rows)); do
 			((currCol++))
 		fi
 	done
-	read -s -n $MAX_READ_INT -r -t .01
-	inputStream+="$REPLY"
+	_poll
 done
 tput rmcup
