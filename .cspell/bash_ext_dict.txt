@@ -2,3 +2,4 @@ extglob
 globasciiranges
 mkfifo
 patsub_replacement
+stty
