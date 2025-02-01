@@ -54,11 +54,6 @@ while [[ -n "${1+x}" ]]; do
 		# 	coarseInput="$1"
 		# 	shift
 		# 	;;
-		# (-d | --decimal)
-		# 	shift
-		# 	separator="$1"
-		# 	shift
-		# 	;;
 		(*)
 			if [[ -n "$opt1" ]]; then
 				if [[ -n "$opt2" ]]; then
@@ -130,7 +125,6 @@ do_read() {
 	local label=''
 	while read -s -t 0; do
 		read -sr params results
-		# echo "P: $params, R: $results"
 		if (( ${#params} <= 0 && ${#results} <= 0 )); then
 			break
 		elif (( ${#params} <= 0 || ${#results} <= 0 )); then
@@ -138,8 +132,6 @@ do_read() {
 			label+=$'\n'
 			continue
 		fi
-		# if [[ "$params" =~ /$ ]]; then params="${params:0:-1}"; fi
-		# if [[ "$results" =~ /$ ]]; then results="${results:0:-1}"; fi
 		TEST_ORDER+=("$params")
 		TESTS[$params]="$results"
 		TEST_LABELS[$params]="$label"
@@ -156,10 +148,10 @@ echo -n $'\n\n# Running:\n\n'
 # for params in "${!TESTS[@]}"; do
 for params in "${TEST_ORDER[@]}"; do
 	# shellcheck disable=SC2086
-	output="$(decimal_calc $params)"
+	output="$($testCommand $params)"
 	if [ "$output" != "${TESTS[$params]}" ]; then
 		echo "$(tput setaf 1)F$(tput setaf 7)"
-		echo "${TEST_LABELS[$params]}decimal_calc $params: Result ($output) != Expected (${TESTS[$params]})" 1>&2
+		echo "${TEST_LABELS[$params]}$testCommand $params: Result ($output) != Expected (${TESTS[$params]})" 1>&2
 		succeeded='false'
 	else
 		echo -n "$(tput setaf 2).$(tput setaf 7)"
