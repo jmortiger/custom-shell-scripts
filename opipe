@@ -303,6 +303,8 @@ exec 3< <("$@")
 declare -i -r sub_pid=$!
 # https://www.gnu.org/software/bash/manual/bash.html#Signals
 # https://www.gnu.org/software/bash/manual/bash.html#index-PIPESTATUS
+# https://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# Check set -b
 # #region Exit handling
 is_active="true"
 function do_stop() {
