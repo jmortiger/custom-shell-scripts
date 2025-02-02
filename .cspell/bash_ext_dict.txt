@@ -1,5 +1,6 @@
 extglob
 globasciiranges
 mkfifo
+nocasematch
 patsub_replacement
 stty

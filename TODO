@@ -97,12 +97,14 @@ Test Runner:
 
 Type Test:
 	- Basic implementation
-		- Uses randomly generated words
-		- displays the typed characters beneath the prompted characters
+		✔ Uses randomly generated words @done
+		✔ displays the typed characters beneath the prompted characters @done
 		- shows status line of current stats
 	- Uses a resource list of words
 	- Option to use generated words or valid words
-	- Uses a resource list of words
+
+Caser:
+	- Basic implementation
 
 Misc:
 	- Make error_exit w/ call stack using

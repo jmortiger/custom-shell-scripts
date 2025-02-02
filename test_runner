@@ -15,7 +15,6 @@ declare -r DEFAULT_TEST_CASES_EXTENSION=".txt"
 show_help() {
 	# or:	$0 [-c COARSENESS] [-d SEPARATOR] NUMERATOR DENOMINATOR
 	# -c, --coarseness COARSENESS: precision. Defaults to $DEFAULT_COARSENESS.
-	# -d, --decimal SEPARATOR: the fractional separator. Defaults to $DEFAULT_DECIMAL
 	cat << __EOF__
 Run tests for simple scripts
 
@@ -30,7 +29,7 @@ __EOF__
 }
 show_version() {
 	cat << __EOF__
-$0 1.0.0
+$0 2.0.0
 
 Copyright (C) 2025 Justin Morris
 __EOF__
@@ -38,6 +37,7 @@ __EOF__
 declare testPath="$DEFAULT_TEST_CASES_DIRECTORY"
 declare testFile=''
 declare testCommand=''
+declare delimiter='>'
 declare -n opt1=testCommand opt2=testPath opt3=testFile
 while [[ -n "${1+x}" ]]; do
 	case "$1" in
@@ -77,85 +77,146 @@ done
 if (( ${#testFile} == 0 )); then
 	declare -r testFile="$testCommand"
 fi
-if (( ${#testPath} == 0 )); then
-	if [ -f "$testFile" ]; then
-		declare -r testPath="$testFile"
-	elif [ -f "$testFile$DEFAULT_TEST_CASES_SUFFIX" ]; then
-		declare -r testPath="$testFile$DEFAULT_TEST_CASES_SUFFIX"
-	elif [ -f "$testFile$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION" ]; then
-		declare -r testPath="$testFile$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION"
-	elif [ -f "$DEFAULT_TEST_CASES_DIRECTORY$testFile" ]; then
-		declare -r testPath="$DEFAULT_TEST_CASES_DIRECTORY$testFile"
-	elif [ -f "$DEFAULT_TEST_CASES_DIRECTORY$testFile$DEFAULT_TEST_CASES_SUFFIX" ]; then
-		declare -r testPath="$DEFAULT_TEST_CASES_DIRECTORY$testFile$DEFAULT_TEST_CASES_SUFFIX"
-	elif [ -f "$DEFAULT_TEST_CASES_DIRECTORY$testFile$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION" ]; then
-		declare -r testPath="$DEFAULT_TEST_CASES_DIRECTORY$testFile$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION"
-	else
-		echo "Can't find test file '$testFile'" 1>&2
-		exit 1
-	fi
+
+testPath+="$testFile"
+if [ -f "$testPath" ]; then
+	declare -r testPath
+elif [ -f "$testPath$DEFAULT_TEST_CASES_SUFFIX" ]; then
+	declare -r testPath="$testPath$DEFAULT_TEST_CASES_SUFFIX"
+elif [ -f "$testPath$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION" ]; then
+	declare -r testPath="$testPath$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION"
+elif [ -f "$DEFAULT_TEST_CASES_DIRECTORY$testPath" ]; then
+	declare -r testPath="$DEFAULT_TEST_CASES_DIRECTORY$testPath"
+elif [ -f "$DEFAULT_TEST_CASES_DIRECTORY$testPath$DEFAULT_TEST_CASES_SUFFIX" ]; then
+	declare -r testPath="$DEFAULT_TEST_CASES_DIRECTORY$testPath$DEFAULT_TEST_CASES_SUFFIX"
+elif [ -f "$DEFAULT_TEST_CASES_DIRECTORY$testPath$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION" ]; then
+	declare -r testPath="$DEFAULT_TEST_CASES_DIRECTORY$testPath$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION"
 else
-	testPath+="$testFile"
-	if [ -f "$testPath" ]; then
-		declare -r testPath
-	elif [ -f "$testPath$DEFAULT_TEST_CASES_SUFFIX" ]; then
-		declare -r testPath="$testPath$DEFAULT_TEST_CASES_SUFFIX"
-	elif [ -f "$testPath$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION" ]; then
-		declare -r testPath="$testPath$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION"
-	elif [ -f "$DEFAULT_TEST_CASES_DIRECTORY$testPath" ]; then
-		declare -r testPath="$DEFAULT_TEST_CASES_DIRECTORY$testPath"
-	elif [ -f "$DEFAULT_TEST_CASES_DIRECTORY$testPath$DEFAULT_TEST_CASES_SUFFIX" ]; then
-		declare -r testPath="$DEFAULT_TEST_CASES_DIRECTORY$testPath$DEFAULT_TEST_CASES_SUFFIX"
-	elif [ -f "$DEFAULT_TEST_CASES_DIRECTORY$testPath$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION" ]; then
-		declare -r testPath="$DEFAULT_TEST_CASES_DIRECTORY$testPath$DEFAULT_TEST_CASES_SUFFIX$DEFAULT_TEST_CASES_EXTENSION"
-	else
-		echo "Can't find test file '$testPath'" 1>&2
-		exit 1
-	fi
+	echo "Can't find test file '$testPath'" 1>&2
+	exit 1
 fi
 # echo "testCommand: $testCommand testFile: $testFile testPath: $testPath"
 
 declare -r ORIG_IFS="$IFS"
-declare -A TESTS=()
+declare -a TEST_RESULTS=()
+declare -a TEST_ASSERTIONS=()
 declare -a TEST_ORDER=()
-declare -A TEST_LABELS=()
+declare -a TEST_LABELS=()
+shopt -s extglob globasciiranges nocasematch
 do_read() {
 	local params=''
 	local results=''
+	local overflow=''
+	local assertion=''
 	local label=''
 	while read -s -t 0; do
-		read -sr params results
+		read -sr params results overflow
 		if (( ${#params} <= 0 && ${#results} <= 0 )); then
 			break
-		elif (( ${#params} <= 0 || ${#results} <= 0 )); then
-			label+="$params"
+		# elif (( ${#params} <= 0 || ${#results} <= 0 )); then
+		# 	label+="$params"
+		# 	label+=$'\n'
+		# 	continue
+		elif (( ${#results} <= 0 )); then
+			if [[ "$params" =~ ^[[:blank:]]*assert(_?not[[:blank:]])?(.*)$ ]]; then
+				if ((${#BASH_REMATCH[1]} > 0)); then
+					assertion="assertNot"
+				else
+					assertion="assert"
+				fi
+				params="${BASH_REMATCH[3]}"
+			else
+				label+="$params"
+				label+=$'\n'
+				continue
+			fi
+		elif [ "${params:0:1}" = '#' ]; then
+			label+="$params$delimiter$results"
+			[ -n "$overflow" ] && label+="$delimiter$overflow"
 			label+=$'\n'
 			continue
+		elif [ -n "$overflow" ]; then
+			assertion="$params"
+			params="$results"
+			results="$overflow"
+		elif [[ "$params" =~ ^[[:blank:]]*(assert[^[:blank:]]*)(.*)$ ]]; then
+			assertion="${BASH_REMATCH[1]}"
+			params="${BASH_REMATCH[2]}"
+		else
+			assertion="assertEquals"
 		fi
+		# local -i index="${#TEST_ORDER[@]}"
 		TEST_ORDER+=("$params")
-		TESTS[$params]="$results"
-		TEST_LABELS[$params]="$label"
+		TEST_ASSERTIONS+=("$assertion")
+		TEST_RESULTS+=("$results")
+		TEST_LABELS+=("$label")
 		label=''
 	done
 	# echo $?
 	return
 }
-IFS=$'>'
+IFS="$delimiter"
 do_read < "$testPath"
 IFS="$ORIG_IFS"
 succeeded='true'
 echo -n $'\n\n# Running:\n\n'
 # for params in "${!TESTS[@]}"; do
-for params in "${TEST_ORDER[@]}"; do
-	# shellcheck disable=SC2086
-	output="$($testCommand $params)"
-	if [ "$output" != "${TESTS[$params]}" ]; then
-		echo "$(tput setaf 1)F$(tput setaf 7)"
-		echo "${TEST_LABELS[$params]}$testCommand $params: Result ($output) != Expected (${TESTS[$params]})" 1>&2
-		succeeded='false'
-	else
-		echo -n "$(tput setaf 2).$(tput setaf 7)"
-	fi
+# for params in "${TEST_ORDER[@]}"; do
+declare -r successfulTestOutput="$(tput setaf 2).$(tput setaf 7)"
+declare -r failingTestOutput="$(tput setaf 1)F$(tput setaf 7)"
+for ((i = 0; i < ${#TEST_ORDER[@]}; i++)); do
+	params="${TEST_ORDER[$i]}"
+	results="${TEST_RESULTS[$i]}"
+	case "${TEST_ASSERTIONS[$i]}" in
+		(^assert$)
+			if eval "$testCommand $params" &>"/dev/null"; then
+				echo -n "$successfulTestOutput"
+			else
+				echo "$failingTestOutput"
+				echo "${TEST_LABELS[$i]}$testCommand $params: Expected true, was false" 1>&2
+				succeeded='false'
+			fi
+			;;
+		(^assert_?not$)
+			if ! eval "$testCommand $params" &>"/dev/null"; then
+				echo -n "$successfulTestOutput"
+			else
+				echo "$failingTestOutput"
+				echo "${TEST_LABELS[$i]}$testCommand $params: Expected false, was true" 1>&2
+				succeeded='false'
+			fi
+			;;
+		(^assert_?not_?equals?$)
+			# shellcheck disable=SC2086
+			output="$($testCommand $params)"
+			if [ "$output" = "$results" ]; then
+				echo "$failingTestOutput"
+				echo "${TEST_LABELS[$i]}$testCommand $params: Expected anything but ($results)" 1>&2
+				succeeded='false'
+			else
+				echo -n "$successfulTestOutput"
+			fi
+			;;
+		(^assert_?equals?$|*)
+			# shellcheck disable=SC2086
+			output="$($testCommand $params)"
+			if [ "$output" != "$results" ]; then
+				echo "$failingTestOutput"
+				echo "${TEST_LABELS[$i]}$testCommand $params: Result ($output) != Expected ($results)" 1>&2
+				succeeded='false'
+			else
+				echo -n "$successfulTestOutput"
+			fi
+	esac
+	# # shellcheck disable=SC2086
+	# output="$($testCommand $params)"
+	# if [ "$output" != "${TEST_RESULTS[$params]}" ]; then
+	# 	echo "$(tput setaf 1)F$(tput setaf 7)"
+	# 	echo "${TEST_LABELS[$params]}$testCommand $params: Result ($output) != Expected (${TEST_RESULTS[$params]})" 1>&2
+	# 	succeeded='false'
+	# else
+	# 	echo -n "$(tput setaf 2).$(tput setaf 7)"
+	# fi
 done
 echo -n $'\n\n'
 echo "Succeeded: $succeeded"
