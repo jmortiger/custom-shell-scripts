@@ -2,6 +2,7 @@ civis
 cnorm
 rmcup
 rmso
+setab
 setaf
 smcup
 smso

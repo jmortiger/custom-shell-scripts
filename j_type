@@ -189,9 +189,8 @@ gen_test_sequence
 for item in "${newTestLines[@]}"; do
 	testLines+=("$item")
 done
-tput smcup
-tput clear
 
+tput smcup clear
 toWrite=''
 for ((i = 0; i < rows; i++)); do
 	toWrite+="${testLines[$i]}"
@@ -200,34 +199,32 @@ done
 echo -n -E "$toWrite"
 tput cup 1 0
 shopt -s globasciiranges extglob
-# exec 3<&0
-# exec <&3
-declare -r ORIG_IFS="$IFS"
-IFS=$'\n'
+declare -r ORIG_IFS="$IFS"; IFS=$'\n'
 declare -a inputs=('')
 declare -i currRow=0
 declare inputStreamName="$(mktemp --dry-run "$HOME/Desktop/j_type_inputStream_XXXX")"
 if ! [[ "$inputStreamName" =~ ^$HOME/Desktop/j_type_inputStream_ ]]; then echo "Cannot safely rm -f $inputStreamName" 2>&1; exit 1; fi
 mkfifo "$inputStreamName"
-exec 3<>"$inputStreamName"
+exec 3<>"$inputStreamName"; trap 'exec 3>&- 3<&-' EXIT
 rm -f "$inputStreamName"
 exec 3<&0
-trap 'exec 3>&- 3<&-' EXIT
-# declare inputStream=''
 declare -i currCol=0
-stty -echo
+stty -echo; trap 'stty echo' EXIT
 _output() {
 	local -i columns=$1; shift
 	local -i currCol=$1; shift
 	local currChar="${1:$currCol:1}"; shift
 	local inputChar="$1"; shift
+	local priorInputChar="$1"
 	local pre=''
 	local post="$(tput setaf 7)"
 	if [ "$inputChar" = "$currChar" ]; then
 		pre+="$(tput setaf 2)"
 	# elif [ "$inputChar" = $'\b' ]; then
-	# 	echo -n "$(tput setaf 4)B$(tput setaf 7)"
-	# 	return 1
+	elif [ "$inputChar" = "$(tput kbs)" ] && [ -n "$priorInputChar" ]; then
+		# echo -n "$(tput setaf 4)B$(tput setaf 7)"
+		echo -n $'\b\b'"$priorInputChar"
+		return 1
 	else
 		pre+="$(tput setaf 1)"
 		if [ "$inputChar" = ' ' ]; then
@@ -245,33 +242,14 @@ _output() {
 	# echo -n "$((currCol + 1))$(tput cub 1)"
 	return 0
 }
-# trap 'rm -f $asyncChannel' EXIT
-# declare -r asyncChannel=$(mktemp "/dev/shm/j_type_async_channel_XXXX")
 _update() {
 	while read -rsN 1 -u 3 newChar; do
-		# newChar="${inputStream:0:1}"
-		# inputStream="${inputStream:1}"
-		# read -u 3 -rsN 1 newChar
-		# if _output $columns $currCol "${testLines[$currRow]}" "$newChar"; then
-		if _output $columns ${#inputs[$currRow]} "${testLines[$currRow]}" "$newChar"; then
+		if _output $columns ${#inputs[$currRow]} "${testLines[$currRow]}" "$newChar" "${inputs[$currRow]: -2:1}"; then
 			inputs[currRow]+="$newChar"
-			# if ((currCol == columns)); then
-			# 	((currRow++))
-			# 	((currCol = 0))
-			# else
-			# 	((currCol++))
-			# fi
 			if ((${#inputs[$currRow]} == columns)); then
 				((currRow++))
 			fi
 		else # Backspace
-			# if ((currCol == 0)); then
-			# 	unset "inputs[$currRow]"
-			# 	((currRow--))
-			# 	((currCol = columns - 1))
-			# else
-			# 	((currCol--))
-			# fi
 			if ((${#inputs[$currRow]} == 0)); then
 				unset "inputs[$currRow]"
 				((currRow--))
@@ -281,30 +259,8 @@ _update() {
 			unset -v l_t
 		fi
 	done
-	# declare -gp inputs inputStream >| "$asyncChannel"
-	# declare -gp inputs currRow >| "$asyncChannel"
 }
-# declare -r -i MAX_READ_INT=$(( 2**31 - 1))
-# _poll() {
-# 	read -s -n $MAX_READ_INT -r -t .01
-# 	inputStream+="$REPLY"
-# }
-# _poll
 while ((currRow < rows)); do
-	# while ((${#inputStream} > 0)); do
-	# 	newChar="${inputStream:0:1}"
-	# 	inputStream="${inputStream:1}"
-	# 	_output $columns $currCol "${testLines[$currRow]}" "$newChar" &
-	# 	inputs[currRow]+="$newChar"
-	# 	if ((currCol == columns)); then
-	# 		((currRow++))
-	# 		((currCol = 0))
-	# 	else
-	# 		((currCol++))
-	# 	fi
-	# done
-	# eval "$(_update)"
 	_update
-	# _poll
 done
 tput rmcup
