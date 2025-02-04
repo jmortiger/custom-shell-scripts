@@ -1,5 +1,5 @@
 {
-	"dictionaries": ["tput_dict", "bash_ext_dict"],
+	"dictionaries": ["tput_dict", "bash_ext_dict", "mount_dict"],
 	"dictionaryDefinitions": [
 	  {
 		"name": "tput_dict",
@@ -10,7 +10,12 @@
 		"name": "bash_ext_dict",
 		"path": "./.cspell/bash_ext_dict.txt",
 		"addWords": true,
-	  }
+	  },
+	  {
+		"name": "mount_dict",
+		"path": "./.cspell/mount_dict.txt",
+		"addWords": true,
+	  },
 	],
 	"ignorePaths": [
 		"./words.txt"
