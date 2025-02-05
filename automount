@@ -2,7 +2,7 @@
 
 # cspell:ignore jmor automount jmort
 
-readonly AUTO_BINDS_PATH="/home/jmor/reposLocal/custom-shell-scripts/automount_binds.txt"
+readonly AUTO_BINDS_PATH="/home/jmor/reposLocal/custom-shell-scripts/automount_binds.tsv"
 readonly WINDOWS_PATH='/mnt/win10'
 readonly WINDOWS_PARTITION='/dev/sda3'
 readonly DEFAULT_BIND_OPTIONS='defaults,nofail,x-systemd.device-timeout=2,windows_names,noatime'
@@ -32,16 +32,14 @@ __EOF__
 { [ "$1" = '--version' ] || [ "$1" = '-v' ]; } && { show_version; exit; }
 declare -i ec=0
 if cd '/mnt/win10/Users/' &>"/dev/null"; then
-	read -r -N 1 -p 'Already mounted. Proceed with binds? (y/n)' proceed
-	if [ "$proceed" = 'y' ] || [ "$proceed" = 'Y' ]; then
-		echo 'Proceeding...'
+	read -r -N 1 -p 'Already mounted. Proceed with binds? (y/n)'
+	if [ "$REPLY" = 'y' ] || [ "$REPLY" = 'Y' ]; then
+		echo $'\nProceeding...'
 	else
 		exit
 	fi
 else
-	sudo mount -t ntfs-3g -o defaults,uid=jmor,nofail,x-systemd.device-timeout=2,windows_names,noatime "$WINDOWS_PARTITION" "$WINDOWS_PATH"
-	ec=$?
-	(( ec != 0 )) && exit $ec
+	sudo mount -t ntfs-3g -o defaults,uid=jmor,nofail,x-systemd.device-timeout=2,windows_names,noatime "$WINDOWS_PARTITION" "$WINDOWS_PATH" || exit $?
 fi
 readonly ORIG_IFS="$IFS"
 declare -a BIND_SOURCE=(); declare -a BIND_DEST=(); declare -a BIND_OPTS=()
@@ -51,7 +49,7 @@ do_read() {
 	read -sr b_source b_destination b_opts
 	while read -s -t 0; do
 		read -sr b_source b_destination b_opts
-		[[ "$b_destination" =~ \t$ ]] && b_destination="${b_destination:0:-1}" && echo "Trailing tab removed manually"
+		[[ "$b_destination" =~ \t$ ]] && echo "Trailing tab removed manually" && b_destination="${b_destination:0:-1}"
 		if (( ${#b_source} <= 0 || ${#b_destination} <= 0 )); then break; fi
 		[[ "$b_source" =~ /$ ]] && b_source="${b_source:0:-1}"
 		[[ "$b_destination" =~ /$ ]] && b_destination="${b_destination:0:-1}"
