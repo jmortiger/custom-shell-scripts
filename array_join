@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
+
+declare separator="$1"
+if ! shift; then exit 1; fi
+result="$1"
+while (($# > 0)) && shift; do
+	result+="$separator$1"
+done
+echo result
+exit
