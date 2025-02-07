@@ -1,0 +1,181 @@
+#!/bin/bash
+
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
+convertSpacesToTabs() { sed -E 's/(\ {'"${1:-2,3}"'})/\	/g'; }
+
+declare -r DO_DEBUG='true'
+declare -r matcherBase='/app/'
+declare matcher='^  [0-9]\.[0-9]{2}      ([^0]|0\.[^0]|0\.0[^0]|0\.00[^0123])|'
+
+declare FILE=
+declare FILE1Name=
+declare FILE2=
+declare FILE2Name=
+declare NEW_FILE='condensed'
+shopt -s globasciiranges extglob
+if [ "$1" = '--max' ]; then matcher=''; NEW_FILE+='-max'; shift; fi
+if [ -e "$1" ]; then
+	declare -r FILE="$1"; shift
+	declare -r FILE1Name="$(get_command_path -n "$FILE")"
+else
+	exit 1
+fi
+if [ "$1" = '--max' ]; then matcher=''; NEW_FILE+='-max'; shift; fi
+if [ -e "$1" ]; then
+	declare -r FILE2="$1"; shift
+	declare -r FILE2Name="$(get_command_path -n "$FILE2")"
+else
+	exit 1
+fi
+if [ "$1" = '--max' ]; then matcher=''; NEW_FILE+='-max'; shift; fi
+if [ -e "$1" ]; then
+	declare -r NEW_FILE="$1"; shift
+	if [ "$1" = '--max' ]; then matcher=''; shift; fi
+elif [ -n "$1" ]; then
+	NEW_FILE="$(get_command_path -d "$FILE")/$1"; shift
+	if [ "$1" = '--max' ]; then matcher=''; shift; fi
+else
+	NEW_FILE="$(get_command_path -d "$FILE")/$FILE1Name vs $FILE2Name $NEW_FILE"; shift
+	if [ "$1" = '--max' ]; then matcher=''; NEW_FILE+='-max'; shift; fi
+fi
+matcher+="$matcherBase"
+declare -r matcher
+NEW_FILE+='.txt'
+declare -r NEW_FILE
+if eval "$DO_DEBUG"; then
+	echo "File 1: $FILE ($FILE1Name); File 2: $FILE2 ($FILE2Name)"
+fi
+eval "$DO_DEBUG" && echo "Output File: $NEW_FILE"
+IFS=$'\n'
+if eval "$DO_DEBUG"; then
+	echo "$FILE"
+else
+	echo "$FILE" >> "$NEW_FILE"
+fi
+mapfile -tn 5 < <(cat "$FILE")
+if eval "$DO_DEBUG"; then
+	{ echo "${MAPFILE[*]}"; echo "$FILE2"; }
+else
+	{ echo "${MAPFILE[*]}"; echo "$FILE2"; } >> "$NEW_FILE"
+fi
+mapfile -tn 7 < <(cat "$FILE2")
+if eval "$DO_DEBUG"; then
+	echo "${MAPFILE[*]}" | convertSpacesToTabs
+else
+	echo "${MAPFILE[*]}" | convertSpacesToTabs >> "$NEW_FILE"
+fi
+mapfile f1 < <(shopt -s extglob; grep -E -e "$matcher" "$FILE" | sed -E 's/^(.{12})(.+)$/\2\1/' | sort -r --numeric-sort - | sed -E 's/^(.+)(.{12})$/\2\1/')
+mapfile f2 < <(grep -E -e "$matcher" "$FILE2" | sed -E 's/^(.{59})([^:[:digit:]]+)(:+[^:[:digit:]]+)?([:[:digit:]]+)$/\1\2\3/')
+# if eval "$DO_DEBUG"; then
+# 	IFS=$''
+# 	echo "${f2[*]}"
+# 	exit
+# fi
+declare -a done=()
+# declare -i notFoundCount=0
+declare -r matchNum='^(\s*)([[:digit:].]+)'
+# declare -r matchNum='(?>\s|^)[0123456789.]+'
+for ((i = 0; i < ${#f1[@]}; i++)); do
+	l1="${f1[$i]}"
+	# l1="${f1[0]}"
+	l1part="${l1:59}"
+	# l1part="${l1part%%[:0123456789]+}"
+	changeLine() {
+		local l1="$1"
+		local l2="$2"
+		local tabConversion=
+		((t_off1=0, t_off2=0))
+		# echo "Matching (from $t_off1): '${l1:$t_off1:-1}'"
+		while [[ "${l1:$t_off1:-1}" =~ $matchNum ]]; do
+			m1="${BASH_REMATCH[1]}"
+			m2="${BASH_REMATCH[2]}"
+			l1chunk0="${l1:0:$((t_off1 + ${#m1}))}"
+			l1chunk2="${l1:$((t_off1 + ${#m1} + ${#m2}))}"
+			# echo "Matched: ${m1}$(tput setaf 2)${m2}$(tput setaf 7)"
+			# echo "Matching (from $t_off2): '${l2:$t_off2:-1}'"
+			if [ -z "$l2" ]; then
+				((t_off1 += ${#m1} + ${#m2} + ${#l1New}, t_off2 += ${#m1} + ${#m2}))
+				l1="$l1chunk0$m2"
+				l1+=$'\t'
+				l1+="$l1chunk2"
+				tabConversion='3'
+				continue
+			elif ! [[ "${l2:$t_off2:-1}" =~ $matchNum ]]; then
+				((t_off1 += ${#m1} + ${#m2} + ${#l1New}, t_off2 += ${#m1} + ${#m2}))
+				l1="$l1chunk0$m2"
+				l1+=$'\t\t\t\t'
+				l1+="$l1chunk2"
+				tabConversion='3'
+				continue
+			fi
+			m1_2="${BASH_REMATCH[1]}"
+			m2_2="${BASH_REMATCH[2]}"
+			# echo "Matched: ${m1_2}$(tput setaf 2)${m2_2}$(tput setaf 7)"
+			l1New=" ($(bc -l <<< "$m2_2 - $m2"))" # l1New=" (from $m2_2; $(bc -l <<< "$m2_2 - $m2"))"
+			# echo -n "{l1:0:-1}: ${l1:0:-1}"
+			l1Display="$(tput setaf 1)$l1chunk0$(tput setaf 2)$m2$l1New$(tput setaf 3)${l1chunk2:0:-1}$(tput setaf 7)${l1chunk2: -1}"
+			l1="$l1chunk0$m2$l1New$l1chunk2"
+			((t_off1 += ${#m1} + ${#m2} + ${#l1New}, t_off2 += ${#m1_2} + ${#m2_2}))
+			# echo "-> ${l1Display:0:-1}"
+			# echo -n "-> ${l1Display:0:-1}"
+			# echo "Matching (from $t_off1): '${l1:t_off1:-1}'"
+		done
+		echo -n "$l1" | convertSpacesToTabs "$tabConversion"
+	}
+	innerLoop() {
+	local -i j
+	local succeeded='false'
+	for ((j = $1; j < $2; j++)); do
+		[ -z "${f2[$j]}" ] && continue
+		l2="${f2[$j]}"
+		l2part="${l2:59}"
+		# l2part="${l2part%%[:0123456789]+}"
+		if [[ "${l1part:0:-1}" =~ ^"${l2part:0:-1}" ]]; then
+			# echo "${l1part:0:-1} vs ${l2part:0:-1} $(array_includes $j "${done[@]}" && echo " (done before)")"
+			# echo -n "l1: $l1"
+			l1="$(changeLine "${l1:0:-1}" "${l2:0:-1}")"$'\n'
+			f1[i]="$l1"
+			# f1[0]="$l1"
+			# echo -n $'\n'
+			# if array_includes $j "${done[@]}"; then
+			# 	echo 
+			# fi
+			done+=("$j")
+			unset "f2[$j]"
+			((j=0))
+			succeeded='true'
+			break;
+		fi
+	done
+	if ! eval "$succeeded"; then
+		# echo "Before: $l1"
+		l1="$(changeLine "${l1:0:-1}")"$'\n'
+		# echo "after: $l1"
+		f1[i]="$l1"
+	fi
+	return $j
+	}
+	innerLoop $i ${#f2[@]}
+	j=$?
+	if ((i > 0 && j != 0)); then innerLoop 0 $i;j=$?; fi
+	# if ((j != 0)); then
+	# 	((notFoundCount++))
+	# 	echo "$notFoundCount Not found (ind $i; '${l1:0:-1}')"
+	# fi
+	if eval "$DO_DEBUG"; then
+		# echo -n "${f1[$i]}"
+		echo -n "${f1[$i]}" | convertSpacesToTabs
+	else
+		# echo -n "${f1[$i]}" >> "$NEW_FILE"
+		echo -n "${f1[$i]}" | convertSpacesToTabs >> "$NEW_FILE"
+	fi
+done
+# if eval "$DO_DEBUG"; then
+# 	echo -n "${f1[@]}"
+# else
+# 	echo -n "${f1[@]}" >> "$NEW_FILE"
+# fi
