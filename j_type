@@ -47,6 +47,7 @@ readonly FG_RED="$(tput setaf 1)"
 readonly FG_WHITE="$(tput setaf 7)"
 readonly FG_YELLOW="$(tput setaf 3)"
 readonly BG_YELLOW="$(tput setab 3)"
+readonly BG_BLACK="$(tput setab 0)"
 ##region########################################### PARAMETERS ###########################################
 declare -i max_dict_size=200
 declare -i max_word_length=7
@@ -214,40 +215,50 @@ exec 3<&0
 declare -i currCol=0
 stty -echo; trap 'stty echo' EXIT
 _output() {
-	local -i columns=$1; shift
-	local -i currCol=$1; shift
-	local currChar="${1:$currCol:1}"; shift
-	local inputChar="$1"; shift
-	local priorInputChar="$1"
+	# local -i columns=${1:-$columns}; shift
+	# local -i currCol=$1; shift
+	# local currChar="${1:$currCol:1}"; shift
+	# local inputChar="$1"; shift
+	# local priorInputChar="$1"
+
+	local -i currCol=${#inputs[$currRow]}
+	local currChar="${testLines[$currRow]:$currCol:1}" #; currChar="${currChar:$currCol:1}"
+	local inputChar="$1"
+	local priorInputChar="${inputs[$currRow]: -2:1}"
 	local pre=''
-	local post="$(tput setaf 7)"
+	local post="$FG_WHITE"
 	if [ "$inputChar" = "$currChar" ]; then
-		pre+="$(tput setaf 2)"
-	# elif [ "$inputChar" = $'\b' ]; then
+		pre+="$FG_GREEN"
+		inputColors+=(2)
 	elif [ "$inputChar" = "$(tput kbs)" ] && [ -n "$priorInputChar" ]; then
-		# echo -n "$(tput setaf 4)B$(tput setaf 7)"
-		echo -n $'\b\b'"$priorInputChar"
+		# if [ -n "${inputColors[$currCol]}" ]; then
+		if ((inputColors[currCol] == 1)); then
+			echo -n "$BG_YELLOW"
+		fi
+		unset "inputColors[$currCol]"
+		echo -n $'\b \b'
+		echo -n "$BG_BLACK"
 		return 1
 	else
-		pre+="$(tput setaf 1)"
+		pre+="$FG_RED"
+		inputColors+=(1)
 		if [ "$inputChar" = ' ' ]; then
 			pre+="$(tput smso)"
 			post="$(tput rmso)$post"
 			inputChar="_"
 		fi
 	fi
-	# if [ "$inputChar" = ' ' ]; then inputChar="_"; fi
 	echo -n "$pre$inputChar$post"
 	if ((currCol + 1 == columns)); then
 		tput cud 2
 		echo -n $'\r'
 	fi
-	# echo -n "$((currCol + 1))$(tput cub 1)"
 	return 0
 }
 _update() {
 	while read -rsN 1 -u 3 newChar; do
-		if _output $columns ${#inputs[$currRow]} "${testLines[$currRow]}" "$newChar" "${inputs[$currRow]: -2:1}"; then
+		# if _output $columns ${#inputs[$currRow]} "${testLines[$currRow]}" "$newChar" "${inputs[$currRow]: -2:1}"; then
+		if _output "$newChar"; then
 			inputs[currRow]+="$newChar"
 			if ((${#inputs[$currRow]} == columns)); then
 				((currRow++))
