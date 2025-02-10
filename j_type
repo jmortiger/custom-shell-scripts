@@ -14,13 +14,11 @@ fi
 ##endregion######################################## GET PATH, DIR, & NAME ###########################################
 ##region########################################### SHOW HELP & VERSION ###########################################
 show_help() {
-	# or:	$0 [-c COARSENESS] [-d SEPARATOR] NUMERATOR DENOMINATOR
 	# -c, --coarseness COARSENESS: precision. Defaults to $DEFAULT_COARSENESS.
-	# -d, --decimal SEPARATOR: the fractional separator. Defaults to $DEFAULT_DECIMAL
 	cat << __EOF__
-A template I didn't replace.
+A typing test.
 
-Usage:	$0
+Usage:	$0 [VALID_CHARACTERS]
 	or:	$0 --help
 	or:	$0 --version
 
@@ -44,6 +42,11 @@ readonly WORDS_FILE="$MY_DIR/words.txt"
 # 	aeiou
 # 	tyur
 # )asdfghjkl;wertyuioaeioutyurtyurtyurtyur
+readonly FG_GREEN="$(tput setaf 2)"
+readonly FG_RED="$(tput setaf 1)"
+readonly FG_WHITE="$(tput setaf 7)"
+readonly FG_YELLOW="$(tput setaf 3)"
+readonly BG_YELLOW="$(tput setab 3)"
 ##region########################################### PARAMETERS ###########################################
 declare -i max_dict_size=200
 declare -i max_word_length=7
