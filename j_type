@@ -57,6 +57,7 @@ declare -i columns=$(tput cols)
 declare characters=' '
 declare -a words=()
 declare f_genWords='true'
+declare f_properPunctuation='true'
 declare -n opt1=characters opt2=testPath opt3=characters
 while [[ -n "${1+x}" ]]; do
 	case "$1" in
@@ -171,18 +172,46 @@ function gen_test_sequence() {
 				newTestLines[j]+=' '
 			else
 				((t_ind = RANDOM % ${#characters}))
-				if [ "${characters:$t_ind:1}" = ' ' ]; then
-					if [ "${l_current_word: -1}" != ' ' ] && (("${#l_current_word}" > 0)); then
+				local tChar="${characters:$t_ind:1}"
+				if [ "$tChar" = ' ' ]; then
+					# It doesn't end in space & isn't empty
+					if [ "${newTestLines[$j]: -1}" != ' ' ] && (("${#l_current_word}" > 0)); then
 						l_current_word=''
-						newTestLines[j]+=' '
-					else
+						newTestLines[j]+="$tChar"
+					else # Try again
 						((i--))
 						# ((l_iter--))
 					fi
+				elif eval "$f_properPunctuation"; then
+					if [[ "$tChar" =~ [\;\,\.\:\!] ]] || [ "$tChar" = ';' ] || [ "$tChar" = ',' ]; then
+						# It there's space for the char + a space, is preceded by a letter/number, & the word isn't empty
+						if ((${#newTestLines[$j]} + 2 < columns)) && [[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && (("${#l_current_word}" > 0)); then
+							l_current_word=''
+							newTestLines[j]+="$tChar "
+							((i++))
+						else # Try again
+							((i--))
+							# ((l_iter--))
+						fi
+					elif [ "$tChar" = '.' ]; then
+						# It there's space for the char + a space, is preceded by a letter/number, & the word isn't empty
+						if ((${#newTestLines[$j]} + 2 < columns)) && [[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && (("${#l_current_word}" > 0)); then
+							l_current_word=''
+							newTestLines[j]+="$tChar "
+							((i++))
+						else # Try again
+							((i--))
+							# ((l_iter--))
+						fi
+					else
+						l_current_word+="$tChar"
+						newTestLines[j]+="$tChar"
+					fi
 				else
-					l_current_word+="${characters:$t_ind:1}"
-					newTestLines[j]+="${l_current_word: -1}"
+					l_current_word+="$tChar"
+					newTestLines[j]+="$tChar"
 				fi
+				unset -v tChar
 			fi
 		done
 	done
@@ -338,6 +367,7 @@ _update() {
 		local priorInputChar="${inputs[$currRow]: -2:1}"
 		local preDisplay=''
 		local postDisplay="$FG_WHITE"
+		# shellcheck disable=SC2119
 		if [ -n "$(getInputColorBg)" ]; then
 			preDisplay+="$(tput setab "$(getInputColorBg)")"
 			postDisplay+="$BG_BLACK"
@@ -430,12 +460,15 @@ _update() {
 	statusLine+="getCoord: $(getCoord)$(tput el)"$' \b\n'
 	statusLine+="getForPrior getCoord: $(getForPrior getCoord)$(tput el)"$' \b\n'
 	statusLine+="getForBeforePrior getCoord: $(getForBeforePrior getCoord)$(tput el)"$' \b\n'
+	# shellcheck disable=SC2119
 	statusLine+="getInputColor: $(getInputColor)$(tput el)"$' \b\n'
 	statusLine+="getForPrior 'getInputColor': $(getForPrior 'getInputColor')$(tput el)"$' \b\n'
 	statusLine+="getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')$(tput el)"$' \b\n'
+	# shellcheck disable=SC2119
 	statusLine+="getInputColorBg: $(getInputColorBg)$(tput el)"$' \b\n'
 	statusLine+="getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg')$(tput el)"$' \b\n'
 	statusLine+="getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')$(tput el)"$' \b\n'
+	# shellcheck disable=SC2119
 	statusLine+="getInput: $(getInput)$(tput el)"$' \b\n'
 	statusLine+="getForPrior 'getInput': $(getForPrior 'getInput')$(tput el)"$' \b\n'
 	statusLine+="getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')$(tput el)"$' \b\n'
