@@ -343,7 +343,7 @@ _update() {
 			postDisplay+="$BG_BLACK"
 		fi
 		doBackspace() {
-			local l_coord="$(getCoord)"
+			local l_coord="$(getForPrior getCoord)"
 			if [ "$(getForPrior getInputColor)" = 1 ]; then
 				inputColorsBg[$l_coord]=3
 			fi
