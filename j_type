@@ -204,17 +204,20 @@ done
 echo -n -E "$toWrite"
 tput cup 1 0
 shopt -s globasciiranges extglob
-declare -r ORIG_IFS="$IFS"; IFS=$'\n'
 declare -a inputs=('')
 declare -a inputColors=('')
 declare -A inputColorsBg=()
 declare -i currRow=0
+##region########################################### SETUP INPUT STREAM ###########################################
 declare inputStreamName="$(mktemp --dry-run "$HOME/Desktop/j_type_inputStream_XXXX")"
 if ! [[ "$inputStreamName" =~ ^$HOME/Desktop/j_type_inputStream_ ]]; then echo "Cannot safely rm -f $inputStreamName" 2>&1; exit 1; fi
 mkfifo "$inputStreamName"
 exec 3<>"$inputStreamName"; trap 'exec 3>&- 3<&-' EXIT
 rm -f "$inputStreamName"
+unset inputStreamName
 exec 3<&0
+##endregion######################################## SETUP INPUT STREAM ###########################################
+# declare -r ORIG_IFS="$IFS"; IFS=$'\n'
 declare -i currCol=0
 stty -echo; trap 'stty echo' EXIT
 ##region########################################### ARRAY GETTERS/SETTERS ###########################################
@@ -233,52 +236,99 @@ _getXY() {
 		if [ -n "$2" ]; then
 			local -ir lCol="$2"
 		else
-			local -ir lCol="${inputs[$lRow]}"
+			local -ir lCol="${#inputs[$lRow]}"
+			# echo "${inputs[$lRow]}" 1>&2
+			# echo "lRow: ${lRow}" 1>&2
+			# echo "inputs: ${inputs[*]}" 1>&2
+			# lCol="${inputs[$lRow]}"
+			# echo "lCol: ${lCol}" 1>&2
+			# # if ! inputs[lRow]="${inputs[$lRow]}"; then
+			# # 	local call i=0
+			# # 	while call=caller $i; do
+			# # 		((i++))
+			# # 		echo $'\t'"$call" 1>&2
+			# # 	done
+			# # else
+			# # fi
+			# local -ir lCol
 		fi
 	fi
-	echo -n $lRow $lCol
+	echo $lRow $lCol
+}
+_getXYPrior() {
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); shift 2
+	((lRow = lCol >= columns && lRow > 0 ? lRow - 1 : lRow))
+	((lCol = lCol >= columns ? 0 : lCol - 1))
+	echo $lRow $lCol
+}
+_getXYBeforePrior() {
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
+	((lRow = lCol >= columns && lRow > 0 ? lRow - 1 : lRow))
+	((lCol = lCol >= columns ? 0 : lCol - 1))
+	echo $lRow $lCol
 }
 getCoord() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
 	echo -n "$lRow:$lCol"
 	# echo -n "$currRow:${#inputs[$currRow]}"
 }
-forPrior() {
+getForPrior() {
 	local lCommand="$1"; shift
 	# if [ "${lCommand:0:3}" = 'set' ];
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$1" "$2"); local -ir lRow lCol; shift 2
-	((lRow = lCol >= columns && lRow > 0 ? lRow - 1 : lRow))
-	((lCol = lCol >= columns ? 0 : lCol - 1))
-	$lCommand $lRow $lCol "$@"
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
+	$lCommand $lRow $lCol
+}
+setForPrior() {
+	local lCommand="$1"; shift
+	local lValue="$1"; shift
+	# if [ "${lCommand:0:3}" = 'set' ];
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
+	$lCommand "$lValue" $lRow $lCol
+}
+getForBeforePrior() {
+	local lCommand="$1"; shift
+	# if [ "${lCommand:0:3}" = 'set' ];
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYBeforePrior "$@"); shift 2
+	$lCommand $lRow $lCol
+}
+setForBeforePrior() {
+	local lCommand="$1"; shift
+	local lValue="$1"; shift
+	# if [ "${lCommand:0:3}" = 'set' ];
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYBeforePrior "$@"); shift 2
+	$lCommand "$lValue" $lRow $lCol
 }
 getInput() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
 	local t="${inputs[$lRow]}"; echo -n "${t: $lCol:1}"
 }
 getInputColor() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
 	local t="${inputColors[$lRow]}"; echo -n "${t: $lCol:1}"
 }
 getInputColorBg() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
 	local t="$(getCoord $lRow $lCol)"; echo -n "${inputColorsBg[$t]}"
 }
 setInput() {
+	local val="$1"; shift
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
-	inputs[lRow]="${inputs[$lRow]:0:$lCol}${1}${inputs[$lRow]:$((lCol + 1))}"
+	inputs[lRow]="${inputs[$lRow]:0:$lCol}${val}${inputs[$lRow]:$((lCol + 1))}"
 }
 setInputColor() {
+	local val="$1"; shift
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
-	inputColors[lRow]="${inputColors[$lRow]:0:$lCol}${1}${inputColors[$lRow]:$((lCol + 1))}"
+	inputColors[lRow]="${inputColors[$lRow]:0:$lCol}${val}${inputColors[$lRow]:$((lCol + 1))}"
 }
 setInputColorBg() {
+	local val="$1"; shift
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
-	local t="$(getCoord $lRow $lCol)"; inputColorsBg[$t]="$1"
+	local t="$(getCoord $lRow $lCol)"; inputColorsBg[$t]="$val"
 }
 ##endregion######################################## ARRAY GETTERS/SETTERS ###########################################
 _update() {
 	local cache=''
-	while ((${#cache} > 0)) || read -rsN 1 -u 3 inputChar; do
+	while ((${#cache} > 0)) || read -rsN 1 -u 3 -t .5 inputChar; do
 		if ((${#cache} > 0)); then
 			inputChar="${cache:0:1}"
 			cache="${cache:1}"
@@ -288,19 +338,24 @@ _update() {
 		local priorInputChar="${inputs[$currRow]: -2:1}"
 		local preDisplay=''
 		local postDisplay="$FG_WHITE"
+		if [ -n "$(getInputColorBg)" ]; then
+			preDisplay+="$(tput setab "$(getInputColorBg)")"
+			postDisplay+="$BG_BLACK"
+		fi
 		doBackspace() {
 			local l_coord="$(getCoord)"
-			if (($(forPrior 'getInputColor') == 1)); then
+			if [ "$(getForPrior getInputColor)" = 1 ]; then
 				inputColorsBg[$l_coord]=3
 			fi
 			if [ -n "${inputColorsBg[$l_coord]}" ]; then
 				echo -n "$(tput setab "${inputColorsBg[$l_coord]}")"
 			fi
 			unset -v l_coord
-			if [ -n "$(forPrior getInputColor)" ]; then
-				echo -n "$(tput setaf "$(forPrior getInputColor)")"
+			if [ -n "$(getForPrior getInputColor)" ]; then
+				echo -n "$(tput setaf "$(getForPrior getInputColor)")"
 			fi
-			unset "inputColors[$((currCol - 1))]"
+			# unset "inputColors[$((currCol - 1))]"
+			setForPrior setInputColor ''
 			local l_display=$'\b'"${1:-$priorInputChar}"$'\b'"$BG_BLACK$FG_WHITE"
 			echo -n "$l_display"
 			unset -v l_display
@@ -317,7 +372,8 @@ _update() {
 		}
 		if [ "$inputChar" = "$currChar" ]; then
 			preDisplay+="$FG_GREEN"
-			inputColors[currCol]=2
+			# inputColors[currCol]=2
+			setInputColor 2
 		elif [ "$inputChar" = "$(tput kbs)" ]; then # Backspace
 			if ((currCol == 0 && currRow == 0)); then continue; fi # if [ -n "$priorInputChar" ]; then continue; fi
 			doBackspace ' '
@@ -347,7 +403,8 @@ _update() {
 			done
 		else # Incorrect character
 			preDisplay+="$FG_RED"
-			inputColors[currCol]=1
+			# inputColors[currCol]=1
+			setInputColor 1
 			if [ "$inputChar" = ' ' ]; then
 				preDisplay+="$(tput smso)"
 				postDisplay="$(tput rmso)$postDisplay"
@@ -362,8 +419,34 @@ _update() {
 			((currRow++))
 		fi
 	done
+	tput cud $((rows * 2 - currRow * 2))
+	local statusLine=$'\r'
+	statusLine+="inputs: ${inputs[*]}$(tput el)"$' \b\n'
+	statusLine+="inputColorsBg: $(declare -p inputColorsBg)$(tput el)"$' \b\n'
+	statusLine+="inputColors: ${inputColors[*]}$(tput el)"$' \b\n'
+	statusLine+="_getXY: $(_getXY)$(tput el)"$' \b\n'
+	statusLine+="_getXYPrior: $(_getXYPrior)$(tput el)"$' \b\n'
+	statusLine+="_getXYBeforePrior: $(_getXYBeforePrior)$(tput el)"$' \b\n'
+	statusLine+="getCoord: $(getCoord)$(tput el)"$' \b\n'
+	statusLine+="getForPrior getCoord: $(getForPrior getCoord)$(tput el)"$' \b\n'
+	statusLine+="getForBeforePrior getCoord: $(getForBeforePrior getCoord)$(tput el)"$' \b\n'
+	statusLine+="getInputColor: $(getInputColor)$(tput el)"$' \b\n'
+	statusLine+="getForPrior 'getInputColor': $(getForPrior 'getInputColor')$(tput el)"$' \b\n'
+	statusLine+="getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')$(tput el)"$' \b\n'
+	statusLine+="getInputColorBg: $(getInputColorBg)$(tput el)"$' \b\n'
+	statusLine+="getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg')$(tput el)"$' \b\n'
+	statusLine+="getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')$(tput el)"$' \b\n'
+	statusLine+="getInput: $(getInput)$(tput el)"$' \b\n'
+	statusLine+="getForPrior 'getInput': $(getForPrior 'getInput')$(tput el)"$' \b\n'
+	statusLine+="getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')$(tput el)"$' \b\n'
+	echo -n "$statusLine"
+	# tput cuu "$(profile_text --edit_mode -r -- "$statusLine")"
+	unset -v statusLine
+	# tput cuu $((rows * 2 - currRow * 2 + 1))
+	tput vpa $((currRow * 2 + 1))
+	if ((${#inputs[$currRow]} > 0)); then
+		tput cuf "${#inputs[$currRow]}"
+	fi
 }
-while ((currRow < rows)); do
-	_update
-done
+while ((currRow < rows)); do _update; done
 tput rmcup
