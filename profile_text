@@ -121,7 +121,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 				declare -r -i p_debugLevel=255
 			fi
 			;;
-		( --output_columns )
+		( --output\(_|-\)columns )
 			shift
 			if [[ "$1" =~ ^[123456789]+[[:digit:]]*$ ]]; then
 				if ! declare -r -g -i TERM_COLS="$1"; then exit 1; fi
@@ -132,7 +132,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
             	exit 1
 			fi
 			;;&
-		( --output_rows )
+		( --output\(_|-\)rows )
 			shift
 			if [[ "$1" =~ ^[123456789]+[[:digit:]]*$ ]]; then
 				if ! declare -r -g -i TERM_ROWS="$1"; then exit 1; fi
@@ -143,7 +143,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
             	exit 1
 			fi
 			;;&
-		( --initial_column_offset )
+		( --initial\(_|-\)column\(_|-\)offset )
 			shift
 			if [[ "$1" =~ ^[[:digit:]]+$ ]]; then
 				if ! declare -g -i initial_line_offset="$1" initial_line_offset_unwrapped="$1"; then exit 1; fi
@@ -154,22 +154,22 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
             	exit 1
 			fi
 			;;&
-		( --edit_mode )
+		( --edit\(_|-\)mode )
 			if ! declare -r flagEditMode='true'; then exit 1; fi
 			;;&
-		( --display_mode )
+		( --display\(_|-\)mode )
 			if ! declare -r flagEditMode='false'; then exit 1; fi
 			;;&
-		( --no_trailing_control )
+		( --no\(_|-\)trailing\(_|-\)control )
 			if ! declare -r p_trailing_control_chars='false'; then exit 1; fi
 			;;&
-		( --trailing_control )
+		( --trailing\(_|-\)control )
 			if ! declare -r p_trailing_control_chars='true'; then exit 1; fi
 			;;&
 		( -r | --rows )
 			if ! declare -r p_output=$C_OUTPUT_ROWS; then exit 1; fi
 			;;&
-		( --max_col_at )
+		( --max\(_|-\)col\(_|-\)at )
 			if ! declare -r p_output=$C_OUTPUT_MAX_COLS_AT; then exit 1; fi
 			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
 				p_trailing_control_chars='false'
@@ -177,7 +177,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagTrackRows='true' flagMaxCharMode='false'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( -m | --max_col )
+		( -m | --max\(_|-\)col )
 			if ! declare -r p_output=$C_OUTPUT_MAX_COLS; then exit 1; fi
 			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
 				p_trailing_control_chars='false'
@@ -185,7 +185,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagTrackRows='true' flagMaxCharMode='false'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( --max_chars_in_row )
+		( --max\(_|-\)chars\(_|-\)in\(_|-\)row )
 			declare -r p_output=$C_OUTPUT_MAX_CHARACTERS_IN_A_ROW
 			if ! declare -r p_output=$C_OUTPUT_MAX_CHARACTERS_IN_A_ROW; then exit 1; fi
 			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
@@ -194,7 +194,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagTrackRows='true' flagMaxCharMode='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( --row_preceded_by )
+		( --row\(_|-\)preceded\(_|-\)by )
 			if ! declare -r p_output=$C_OUTPUT_ROW_PRECEDED_BY; then exit 1; fi
 			shift
 			if [[ "$1" =~ ^(-|\+)?[[:digit:]]+$ ]]; then
@@ -210,7 +210,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagTrackRows='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( --row_succeeded_by )
+		( --row\(_|-\)succeeded\(_|-\)by )
 			declare -r p_output=$C_OUTPUT_ROW_SUCCEEDED_BY
 			if [ ! $? ]; then exit 1; fi
 			shift
@@ -228,7 +228,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagTrackRows='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( --chars_at )
+		( --chars\(_|-\)at )
 			declare -r p_output=$C_OUTPUT_CHARS_AT
 			if [ ! $? ]; then exit 1; fi
 			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
@@ -248,7 +248,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagMaxCharMode='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( -c | --col_at )
+		( -c | --col\(_|-\)at )
 			declare -r p_output=$C_OUTPUT_COLS_AT
 			if [ ! $? ]; then exit 1; fi
 			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
@@ -268,7 +268,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagMaxCharMode='false'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( --row_at )
+		( --row\(_|-\)at )
 			declare -r p_output=$C_OUTPUT_ROW_AT
 			if [ ! $? ]; then exit 1; fi
 			shift
@@ -284,7 +284,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagTrackRows='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( -[[:alpha:]] | --+([[:alpha:]_]) )
+		( -[[:alpha:]] | --+([[:alpha:]_-]) )
 			# echo "Gen called"
 			shift
 			;;
