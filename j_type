@@ -50,12 +50,13 @@ readonly BG_YELLOW="$(tput setab 3)"
 readonly BG_BLACK="$(tput setab 0)"
 readonly BACK_ONE="$(tput cub1)"
 ##region########################################### PARAMETERS ###########################################
-declare -i max_dict_size=200
+declare -i max_dict_size=100000
 declare -i max_word_length=7
 declare -i rows=3
 declare -i columns=$(tput cols)
 declare characters=' '
 declare -a words=()
+# Dynamically generate nonsense words?
 declare f_genWords='true'
 declare f_properPunctuation='true'
 declare -n opt1=characters opt2=testPath opt3=characters
@@ -93,8 +94,24 @@ while [[ -n "${1+x}" ]]; do
 	esac
 done
 if ! eval "$f_genWords"; then
+	# match only the words that are short enough & only have valid characters
 	mapfile -t words < <(grep --max-count=$max_dict_size -E --text -e "^[$characters]{1,$max_word_length}$" "$WORDS_FILE")
 fi
+declare -r ORIG_IFS="$IFS"
+# 1: max length
+# 2: valid chars
+getRandomWord() {
+	local -a validWords
+	if [ -n "${words[*]}" ]; then
+		IFS=$'\n'
+		mapfile -t validWords < <(echo -n "${words[*]}" | grep --max-count=$max_dict_size -E --text -e "^[$characters]{1,$1}$")
+		IFS="$ORIG_IFS"
+	else
+		mapfile -t validWords < <(grep --max-count=$max_dict_size -E --text -e "^[${2:-$characters}]{1,${1:-$max_word_length}}$" "$WORDS_FILE")
+	fi
+	local -i t_ind=$RANDOM%${#validWords[@]}
+	echo -n "${validWords[$t_ind]}"
+}
 ##endregion######################################## PARAMETERS ###########################################
 declare -a newTestLines=()
 declare -a testLines=()
@@ -105,21 +122,23 @@ function gen_test_sequence() {
 	RANDOM=$$
 	declare -g newTestLines=()
 	local l_current_word=''
-	# local -i l_iter=0
-	# local -r matcherStart='(^| )'
-	# local -r matcherEnd='( |$)'
+	# local -ir rows=
 	for ((j = 0; j < rows; j++)); do
 		for ((i = 0; i < columns; i++)); do
-			# ((l_iter++))
+			if ((${#l_current_word} >= max_word_length)); then
+				l_current_word=''
+				# TODO: Add chance to add a punctuation or space if following grammar rules
+				newTestLines[j]+=' '
+				continue
+			fi
 			if ((${#words[@]} > 0)); then
-				# local badIndices=''
 				local -a badIndices=()
 				while true; do
-					((t_ind=-1, loop = 0))
-					# while ((t_ind < 0)) || [[ "$badIndices" =~ $matcherStart$t_ind$matcherEnd ]]; do
-					while ((t_ind < 0)) || array_includes "$t_ind" "${badIndices[@]}"; do
-						((loop++, t_ind = RANDOM % ${#words[@]}))
-						if ((loop >= 100)); then break; fi
+					((t_ind = RANDOM % ${#words[@]}, loop = 0))
+					for ((t_ind = RANDOM % ${#words[@]}, loop = 0; loop < 100; loop++, t_ind = RANDOM % ${#words[@]})); do
+						if ! array_includes "$t_ind" "${badIndices[@]}"; then
+							break;
+						fi
 					done
 					l_current_word="${words[$t_ind]}"
 					local -i newLength=0
@@ -133,7 +152,8 @@ function gen_test_sequence() {
 							newTestLines[j]+="${l_current_word:0:$l_wordSlice}-"
 							((j++))
 							newTestLines[j]+="${l_current_word: -$newLength} "
-							((i=newLength))
+							l_current_word=
+							((i = ${#newTestLines[j]} - 1))
 							break
 						# ...and there's not another line...
 						else
@@ -143,7 +163,6 @@ function gen_test_sequence() {
 								break 2
 							# ...try another word
 							else
-								# badIndices+=" $t_ind"
 								badIndices+=("$t_ind")
 								continue
 							fi
@@ -151,75 +170,82 @@ function gen_test_sequence() {
 					# If it perfectly fills the line
 					elif ((newLength == columns)); then
 						newTestLines[j]+="$l_current_word"
-						# Start w/ a space...
+						# If there's another line...
 						if ((j + 1 < rows)); then
-							((j++, i = 0))
+							# ...start it w/ a space
+							((j++))
 							newTestLines[j]+=' '
+							((i = ${#newTestLines[j]} - 1))
+							l_current_word=
 							break
-						# ...or we're done
-						else
+						else # ...or we're done
 							break 3
 						fi
-					else
-						newTestLines[j]+="$l_current_word"
+					# # If it perfectly fills the line w/ a space
+					# elif ((newLength + 1 == columns)); then
+					# 	newTestLines[j]+="$l_current_word "
+					# 	((i = ${#newTestLines[j]} - 1))
+					# 	l_current_word=
+					# 	break
+					else # It fits, but doesn't fill, the line (even w/ a space)
+						newTestLines[j]+="$l_current_word "
+						((i = ${#newTestLines[j]} - 1))
+						l_current_word=
 						break
 					fi
 				done
 				continue
 			fi
-			if ((${#l_current_word} >= max_word_length)); then
-				l_current_word=''
-				newTestLines[j]+=' '
-			else
-				((t_ind = RANDOM % ${#characters}))
-				local tChar="${characters:$t_ind:1}"
-				if [ "$tChar" = ' ' ]; then
-					# It doesn't end in space & isn't empty
-					if [ "${newTestLines[$j]: -1}" != ' ' ] && (("${#l_current_word}" > 0)); then
+			((t_ind = RANDOM % ${#characters}))
+			local tChar="${characters:$t_ind:1}"
+			if [ "$tChar" = ' ' ]; then
+				# It doesn't end in space & isn't empty
+				if [ "${newTestLines[$j]: -1}" != ' ' ] && (("${#l_current_word}" > 0)); then
+					l_current_word=''
+					newTestLines[j]+="$tChar"
+				else # Try again
+					((i--))
+				fi
+			elif eval "$f_properPunctuation"; then
+				if [[ "$tChar" =~ [\;\,\.\:\!] ]] || [ "$tChar" = ';' ] || [ "$tChar" = ',' ]; then
+					# If there's space for the char + a space, it's preceded by a letter/number, & the word isn't empty
+					if ((${#newTestLines[$j]} + 2 < columns)) && [[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && (("${#l_current_word}" > 0)); then
 						l_current_word=''
-						newTestLines[j]+="$tChar"
+						newTestLines[j]+="$tChar "
+						((i++))
 					else # Try again
 						((i--))
-						# ((l_iter--))
 					fi
-				elif eval "$f_properPunctuation"; then
-					if [[ "$tChar" =~ [\;\,\.\:\!] ]] || [ "$tChar" = ';' ] || [ "$tChar" = ',' ]; then
-						# It there's space for the char + a space, is preceded by a letter/number, & the word isn't empty
-						if ((${#newTestLines[$j]} + 2 < columns)) && [[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && (("${#l_current_word}" > 0)); then
-							l_current_word=''
-							newTestLines[j]+="$tChar "
-							((i++))
-						else # Try again
-							((i--))
-							# ((l_iter--))
-						fi
-					elif [ "$tChar" = '.' ]; then
-						# It there's space for the char + a space, is preceded by a letter/number, & the word isn't empty
-						if ((${#newTestLines[$j]} + 2 < columns)) && [[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && (("${#l_current_word}" > 0)); then
-							l_current_word=''
-							newTestLines[j]+="$tChar "
-							((i++))
-						else # Try again
-							((i--))
-							# ((l_iter--))
-						fi
-					else
-						l_current_word+="$tChar"
-						newTestLines[j]+="$tChar"
+				elif [ "$tChar" = '.' ]; then
+					# If there's space for the char + a space, it's preceded by a letter/number, & the word isn't empty
+					if ((${#newTestLines[$j]} + 2 < columns)) && [[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && (("${#l_current_word}" > 0)); then
+						l_current_word=''
+						newTestLines[j]+="$tChar "
+						((i++))
+					else # Try again
+						((i--))
 					fi
 				else
 					l_current_word+="$tChar"
 					newTestLines[j]+="$tChar"
 				fi
-				unset -v tChar
+			else
+				l_current_word+="$tChar"
+				newTestLines[j]+="$tChar"
 			fi
+			unset tChar
 		done
 	done
-	# echo $l_iter $i $j
 }
+# function _testGenerator() {
+# 	function _test_punctuation() {
+# 		gen_test_sequence
+# 	}
+# }
 ##endregion######################################## GENERATE TEST SEQUENCE ###########################################
 
 gen_test_sequence
+# unset words
 for item in "${newTestLines[@]}"; do
 	testLines+=("$item")
 done
@@ -247,7 +273,6 @@ unset inputStreamName
 exec 3<&0
 ##endregion######################################## SETUP INPUT STREAM ###########################################
 # declare -r ORIG_IFS="$IFS"; IFS=$'\n'
-declare -i currCol=0
 stty -echo; trap 'stty echo' EXIT
 ##region########################################### ARRAY GETTERS/SETTERS ###########################################
 _getXY() {
@@ -355,6 +380,7 @@ setInputColorBg() {
 	local t="$(getCoord $lRow $lCol)"; inputColorsBg[$t]="$val"
 }
 ##endregion######################################## ARRAY GETTERS/SETTERS ###########################################
+getCurrCol() { echo -n ${#inputs[$currRow]}; }
 _update() {
 	local cache=''
 	while ((${#cache} > 0)) || read -rsN 1 -u 3 -t .5 inputChar; do
@@ -380,60 +406,69 @@ _update() {
 			if [ -n "${inputColorsBg[$l_coord]}" ]; then
 				echo -n "$(tput setab "${inputColorsBg[$l_coord]}")"
 			fi
-			unset -v l_coord
+			unset l_coord
 			if [ -n "$(getForPrior getInputColor)" ]; then
 				echo -n "$(tput setaf "$(getForPrior getInputColor)")"
 			fi
-			# unset "inputColors[$((currCol - 1))]"
 			setForPrior setInputColor ''
 			local l_display=$'\b'"${1:-$priorInputChar}"$'\b'"$BG_BLACK$FG_WHITE"
 			echo -n "$l_display"
-			unset -v l_display
+			unset l_display
 			# Update logical inputs
-			if ((currCol == 0 && currRow > 0)); then
+			if (($(getCurrCol) == 0 && currRow > 0)); then
 				unset "inputs[$currRow]"
-				((currRow--, currCol = columns - 1))
+				((currRow--))
 				return
 			fi
 			local l_t="${inputs[$currRow]}"
 			inputs[currRow]="${l_t:0:-1}"
 			priorInputChar="${l_t: -2:1}"
-			unset -v l_t
+			unset l_t
 		}
 		if [ "$inputChar" = "$currChar" ]; then
 			preDisplay+="$FG_GREEN"
-			# inputColors[currCol]=2
 			setInputColor 2
 		elif [ "$inputChar" = "$(tput kbs)" ]; then # Backspace
-			if ((currCol == 0 && currRow == 0)); then continue; fi # if [ -n "$priorInputChar" ]; then continue; fi
+			# If there's nothing to backspace, skip
+			if (($(getCurrCol) <= 0 && currRow <= 0)); then continue; fi
 			doBackspace ' '
 			continue
 		elif [ "$inputChar" = $'\E' ]; then # ESCAPE SEQUENCE
-			read -rsN 1 -u 3 escapeSequence
+			local escapeSequence
+			if ((${#cache} > 0)); then
+				local escapeSequence="$cache"
+				cache=''
+			else
+				# read -rsN 1 -u 3 escapeSequence
+				read -rsN $((2**31 - 1)) -u 3 -t .01 escapeSequence
+			fi
 			# for ((i = 0; i < ${#escapeSequence}; i++)); do
 			# 	if  [ "${escapeSequence:0:-$i}" = "$(tput khome)" ] || [ $'\E'"${escapeSequence:0:-$i}" = "$(tput khome)" ] || 
 			# 		[ "${escapeSequence:0:-$i}" = $'\r' ] || [ $'\E'"${escapeSequence:0:-$i}" = $'\r' ] ||
 			# 		[ "${escapeSequence:0:-$i}" = "[H" ]; then # Home
-			# 		for ((; currCol > 0; currCol--)); do
+			# 		for ((currCol=$(getCurrCol); currCol > 0; currCol--)); do
 			# 			doBackspace
 			# 		done
 			# 		continue 2
 			# 	fi
 			# done
-			for ((i = ${#escapeSequence} - 1; i > 0; i--)); do
-				cache="${escapeSequence:$i}"
-				if  [ "${escapeSequence:0:-$i}" = "$(tput khome)" ] || [ $'\E'"${escapeSequence:0:-$i}" = "$(tput khome)" ] || 
-					[ "${escapeSequence:0:-$i}" = $'\r' ] || [ $'\E'"${escapeSequence:0:-$i}" = $'\r' ] ||
-					[ "${escapeSequence:0:-$i}" = "[H" ]; then # Home
-					for ((; currCol > 0; currCol--)); do
+			# From the end of cache, search for the longest matching escape sequence.
+			for ((i = ${#escapeSequence}; i > 0; i--)); do
+				cache="${escapeSequence:$i}$cache"
+				escapeSequence="${escapeSequence:0:$i}"
+				if  [ "$escapeSequence" = "$(tput khome)" ] || [ $'\E'"$escapeSequence" = "$(tput khome)" ] || 
+					[ "$escapeSequence" = $'\r' ] || [ $'\E'"$escapeSequence" = $'\r' ] ||
+					[ "$escapeSequence" = "[H" ]; then # Home
+					for ((currCol=$(getCurrCol); currCol > 0; currCol--)); do
 						doBackspace
 					done
+					unset escapeSequence currCol
 					continue 2
 				fi
 			done
+			unset escapeSequence
 		else # Incorrect character
 			preDisplay+="$FG_RED"
-			# inputColors[currCol]=1
 			setInputColor 1
 			if [ "$inputChar" = ' ' ]; then
 				preDisplay+="$(tput smso)"
@@ -443,16 +478,19 @@ _update() {
 		fi
 		echo -n "$preDisplay$inputChar$postDisplay"
 		inputs[currRow]+="$inputChar"
-		if ((currCol + 1 == columns)); then
+		if (($(getCurrCol) == ${#testLines[$currRow]})); then
 			tput cud 2
 			echo -n $'\r'
 			((currRow++))
+		elif (($(getCurrCol) > ${#testLines[$currRow]})); then
+			exit 1 # TODO: THROW
 		fi
 	done
-	tput cud $((rows * 2 - currRow * 2))
+	##region########################################### Status Line ###########################################
+	local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
 	local statusLine=$'\r'
 	statusLine+="inputs: ${inputs[*]}$(tput el)"$' \b\n'
-	statusLine+="inputColorsBg: $(declare -p inputColorsBg)$(tput el)"$' \b\n'
+	statusLine+="inputColorsBg: ${inputColorsBg[*]@A}$(tput el)"$' \b\n'
 	statusLine+="inputColors: ${inputColors[*]}$(tput el)"$' \b\n'
 	statusLine+="_getXY: $(_getXY)$(tput el)"$' \b\n'
 	statusLine+="_getXYPrior: $(_getXYPrior)$(tput el)"$' \b\n'
@@ -472,14 +510,12 @@ _update() {
 	statusLine+="getInput: $(getInput)$(tput el)"$' \b\n'
 	statusLine+="getForPrior 'getInput': $(getForPrior 'getInput')$(tput el)"$' \b\n'
 	statusLine+="getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')$(tput el)"$' \b\n'
-	echo -n "$statusLine"
-	# tput cuu "$(profile_text --edit_mode -r -- "$statusLine")"
-	unset -v statusLine
-	# tput cuu $((rows * 2 - currRow * 2 + 1))
-	tput vpa $((currRow * 2 + 1))
-	if ((${#inputs[$currRow]} > 0)); then
-		tput cuf "${#inputs[$currRow]}"
-	fi
+	if ((${#words[@]} > 0)); then statusLine+="last word: ${words[-1]}$(tput el)"$' \b\n'; fi
+	local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
+	if (($(getCurrCol) > 0)); then postStatusLine+="$(tput cuf "$(getCurrCol)")"; fi
+	echo -n "$preStatusLine$statusLine$postStatusLine"
+	unset statusLine preStatusLine postStatusLine
+	##endregion######################################## Status Line ###########################################
 }
 while ((currRow < rows)); do _update; done
 tput rmcup
