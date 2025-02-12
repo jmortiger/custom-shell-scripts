@@ -50,6 +50,10 @@ readonly BG_YELLOW="$(tput setab 3)"
 readonly BG_BLACK="$(tput setab 0)"
 readonly BACK_ONE="$(tput cub1)"
 ##region########################################### PARAMETERS ###########################################
+# The time in seconds after which an update will be forced.
+declare -ir FORCE_REFRESH_INTERVAL=5
+# The time in seconds after which an update will be attempted.
+declare -ir REFRESH_INTERVAL=1
 declare -i max_dict_size=100000
 declare -i max_word_length=7
 declare -i rows=3
@@ -381,6 +385,7 @@ setInputColorBg() {
 }
 ##endregion######################################## ARRAY GETTERS/SETTERS ###########################################
 getCurrCol() { echo -n ${#inputs[$currRow]}; }
+declare -i lastUpdate=$(date -u +'%-s')
 _update() {
 	local cache=''
 	while ((${#cache} > 0)) || read -rsN 1 -u 3 -t .5 inputChar; do
@@ -388,6 +393,7 @@ _update() {
 			inputChar="${cache:0:1}"
 			cache="${cache:1}"
 		fi
+		local -i currTime=$(date -u +'%-s')
 		local -i currCol=${#inputs[$currRow]}
 		local currChar="${testLines[$currRow]:$currCol:1}"
 		local priorInputChar="${inputs[$currRow]: -2:1}"
@@ -485,36 +491,69 @@ _update() {
 		elif (($(getCurrCol) > ${#testLines[$currRow]})); then
 			exit 1 # TODO: THROW
 		fi
+		if ((currTime - lastUpdate > REFRESH_INTERVAL)); then
+			##region########################################### Status Line ###########################################
+			local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
+			local statusLine=$'\r'
+			statusLine+="inputs: ${inputs[*]}$(tput el)"$' \b\n'
+			statusLine+="inputColorsBg: ${inputColorsBg[*]@A}$(tput el)"$' \b\n'
+			statusLine+="inputColors: ${inputColors[*]}$(tput el)"$' \b\n'
+			statusLine+="_getXY: $(_getXY)$(tput el)"$' \b\n'
+			statusLine+="_getXYPrior: $(_getXYPrior)$(tput el)"$' \b\n'
+			statusLine+="_getXYBeforePrior: $(_getXYBeforePrior)$(tput el)"$' \b\n'
+			statusLine+="getCoord: $(getCoord)$(tput el)"$' \b\n'
+			statusLine+="getForPrior getCoord: $(getForPrior getCoord)$(tput el)"$' \b\n'
+			statusLine+="getForBeforePrior getCoord: $(getForBeforePrior getCoord)$(tput el)"$' \b\n'
+			# shellcheck disable=SC2119
+			statusLine+="getInputColor: $(getInputColor)$(tput el)"$' \b\n'
+			statusLine+="getForPrior 'getInputColor': $(getForPrior 'getInputColor')$(tput el)"$' \b\n'
+			statusLine+="getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')$(tput el)"$' \b\n'
+			# shellcheck disable=SC2119
+			statusLine+="getInputColorBg: $(getInputColorBg)$(tput el)"$' \b\n'
+			statusLine+="getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg')$(tput el)"$' \b\n'
+			statusLine+="getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')$(tput el)"$' \b\n'
+			# shellcheck disable=SC2119
+			statusLine+="getInput: $(getInput)$(tput el)"$' \b\n'
+			statusLine+="getForPrior 'getInput': $(getForPrior 'getInput')$(tput el)"$' \b\n'
+			statusLine+="getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')$(tput el)"$' \b\n'
+			if ((${#words[@]} > 0)); then statusLine+="last word: ${words[-1]}$(tput el)"$' \b\n'; fi
+			local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
+			if (($(getCurrCol) > 0)); then postStatusLine+="$(tput cuf "$(getCurrCol)")"; fi
+			echo -n "$preStatusLine$statusLine$postStatusLine"
+			unset statusLine preStatusLine postStatusLine
+			##endregion######################################## Status Line ###########################################
+			((lastUpdate=currTime))
+		fi
 	done
 	##region########################################### Status Line ###########################################
-	local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
-	local statusLine=$'\r'
-	statusLine+="inputs: ${inputs[*]}$(tput el)"$' \b\n'
-	statusLine+="inputColorsBg: ${inputColorsBg[*]@A}$(tput el)"$' \b\n'
-	statusLine+="inputColors: ${inputColors[*]}$(tput el)"$' \b\n'
-	statusLine+="_getXY: $(_getXY)$(tput el)"$' \b\n'
-	statusLine+="_getXYPrior: $(_getXYPrior)$(tput el)"$' \b\n'
-	statusLine+="_getXYBeforePrior: $(_getXYBeforePrior)$(tput el)"$' \b\n'
-	statusLine+="getCoord: $(getCoord)$(tput el)"$' \b\n'
-	statusLine+="getForPrior getCoord: $(getForPrior getCoord)$(tput el)"$' \b\n'
-	statusLine+="getForBeforePrior getCoord: $(getForBeforePrior getCoord)$(tput el)"$' \b\n'
-	# shellcheck disable=SC2119
-	statusLine+="getInputColor: $(getInputColor)$(tput el)"$' \b\n'
-	statusLine+="getForPrior 'getInputColor': $(getForPrior 'getInputColor')$(tput el)"$' \b\n'
-	statusLine+="getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')$(tput el)"$' \b\n'
-	# shellcheck disable=SC2119
-	statusLine+="getInputColorBg: $(getInputColorBg)$(tput el)"$' \b\n'
-	statusLine+="getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg')$(tput el)"$' \b\n'
-	statusLine+="getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')$(tput el)"$' \b\n'
-	# shellcheck disable=SC2119
-	statusLine+="getInput: $(getInput)$(tput el)"$' \b\n'
-	statusLine+="getForPrior 'getInput': $(getForPrior 'getInput')$(tput el)"$' \b\n'
-	statusLine+="getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')$(tput el)"$' \b\n'
-	if ((${#words[@]} > 0)); then statusLine+="last word: ${words[-1]}$(tput el)"$' \b\n'; fi
-	local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
-	if (($(getCurrCol) > 0)); then postStatusLine+="$(tput cuf "$(getCurrCol)")"; fi
-	echo -n "$preStatusLine$statusLine$postStatusLine"
-	unset statusLine preStatusLine postStatusLine
+	# local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
+	# local statusLine=$'\r'
+	# statusLine+="inputs: ${inputs[*]}$(tput el)"$' \b\n'
+	# statusLine+="inputColorsBg: ${inputColorsBg[*]@A}$(tput el)"$' \b\n'
+	# statusLine+="inputColors: ${inputColors[*]}$(tput el)"$' \b\n'
+	# statusLine+="_getXY: $(_getXY)$(tput el)"$' \b\n'
+	# statusLine+="_getXYPrior: $(_getXYPrior)$(tput el)"$' \b\n'
+	# statusLine+="_getXYBeforePrior: $(_getXYBeforePrior)$(tput el)"$' \b\n'
+	# statusLine+="getCoord: $(getCoord)$(tput el)"$' \b\n'
+	# statusLine+="getForPrior getCoord: $(getForPrior getCoord)$(tput el)"$' \b\n'
+	# statusLine+="getForBeforePrior getCoord: $(getForBeforePrior getCoord)$(tput el)"$' \b\n'
+	# # shellcheck disable=SC2119
+	# statusLine+="getInputColor: $(getInputColor)$(tput el)"$' \b\n'
+	# statusLine+="getForPrior 'getInputColor': $(getForPrior 'getInputColor')$(tput el)"$' \b\n'
+	# statusLine+="getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')$(tput el)"$' \b\n'
+	# # shellcheck disable=SC2119
+	# statusLine+="getInputColorBg: $(getInputColorBg)$(tput el)"$' \b\n'
+	# statusLine+="getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg')$(tput el)"$' \b\n'
+	# statusLine+="getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')$(tput el)"$' \b\n'
+	# # shellcheck disable=SC2119
+	# statusLine+="getInput: $(getInput)$(tput el)"$' \b\n'
+	# statusLine+="getForPrior 'getInput': $(getForPrior 'getInput')$(tput el)"$' \b\n'
+	# statusLine+="getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')$(tput el)"$' \b\n'
+	# if ((${#words[@]} > 0)); then statusLine+="last word: ${words[-1]}$(tput el)"$' \b\n'; fi
+	# local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
+	# if (($(getCurrCol) > 0)); then postStatusLine+="$(tput cuf "$(getCurrCol)")"; fi
+	# echo -n "$preStatusLine$statusLine$postStatusLine"
+	# unset statusLine preStatusLine postStatusLine
 	##endregion######################################## Status Line ###########################################
 }
 while ((currRow < rows)); do _update; done
