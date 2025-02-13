@@ -181,13 +181,7 @@ function genTestSequence() {
 						else # ...or we're done
 							break 3
 						fi
-					# # If it perfectly fills the line w/ a space
-					# elif ((newLength + 1 == columns)); then
-					# 	newTestLines[j]+="$l_current_word "
-					# 	((i = ${#newTestLines[j]} - 1))
-					# 	l_current_word=
-					# 	break
-					else # It fits, but doesn't fill, the line (even w/ a space)
+					else # It fits, but doesn't fill, the line (disregarding the trailing space)
 						newTestLines[j]+="$l_current_word "
 						((i = ${#newTestLines[j]} - 1))
 						l_current_word=
@@ -207,18 +201,11 @@ function genTestSequence() {
 					((i--))
 				fi
 			elif eval "$f_properPunctuation"; then
-				if [[ "$tChar" =~ [\;\,\.\:\!] ]] || [ "$tChar" = ';' ] || [ "$tChar" = ',' ]; then
+				if [[ "$tChar" =~ [\;\,\.\:\!] ]]; then
 					# If there's space for the char + a space, it's preceded by a letter/number, & the word isn't empty
-					if ((${#newTestLines[$j]} + 2 < columns)) && [[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && (("${#l_current_word}" > 0)); then
-						l_current_word=''
-						newTestLines[j]+="$tChar "
-						((i++))
-					else # Try again
-						((i--))
-					fi
-				elif [ "$tChar" = '.' ]; then
-					# If there's space for the char + a space, it's preceded by a letter/number, & the word isn't empty
-					if ((${#newTestLines[$j]} + 2 < columns)) && [[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && (("${#l_current_word}" > 0)); then
+					if  ((${#newTestLines[$j]} + 2 < columns)) && 
+						[[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && 
+						(("${#l_current_word}" > 0)); then
 						l_current_word=''
 						newTestLines[j]+="$tChar "
 						((i++))
@@ -291,20 +278,6 @@ _getXY() {
 			local -ir lCol="$2"
 		else
 			local -ir lCol="${#inputs[$lRow]}"
-			# echo "${inputs[$lRow]}" 1>&2
-			# echo "lRow: ${lRow}" 1>&2
-			# echo "inputs: ${inputs[*]}" 1>&2
-			# lCol="${inputs[$lRow]}"
-			# echo "lCol: ${lCol}" 1>&2
-			# # if ! inputs[lRow]="${inputs[$lRow]}"; then
-			# # 	local call i=0
-			# # 	while call=caller $i; do
-			# # 		((i++))
-			# # 		echo $'\t'"$call" 1>&2
-			# # 	done
-			# # else
-			# # fi
-			# local -ir lCol
 		fi
 	fi
 	echo $lRow $lCol
@@ -352,14 +325,17 @@ setForBeforePrior() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYBeforePrior "$@"); shift 2
 	$lCommand "$lValue" $lRow $lCol
 }
+# shellcheck disable=SC2120
 getInput() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
 	local t="${inputs[$lRow]}"; echo -n "${t: $lCol:1}"
 }
+# shellcheck disable=SC2120
 getInputColor() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
 	local t="${inputColors[$lRow]}"; echo -n "${t: $lCol:1}"
 }
+# shellcheck disable=SC2120
 getInputColorBg() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
 	local t="$(getCoord $lRow $lCol)"; echo -n "${inputColorsBg[$t]}"
@@ -480,13 +456,9 @@ _update() {
 					##endregion############################## Debug Output #################################
 					break
 				elif  [ $'\e'"$escapeSequence" = "${CTR_SEQ[end]}" ]; then # Home
-					# TODO: allow non-destructive scroll-back
+					# TODO: Implement
 					##region################################# Actual Output #################################
-					# local -i currCol
-					# for ((currCol=$(getCurrCol); currCol > 0; currCol--)); do
-					# 	doBackspace
-					# done
-					# unset currCol
+					
 					##endregion############################## Actual Output #################################
 					##region################################# Debug Output #################################
 					inputChar='E'
