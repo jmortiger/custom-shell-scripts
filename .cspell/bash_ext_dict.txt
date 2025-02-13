@@ -1,5 +1,8 @@
++rc
+bash*
 extglob
 globasciiranges
+input*
 mkfifo
 nocasematch
 patsub_replacement

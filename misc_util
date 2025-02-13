@@ -20,40 +20,14 @@ else
 	exit 1
 fi
 ##endregion######################################## GET PATH, DIR, & NAME ###########################################
+##region########################################### CONSTANTS ###########################################
 
-# New uses $LINENO/BASH_LINENO
-##region################################# OLD EXIT WITH ERROR AND LINE #################################
-readonly MATCH_LINE='^[[:blank:]]*exit_error .*?'
-exit_error_old() {
-	if [[ "$1" =~ ^[[:digit:]]+$ ]]; then local -ir errorCode=$1; shift; else local -ir errorCode=1; fi
-	line=$(grep -m 1 -n -E -e "$MATCH_LINE($1)" "$MY_PATH")
-	if [[ "$line" =~ ^([[:digit:]]+) ]]; then
-		line="${BASH_REMATCH[1]}: "
-	else
-		line=''
-	fi
-	echo "$MY_NAME: $line$*" 1>&2
-	exit $errorCode
-}
-##endregion############################## OLD EXIT WITH ERROR AND LINE #################################
-
-##region################################# NEW EXIT WITH ERROR AND LINE #################################
-exit_error() {
-	if [[ "$1" =~ ^[[:digit:]]+$ ]]; then local -ir errorCode=$1; shift; else local -ir errorCode=1; fi
-	mapfile -t val < caller 0
-	# echo "$MY_NAME: $line$*" 1>&2
-	t_out="$MY_NAME: $*"$'\n'"${val[0]}"
-	echo "$t_out" 1>&2
-	exit $errorCode
-}
-##endregion############################## NEW EXIT WITH ERROR AND LINE #################################
-
-readonly MAX_INT=$(( 2**63 - 1 ))
-declare -r -i MAX_READ_INT=$(( 2**31 - 1))
+declare -ri MAX_INT=$(( 2**63 - 1 ))
+declare -ri MAX_READ_INT=$(( 2**31 - 1))
 # https://unix.stackexchange.com/questions/592159/how-to-read-file-in-bash-using-a-fixed-number-of-character#comment1104513_592159
 # https://www.reddit.com/r/bash/comments/1cest8z/comment/l1o17vt/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 # https://www.reddit.com/r/bash/comments/1cest8z/comment/l1orak7/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-declare -r -i MAX_READ_BUFFER=4096
+declare -ri MAX_READ_BUFFER=4096
 # #region ########## SIGNALS ##########
 # cspell:disable
 # https://man7.org/linux/man-pages/man7/signal.7.html
@@ -121,6 +95,50 @@ declare -ri TPUT_COLOR_WHITE=7
 declare -ri TPUT_COLOR_NOT_USED=8
 declare -ri TPUT_COLOR_RESET_TO_DEFAULT_COLOR=9
 ##endregion################ TPUT COLORS ###################
+# /etc/inputrc
+# https://unix.stackexchange.com/questions/116562/key-bindings-table
+declare -Ar CTR_SEQ=(
+	[home]=$'\e[H'
+	[end]=$'\e[F'
+	[up]=$'\e[A'
+	[down]=$'\e[B'
+	[right]=$'\e[C'
+	[left]=$'\e[D'
+)
+case "$1" in
+	MAX_READ_INT) echo -n "${MAX_READ_INT@A}"; exit 0;;
+	CTR_SEQ) echo -n "${CTR_SEQ[@]@A}"; exit 0;;
+	TPUT_COLOR) echo -n "${TPUT_COLOR[@]@A}"; exit 0;;
+	# *) exit 1;;
+esac
+##endregion######################################## CONSTANTS ###########################################
+# New uses $LINENO/BASH_LINENO
+##region################################# OLD EXIT WITH ERROR AND LINE #################################
+# readonly MATCH_LINE='^[[:blank:]]*exit_error .*?'
+# exit_error_old() {
+# 	if [[ "$1" =~ ^[[:digit:]]+$ ]]; then local -ir errorCode=$1; shift; else local -ir errorCode=1; fi
+# 	line=$(grep -m 1 -n -E -e "$MATCH_LINE($1)" "$MY_PATH")
+# 	if [[ "$line" =~ ^([[:digit:]]+) ]]; then
+# 		line="${BASH_REMATCH[1]}: "
+# 	else
+# 		line=''
+# 	fi
+# 	echo "$MY_NAME: $line$*" 1>&2
+# 	exit $errorCode
+# }
+##endregion############################## OLD EXIT WITH ERROR AND LINE #################################
+
+##region################################# NEW EXIT WITH ERROR AND LINE #################################
+exit_error() {
+	if [[ "$1" =~ ^[[:digit:]]+$ ]]; then local -ir errorCode=$1; shift; else local -ir errorCode=1; fi
+	mapfile -t val < caller 0
+	# echo "$MY_NAME: $line$*" 1>&2
+	t_out="$MY_NAME: $*"$'\n'"${val[0]}"
+	echo "$t_out" 1>&2
+	exit $errorCode
+}
+##endregion############################## NEW EXIT WITH ERROR AND LINE #################################
+
 #########################region GET OPTIONS#########################
 # #region ########## METHOD 1 ##########
 useLabels='false'
