@@ -282,18 +282,27 @@ _getXY() {
 	fi
 	echo $lRow $lCol
 }
+_getXYNext() {
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@")
+	# if ((lCol >= columns && lRow < rows)); then
+	if ((lCol >= columns)); then
+		((lCol = 0, lRow++))
+	else
+		((lCol++))
+	fi
+	echo $lRow $lCol
+}
+_getXYAfterNext() { read -sr lRow lCol < <(_getXYNext "$@"); _getXYNext "$lRow" "$lCol"; }
 _getXYPrior() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); shift 2
-	((lRow = lCol >= columns && lRow > 0 ? lRow - 1 : lRow))
-	((lCol = lCol >= columns ? 0 : lCol - 1))
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@")
+	if ((lCol <= 0 && lRow > 0)); then
+		((lCol = columns - 1, lRow--))
+	else
+		((lCol--))
+	fi
 	echo $lRow $lCol
 }
-_getXYBeforePrior() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
-	((lRow = lCol >= columns && lRow > 0 ? lRow - 1 : lRow))
-	((lCol = lCol >= columns ? 0 : lCol - 1))
-	echo $lRow $lCol
-}
+_getXYBeforePrior() { read -sr lRow lCol < <(_getXYPrior "$@"); _getXYPrior "$lRow" "$lCol"; }
 getCoord() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
 	echo -n "$lRow:$lCol"
@@ -326,6 +335,11 @@ setForBeforePrior() {
 	$lCommand "$lValue" $lRow $lCol
 }
 # shellcheck disable=SC2120
+getTestChar() {
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
+	local t="${testLines[$lRow]}"; echo -n "${t: $lCol:1}"
+}
+# shellcheck disable=SC2120
 getInput() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
 	local t="${inputs[$lRow]}"; echo -n "${t: $lCol:1}"
@@ -356,8 +370,42 @@ setInputColorBg() {
 	local t="$(getCoord $lRow $lCol)"; inputColorsBg[$t]="$val"
 }
 ##endregion######################################## ARRAY GETTERS/SETTERS ###########################################
-getCurrCol() { echo -n ${#inputs[$currRow]}; }
-# setCurrCol() { echo -n ${#inputs[$currRow]}; }
+getCurrInputColNum()  { echo -n ${#inputs[$currRow]}; }
+# setCurrInputColNum() { echo -n ${#inputs[$currRow]}; }
+addToInput() {
+	local -i linesAdded=0; local -i myCurrRow=$currRow; local -i myCurrCol=$(getCurrInputColNum)
+	for ((i = 0; i < "${#1}"; i++)); do
+		inputs[myCurrRow]+="${1:$i:1}"
+		((myCurrCol++))
+		if ((myCurrCol == columns)); then
+			((myCurrCol = 0))
+			((myCurrRow++))
+			((linesAdded++))
+		elif ((myCurrCol > columns)); then
+			echo "$(getCurrInputColNum) > columns ($columns)"
+			sleep 3
+			exit 1 # TODO: THROW
+		fi
+	done
+	return $linesAdded
+}
+removeFromInput() {
+	local -i linesRemoved=0; local -i myCurrRow=$currRow; local -i myCurrCol=$(getCurrInputColNum)
+	for ((i = 0; i < "$1"; i++)); do
+		if (($(getCurrInputColNum) == 0 && currRow > 0)); then
+			((myCurrRow--))
+			((myCurrCol=$(getCurrInputCol)))
+			((linesRemoved++))
+		elif (($(getCurrInputColNum) < 0)); then
+			echo "$(getCurrInputColNum) < 0"
+			sleep 3
+			exit 1 # TODO: THROW
+		fi
+		inputs[myCurrRow]="${inputs[$myCurrRow]:0:$((myCurrCol - 1))}${inputs[$myCurrRow]:$((myCurrCol))}"
+	done
+	return $linesRemoved
+}
+# setCurrInputColChar() { echo -n "${inputs[$currRow]: -1}"; }
 declare -i lastUpdate=$(date -u +'%-s')
 _update() {
 	local cache=''
@@ -367,8 +415,6 @@ _update() {
 			cache="${cache:1}"
 		fi
 		local -i currTime=$(date -u +'%-s')
-		local currChar="${testLines[$currRow]:$(getCurrCol):1}"
-		local priorInputChar="${inputs[$currRow]: -2:1}"
 		local preDisplay=''
 		local postDisplay="$FG_WHITE"
 		# Assumes
@@ -377,21 +423,21 @@ _update() {
 		# * `inputChar` holds 1 character
 		_addToOutput() {
 			echo -n "$preDisplay$inputChar$postDisplay"
-			inputs[currRow]+="$inputChar"
-			if (($(getCurrCol) == ${#testLines[$currRow]})); then
+			local -i linesAdded=0 i=0
+			addToInput "$inputChar"
+			linesAdded=$?
+			for ((i = 0; i < linesAdded; i++)); do
 				tput cud 2
 				echo -n $'\r'
 				((currRow++))
-			elif (($(getCurrCol) > ${#testLines[$currRow]})); then
-				exit 1 # TODO: THROW
-			fi
+			done
 		}
 		# shellcheck disable=SC2119
 		if [ -n "$(getInputColorBg)" ]; then
 			preDisplay+="$(tput setab "$(getInputColorBg)")"
 			postDisplay+="$BG_BLACK"
 		fi
-		doBackspace() {
+		scrollBack() {
 			local l_coord="$(getForPrior getCoord)"
 			if [ "$(getForPrior getInputColor)" = 1 ]; then
 				inputColorsBg[$l_coord]=3
@@ -404,27 +450,35 @@ _update() {
 				echo -n "$(tput setaf "$(getForPrior getInputColor)")"
 			fi
 			setForPrior setInputColor ''
-			local l_display=$'\b'"${1:-$priorInputChar}"$'\b'"$BG_BLACK$FG_WHITE"
-			echo -n "$l_display"
-			unset l_display
-			# Update logical inputs
-			if (($(getCurrCol) == 0 && currRow > 0)); then
+			if (($(getCurrInputColNum) == 0 && currRow > 0)); then
+				tput cuu 2
+				tput hpa $((columns - 1))
+				echo -n "${1:-$(getForPrior getInput)}"$'\b'"$BG_BLACK$FG_WHITE"
+			else
+				echo -n $'\b'"${1:-$(getForPrior getInput)}"$'\b'"$BG_BLACK$FG_WHITE"
+			fi
+		}
+		doBackspace() {
+			if (($(getCurrInputColNum) == 0 && currRow <= 0)); then return; fi
+			scrollBack "$1"
+			##region########################################### Update logical inputs ###########################################
+			if (($(getCurrInputColNum) == 0 && currRow > 0)); then
 				unset "inputs[$currRow]"
 				((currRow--))
-				return
+				# return
 			fi
 			local l_t="${inputs[$currRow]}"
 			inputs[currRow]="${l_t:0:-1}"
-			priorInputChar="${l_t: -2:1}"
 			unset l_t
+			##endregion######################################## Update logical inputs ###########################################
 		}
-		if [ "$inputChar" = "$currChar" ]; then
+		if [ "$inputChar" = "$(getTestChar)" ]; then
 			preDisplay+="$FG_GREEN"
 			setInputColor 2
 			_addToOutput
 		elif [ "$inputChar" = "$(tput kbs)" ]; then # Backspace
 			# If there's nothing to backspace, skip
-			if (($(getCurrCol) <= 0 && currRow <= 0)); then continue; fi
+			if (($(getCurrInputColNum) <= 0 && currRow <= 0)); then continue; fi
 			doBackspace ' '
 			# continue
 		elif [ "$inputChar" = $'\E' ]; then # ESCAPE SEQUENCE
@@ -443,7 +497,7 @@ _update() {
 					# TODO: allow non-destructive scroll-back
 					##region################################# Actual Output #################################
 					# local -i currCol
-					# for ((currCol=$(getCurrCol); currCol > 0; currCol--)); do
+					# for ((currCol=$(getCurrInputColNum); currCol > 0; currCol--)); do
 					# 	doBackspace
 					# done
 					# unset currCol
@@ -455,7 +509,7 @@ _update() {
 					_addToOutput
 					##endregion############################## Debug Output #################################
 					break
-				elif  [ $'\e'"$escapeSequence" = "${CTR_SEQ[end]}" ]; then # Home
+				elif  [ $'\e'"$escapeSequence" = "${CTR_SEQ[end]}" ]; then # End
 					# TODO: Implement
 					##region################################# Actual Output #################################
 					
@@ -480,7 +534,7 @@ _update() {
 			fi
 			_addToOutput
 		fi
-		if ((currTime - lastUpdate > REFRESH_INTERVAL)); then
+		# if ((currTime - lastUpdate > REFRESH_INTERVAL)); then
 			##region########################################### Status Line ###########################################
 			local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
 			local statusLine=$'\r'
@@ -508,43 +562,13 @@ _update() {
 			__addLine "getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')"
 			if ((${#words[@]} > 0)); then __addLine "last word: ${words[-1]}"; fi
 			local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
-			if (($(getCurrCol) > 0)); then postStatusLine+="$(tput cuf "$(getCurrCol)")"; fi
+			if (($(getCurrInputColNum) > 0)); then postStatusLine+="$(tput cuf "$(getCurrInputColNum)")"; fi
 			echo -n "$preStatusLine$statusLine$postStatusLine"
 			unset statusLine preStatusLine postStatusLine __addLine
 			##endregion######################################## Status Line ###########################################
 			((lastUpdate=currTime))
-		fi
+		# fi
 	done
-	##region########################################### Status Line ###########################################
-	# local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
-	# local statusLine=$'\r'
-	# statusLine+="inputs: ${inputs[*]}$(tput el)"$' \b\n'
-	# statusLine+="inputColorsBg: ${inputColorsBg[*]@A}$(tput el)"$' \b\n'
-	# statusLine+="inputColors: ${inputColors[*]}$(tput el)"$' \b\n'
-	# statusLine+="_getXY: $(_getXY)$(tput el)"$' \b\n'
-	# statusLine+="_getXYPrior: $(_getXYPrior)$(tput el)"$' \b\n'
-	# statusLine+="_getXYBeforePrior: $(_getXYBeforePrior)$(tput el)"$' \b\n'
-	# statusLine+="getCoord: $(getCoord)$(tput el)"$' \b\n'
-	# statusLine+="getForPrior getCoord: $(getForPrior getCoord)$(tput el)"$' \b\n'
-	# statusLine+="getForBeforePrior getCoord: $(getForBeforePrior getCoord)$(tput el)"$' \b\n'
-	# # shellcheck disable=SC2119
-	# statusLine+="getInputColor: $(getInputColor)$(tput el)"$' \b\n'
-	# statusLine+="getForPrior 'getInputColor': $(getForPrior 'getInputColor')$(tput el)"$' \b\n'
-	# statusLine+="getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')$(tput el)"$' \b\n'
-	# # shellcheck disable=SC2119
-	# statusLine+="getInputColorBg: $(getInputColorBg)$(tput el)"$' \b\n'
-	# statusLine+="getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg')$(tput el)"$' \b\n'
-	# statusLine+="getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')$(tput el)"$' \b\n'
-	# # shellcheck disable=SC2119
-	# statusLine+="getInput: $(getInput)$(tput el)"$' \b\n'
-	# statusLine+="getForPrior 'getInput': $(getForPrior 'getInput')$(tput el)"$' \b\n'
-	# statusLine+="getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')$(tput el)"$' \b\n'
-	# if ((${#words[@]} > 0)); then statusLine+="last word: ${words[-1]}$(tput el)"$' \b\n'; fi
-	# local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
-	# if (($(getCurrCol) > 0)); then postStatusLine+="$(tput cuf "$(getCurrCol)")"; fi
-	# echo -n "$preStatusLine$statusLine$postStatusLine"
-	# unset statusLine preStatusLine postStatusLine
-	##endregion######################################## Status Line ###########################################
 }
 while ((currRow < rows)); do _update; done
 tput rmcup
