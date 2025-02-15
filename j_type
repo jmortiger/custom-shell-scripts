@@ -394,10 +394,6 @@ dryAddToInput() {
 	done
 	return $linesAdded
 }
-removeCharacterAt() {
-	local -i myCurrRow=$1; local -i myCurrCol=$2; local -i precedingCol=$myCurrCol-1; local line="${inputs[$myCurrRow]}"
-	((${#line} > 0)) && echo -n "${line:0:$precedingCol}${line:$myCurrCol}"
-}
 removeFromInput() {
 	local -i linesRemoved=0; local -i myCurrRow=$currRow; local -i myCurrCol=$(getInputColNum $myCurrRow)
 	for ((i = 0; i < "$1"; i++, myCurrCol--)); do
@@ -411,11 +407,9 @@ removeFromInput() {
 			exit 1 # TODO: THROW
 		fi
 		inputs[myCurrRow]="${inputs[$myCurrRow]:0:$((myCurrCol - 1))}${inputs[$myCurrRow]:$myCurrCol}"
-		# inputs[myCurrRow]="$(removeCharacterAt $myCurrRow $myCurrCol)"
 	done
 	return $linesRemoved
 }
-# setCurrInputColChar() { echo -n "${inputs[$currRow]: -1}"; }
 declare -i lastUpdate=$(date -u +'%-s')
 badInputs=''
 _update() {
@@ -502,7 +496,7 @@ _update() {
 			((currRow-=linesRemoved))
 		}
 		invalidCharacter() {
-			preDisplay+="${TPUT_COLOR[RED]}"
+			preDisplay+="$(tput setaf "${TPUT_COLOR[RED]}")"
 			setInputColor 1
 			preDisplay+="$(tput smso)"
 			postDisplay="$(tput rmso)$postDisplay"
@@ -511,7 +505,7 @@ _update() {
 			_addToOutput
 		}
 		if [ "$inputChar" = "$(getTestChar)" ]; then
-			preDisplay+="${TPUT_COLOR[GREEN]}"
+			preDisplay+="$(tput setaf "${TPUT_COLOR[GREEN]}")"
 			setInputColor 2
 			_addToOutput
 		elif [ "$inputChar" = "$(tput kbs)" ]; then # Backspace
@@ -572,7 +566,7 @@ _update() {
 			if ((iEsc <= 0)); then invalidCharacter; fi
 			unset escapeSequence iEsc
 		elif [[ "$inputChar" =~ ^[[:print:]]$ ]]; then # Incorrect character
-			preDisplay+="${TPUT_COLOR[RED]}"
+			preDisplay+="$(tput setaf "${TPUT_COLOR[RED]}")"
 			setInputColor 1
 			if [ "$inputChar" = ' ' ]; then
 				preDisplay+="$(tput smso)"
@@ -586,31 +580,30 @@ _update() {
 		if ((currTime - lastUpdate > REFRESH_INTERVAL)); then
 			##region########################################### Status Line ###########################################
 			local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
-			local statusLine=$'\r'
+			local statusLine=$'\rStatus Line:'
 			__addLine() { statusLine+="$1$(tput el)"$' \b\n'; }
 			IFS=$'\n'; __addLine "inputs: ${inputs[*]}"; IFS="$ORIG_IFS"
 			# __addLine "inputColorsBg: ${inputColorsBg[*]@A}"
 			# __addLine "inputColors: ${inputColors[*]}"
-			# __addLine "removeCharacterAt($currRow, $(getCurrInputColNum)): $(removeCharacterAt $currRow "$(getCurrInputColNum)")"
-			# __addLine "removeCharacterAt($((currRow - 1)), $(getInputColNum $((currRow - 1)))): $(removeCharacterAt $currRow "$(getInputColNum $((currRow - 1)))")"
+			__addLine "getCurrInputColNum: $(getCurrInputColNum)"
 			__addLine "_getXY: $(_getXY)"
 			__addLine "_getXYPrior: $(_getXYPrior)"
 			__addLine "_getXYBeforePrior: $(_getXYBeforePrior)"
 			__addLine "getCoord: $(getCoord)"
 			__addLine "getForPrior getCoord: $(getForPrior getCoord)"
 			__addLine "getForBeforePrior getCoord: $(getForBeforePrior getCoord)"
-			# shellcheck disable=SC2119
-			__addLine "getInputColor: $(getInputColor)"
-			__addLine "getForPrior 'getInputColor': $(getForPrior 'getInputColor')"
-			__addLine "getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')"
+			# # shellcheck disable=SC2119
+			# __addLine "getInputColor: $(getInputColor)"
+			# __addLine "getForPrior 'getInputColor': $(getForPrior 'getInputColor')"
+			# __addLine "getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')"
 			# # shellcheck disable=SC2119
 			# __addLine "getInputColorBg: $(getInputColorBg)"
 			# __addLine "getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg')"
 			# __addLine "getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')"
-			# shellcheck disable=SC2119
-			__addLine "getInput: $(getInput)"
-			__addLine "getForPrior 'getInput': $(getForPrior 'getInput')"
-			__addLine "getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')"
+			# # shellcheck disable=SC2119
+			# __addLine "getInput: $(getInput)"
+			# __addLine "getForPrior 'getInput': $(getForPrior 'getInput')"
+			# __addLine "getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')"
 			__addLine "badInputs (Length: ${#badInputs}): $badInputs"
 			# if ((${#words[@]} > 0)); then __addLine "last word: ${words[-1]}"; fi
 			local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
