@@ -31,47 +31,49 @@ declare -ri MAX_READ_BUFFER=4096
 # #region ########## SIGNALS ##########
 # cspell:disable
 # https://man7.org/linux/man-pages/man7/signal.7.html
-readonly SIGHUP=1
-readonly SIGINT=2
-readonly SIGQUIT=3
-readonly SIGILL=4
-readonly SIGTRAP=5
-readonly SIGABRT=6
-readonly SIGIOT=6
-readonly SIGBUS=7
-# readonly SIGEMT=-
-readonly SIGFPE=8
-readonly SIGKILL=9
-readonly SIGUSR1=10
-readonly SIGSEGV=11
-readonly SIGUSR2=12
-readonly SIGPIPE=13
-readonly SIGALRM=14
-readonly SIGTERM=15
-readonly SIGSTKFLT=16
-readonly SIGCHLD=17
-# readonly SIGCLD=17
-readonly SIGCONT=18
-readonly SIGSTOP=19
-readonly SIGTSTP=20
-readonly SIGTTIN=21
-readonly SIGTTOU=22
-readonly SIGURG=23
-readonly SIGXCPU=24
-readonly SIGXFSZ=25
-readonly SIGVTALRM=26
-readonly SIGPROF=27
-readonly SIGWINCH=28
-readonly SIGIO=29
-readonly SIGPOLL=SIGIO
-readonly SIGPWR=30
-# readonly SIGINFO=-
-# readonly SIGLOST=-
-readonly SIGSYS=31
-readonly SIGUNUSED=31
+readonly -A SIGNAL=(
+	[HUP]=1 [SIGHUP]=1
+	[INT]=2 [SIGINT]=2
+	[QUIT]=3 [SIGQUIT]=3
+	[ILL]=4 [SIGILL]=4
+	[TRAP]=5 [SIGTRAP]=5
+	[ABRT]=6 [SIGABRT]=6
+	[IOT]=6 [SIGIOT]=6
+	[BUS]=7 [SIGBUS]=7
+	[FPE]=8 [SIGFPE]=8
+	[KILL]=9 [SIGKILL]=9
+	[USR1]=10 [SIGUSR1]=10
+	[SEGV]=11 [SIGSEGV]=11
+	[USR2]=12 [SIGUSR2]=12
+	[PIPE]=13 [SIGPIPE]=13
+	[ALRM]=14 [SIGALRM]=14
+	[TERM]=15 [SIGTERM]=15
+	[STKFLT]=16 [SIGSTKFLT]=16
+	[CHLD]=17 [SIGCHLD]=17
+	[CONT]=18 [SIGCONT]=18
+	[STOP]=19 [SIGSTOP]=19
+	[TSTP]=20 [SIGTSTP]=20
+	[TTIN]=21 [SIGTTIN]=21
+	[TTOU]=22 [SIGTTOU]=22
+	[URG]=23 [SIGURG]=23
+	[XCPU]=24 [SIGXCPU]=24
+	[XFSZ]=25 [SIGXFSZ]=25
+	[VTALRM]=26 [SIGVTALRM]=26
+	[PROF]=27 [SIGPROF]=27
+	[WINCH]=28 [SIGWINCH]=28
+	[IO]=29 [SIGIO]=29 [POLL]=29 [SIGPOLL]=29
+	[PWR]=30 [SIGPWR]=30
+	[SYS]=31 [SIGSYS]=31
+)
+# readonly SIGEMT=7 # Emulator trap; weird definitions
+# readonly SIGCLD=SIGCHLD # A synonym for SIGCHLD on MIPS
+# readonly SIGINFO=SIGPWR # A synonym for SIGPWR; only on Alpha
+# readonly SIGLOST=29 # File lock lost (unused); only on SPARC
+# readonly SIGUNUSED=SIGSYS # Where defined, SIGUNUSED is synonymous with SIGSYS.  Since glibc 2.26, SIGUNUSED is no longer defined on any architecture.
 # cspell:enable
 # #endregion ########## SIGNALS ##########
 ##region################### TPUT COLORS ###################
+# https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
 declare -rA TPUT_COLOR=(
 	[BLACK]=0
 	[RED]=1
@@ -81,19 +83,15 @@ declare -rA TPUT_COLOR=(
 	[MAGENTA]=5
 	[CYAN]=6
 	[WHITE]=7
-	[NOT_USED]=8
-	[RESET_TO_DEFAULT_COLOR]=9
+	[BRIGHT_BLACK]=8
+	[BRIGHT_RED]=9
+	[BRIGHT_GREEN]=10
+	[BRIGHT_YELLOW]=11
+	[BRIGHT_BLUE]=12
+	[BRIGHT_MAGENTA]=13
+	[BRIGHT_CYAN]=14
+	[BRIGHT_WHITE]=15
 )
-declare -ri TPUT_COLOR_BLACK=0
-declare -ri TPUT_COLOR_RED=1
-declare -ri TPUT_COLOR_GREEN=2
-declare -ri TPUT_COLOR_YELLOW=3
-declare -ri TPUT_COLOR_BLUE=4
-declare -ri TPUT_COLOR_MAGENTA=5
-declare -ri TPUT_COLOR_CYAN=6
-declare -ri TPUT_COLOR_WHITE=7
-declare -ri TPUT_COLOR_NOT_USED=8
-declare -ri TPUT_COLOR_RESET_TO_DEFAULT_COLOR=9
 ##endregion################ TPUT COLORS ###################
 # /etc/inputrc
 # https://unix.stackexchange.com/questions/116562/key-bindings-table
@@ -106,9 +104,11 @@ declare -Ar CTR_SEQ=(
 	[left]=$'\e[D'
 )
 case "$1" in
+	MAX_INT) echo -n "${MAX_INT@A}"; exit 0;;
 	MAX_READ_INT) echo -n "${MAX_READ_INT@A}"; exit 0;;
 	CTR_SEQ) echo -n "${CTR_SEQ[@]@A}"; exit 0;;
 	TPUT_COLOR) echo -n "${TPUT_COLOR[@]@A}"; exit 0;;
+	SIGNAL) echo -n "${SIGNAL[@]@A}"; exit 0;;
 	# *) exit 1;;
 esac
 ##endregion######################################## CONSTANTS ###########################################

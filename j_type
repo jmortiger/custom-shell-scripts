@@ -49,7 +49,8 @@ readonly FG_YELLOW="$(tput setaf 3)"
 readonly BG_YELLOW="$(tput setab 3)"
 readonly BG_BLACK="$(tput setab 0)"
 readonly BACK_ONE="$(tput cub1)"
-CTR_SEQ=; eval "$(misc_util CTR_SEQ)"
+declare -A CTR_SEQ=; eval "$(misc_util CTR_SEQ)"
+declare -A TPUT_COLOR=; eval "$(misc_util TPUT_COLOR)"
 declare -i MAX_READ_INT=; eval "$(misc_util MAX_READ_INT)"
 ##region########################################### PARAMETERS ###########################################
 # The time in seconds after which an update will be forced.
@@ -233,17 +234,10 @@ function genTestSequence() {
 
 genTestSequence
 # unset words
-for item in "${newTestLines[@]}"; do
-	testLines+=("$item")
-done
+for item in "${newTestLines[@]}"; do testLines+=("$item"); done
 doExit() { tput rmcup; exit; }
 tput smcup; tput clear; trap 'tput rmcup' EXIT; trap 'doExit' INT
-toWrite=''
-for ((i = 0; i < rows; i++)); do
-	toWrite+="${testLines[$i]}"
-	toWrite+=$'\n\n'
-done
-echo -n -E "$toWrite"
+echo -nE "$(array_join $'\n\n' "${testLines[@]}")"
 tput cup 1 0
 shopt -s globasciiranges extglob
 declare -a inputs=('')
@@ -371,37 +365,42 @@ setInputColorBg() {
 }
 ##endregion######################################## ARRAY GETTERS/SETTERS ###########################################
 getCurrInputColNum()  { echo -n ${#inputs[$currRow]}; }
+getInputColNum()  { if [ -z "$1" ]; then echo -n ${#inputs[$currRow]}; else echo -n ${#inputs[$1]}; fi; }
 # setCurrInputColNum() { echo -n ${#inputs[$currRow]}; }
 addToInput() {
 	local -i linesAdded=0; local -i myCurrRow=$currRow; local -i myCurrCol=$(getCurrInputColNum)
-	for ((i = 0; i < "${#1}"; i++)); do
+	for ((i = 0; i < "${#1}"; i++, myCurrCol++)); do
 		inputs[myCurrRow]+="${1:$i:1}"
-		((myCurrCol++))
-		if ((myCurrCol == columns)); then
-			((myCurrCol = 0))
+		if ((myCurrCol + 1 == columns)); then
+			((myCurrCol = -1))
 			((myCurrRow++))
 			((linesAdded++))
-		elif ((myCurrCol > columns)); then
-			echo "$(getCurrInputColNum) > columns ($columns)"
+		elif ((myCurrCol + 1 > columns)); then
+			echo "$myCurrCol > columns ($columns)"
 			sleep 3
 			exit 1 # TODO: THROW
 		fi
 	done
 	return $linesAdded
 }
+removeCharacterAt() {
+	local -i myCurrRow=$1; local -i myCurrCol=$2; local -i precedingCol=$myCurrCol-1; local line="${inputs[$myCurrRow]}"
+	((${#line} > 0)) && echo -n "${line:0:$precedingCol}${line:$myCurrCol}"
+}
 removeFromInput() {
-	local -i linesRemoved=0; local -i myCurrRow=$currRow; local -i myCurrCol=$(getCurrInputColNum)
-	for ((i = 0; i < "$1"; i++)); do
-		if (($(getCurrInputColNum) == 0 && currRow > 0)); then
+	local -i linesRemoved=0; local -i myCurrRow=$currRow; local -i myCurrCol=$(getInputColNum $myCurrRow)
+	for ((i = 0; i < "$1"; i++, myCurrCol--)); do
+		if ((myCurrCol == 0 && myCurrRow > 0)); then
 			((myCurrRow--))
-			((myCurrCol=$(getCurrInputCol)))
+			((myCurrCol = $(getInputColNum $myCurrRow)))
 			((linesRemoved++))
-		elif (($(getCurrInputColNum) < 0)); then
-			echo "$(getCurrInputColNum) < 0"
+		elif ((myCurrCol < 0)); then
+			echo "$myCurrCol < 0"
 			sleep 3
 			exit 1 # TODO: THROW
 		fi
-		inputs[myCurrRow]="${inputs[$myCurrRow]:0:$((myCurrCol - 1))}${inputs[$myCurrRow]:$((myCurrCol))}"
+		inputs[myCurrRow]="${inputs[$myCurrRow]:0:$((myCurrCol - 1))}${inputs[$myCurrRow]:$myCurrCol}"
+		# inputs[myCurrRow]="$(removeCharacterAt $myCurrRow $myCurrCol)"
 	done
 	return $linesRemoved
 }
@@ -461,16 +460,10 @@ _update() {
 		doBackspace() {
 			if (($(getCurrInputColNum) == 0 && currRow <= 0)); then return; fi
 			scrollBack "$1"
-			##region########################################### Update logical inputs ###########################################
-			if (($(getCurrInputColNum) == 0 && currRow > 0)); then
-				unset "inputs[$currRow]"
-				((currRow--))
-				# return
-			fi
-			local l_t="${inputs[$currRow]}"
-			inputs[currRow]="${l_t:0:-1}"
-			unset l_t
-			##endregion######################################## Update logical inputs ###########################################
+			local -i linesRemoved=0
+			removeFromInput 1
+			linesRemoved=$?
+			((currRow-=linesRemoved))
 		}
 		if [ "$inputChar" = "$(getTestChar)" ]; then
 			preDisplay+="$FG_GREEN"
@@ -540,8 +533,10 @@ _update() {
 			local statusLine=$'\r'
 			__addLine() { statusLine+="$1$(tput el)"$' \b\n'; }
 			IFS=$'\n'; __addLine "inputs: ${inputs[*]}"; IFS="$ORIG_IFS"
-			__addLine "inputColorsBg: ${inputColorsBg[*]@A}"
-			__addLine "inputColors: ${inputColors[*]}"
+			# __addLine "inputColorsBg: ${inputColorsBg[*]@A}"
+			# __addLine "inputColors: ${inputColors[*]}"
+			# __addLine "removeCharacterAt($currRow, $(getCurrInputColNum)): $(removeCharacterAt $currRow "$(getCurrInputColNum)")"
+			# __addLine "removeCharacterAt($((currRow - 1)), $(getInputColNum $((currRow - 1)))): $(removeCharacterAt $currRow "$(getInputColNum $((currRow - 1)))")"
 			__addLine "_getXY: $(_getXY)"
 			__addLine "_getXYPrior: $(_getXYPrior)"
 			__addLine "_getXYBeforePrior: $(_getXYBeforePrior)"
@@ -552,15 +547,15 @@ _update() {
 			__addLine "getInputColor: $(getInputColor)"
 			__addLine "getForPrior 'getInputColor': $(getForPrior 'getInputColor')"
 			__addLine "getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')"
-			# shellcheck disable=SC2119
-			__addLine "getInputColorBg: $(getInputColorBg)"
-			__addLine "getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg')"
-			__addLine "getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')"
+			# # shellcheck disable=SC2119
+			# __addLine "getInputColorBg: $(getInputColorBg)"
+			# __addLine "getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg')"
+			# __addLine "getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')"
 			# shellcheck disable=SC2119
 			__addLine "getInput: $(getInput)"
 			__addLine "getForPrior 'getInput': $(getForPrior 'getInput')"
 			__addLine "getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')"
-			if ((${#words[@]} > 0)); then __addLine "last word: ${words[-1]}"; fi
+			# if ((${#words[@]} > 0)); then __addLine "last word: ${words[-1]}"; fi
 			local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
 			if (($(getCurrInputColNum) > 0)); then postStatusLine+="$(tput cuf "$(getCurrInputColNum)")"; fi
 			echo -n "$preStatusLine$statusLine$postStatusLine"
