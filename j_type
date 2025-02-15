@@ -42,16 +42,11 @@ readonly WORDS_FILE="$MY_DIR/words.txt"
 # 	aeiou
 # 	tyur
 # )asdfghjkl;wertyuioaeioutyurtyurtyurtyur
-readonly FG_GREEN="$(tput setaf 2)"
-readonly FG_RED="$(tput setaf 1)"
-readonly FG_WHITE="$(tput setaf 7)"
-readonly FG_YELLOW="$(tput setaf 3)"
-readonly BG_YELLOW="$(tput setab 3)"
-readonly BG_BLACK="$(tput setab 0)"
-readonly BACK_ONE="$(tput cub1)"
 declare -A CTR_SEQ=; eval "$(misc_util CTR_SEQ)"
 declare -A TPUT_COLOR=; eval "$(misc_util TPUT_COLOR)"
 declare -i MAX_READ_INT=; eval "$(misc_util MAX_READ_INT)"
+declare RESET_COLOR_BACKGROUND=; eval "$(misc_util RESET_COLOR_BACKGROUND)"
+declare RESET_COLOR_FOREGROUND=; eval "$(misc_util RESET_COLOR_FOREGROUND)"
 ##region########################################### PARAMETERS ###########################################
 # The time in seconds after which an update will be forced.
 declare -ir FORCE_REFRESH_INTERVAL=5
@@ -383,6 +378,22 @@ addToInput() {
 	done
 	return $linesAdded
 }
+dryAddToInput() {
+	local -i linesAdded=0; local -i myCurrRow=$currRow; local -i myCurrCol=$(getCurrInputColNum)
+	for ((i = 0; i < "${#1}"; i++, myCurrCol++)); do
+		# inputs[myCurrRow]+="${1:$i:1}"
+		if ((myCurrCol + 1 == columns)); then
+			((myCurrCol = -1))
+			((myCurrRow++))
+			((linesAdded++))
+		elif ((myCurrCol + 1 > columns)); then
+			echo "$myCurrCol > columns ($columns)"
+			sleep 3
+			exit 1 # TODO: THROW
+		fi
+	done
+	return $linesAdded
+}
 removeCharacterAt() {
 	local -i myCurrRow=$1; local -i myCurrCol=$2; local -i precedingCol=$myCurrCol-1; local line="${inputs[$myCurrRow]}"
 	((${#line} > 0)) && echo -n "${line:0:$precedingCol}${line:$myCurrCol}"
@@ -406,6 +417,7 @@ removeFromInput() {
 }
 # setCurrInputColChar() { echo -n "${inputs[$currRow]: -1}"; }
 declare -i lastUpdate=$(date -u +'%-s')
+badInputs=''
 _update() {
 	local cache=''
 	while ((${#cache} > 0)) || read -rsN 1 -u 3 -t .5 inputChar; do
@@ -415,11 +427,11 @@ _update() {
 		fi
 		local -i currTime=$(date -u +'%-s')
 		local preDisplay=''
-		local postDisplay="$FG_WHITE"
+		local postDisplay="$RESET_COLOR_FOREGROUND"
 		# Assumes
-		# * Color handled in `preDisplay` & `postDisplay`
-		# * `inputChar` holds what to add to `inputs[currRow]`
-		# * `inputChar` holds 1 character
+			# * Color handled in `preDisplay` & `postDisplay`
+			# * `inputChar` holds what to add to `inputs[currRow]`
+			# * `inputChar` holds 1 character
 		_addToOutput() {
 			echo -n "$preDisplay$inputChar$postDisplay"
 			local -i linesAdded=0 i=0
@@ -431,12 +443,27 @@ _update() {
 				((currRow++))
 			done
 		}
+		# Assumes
+			# * Color handled in `preDisplay` & `postDisplay`
+			# * `inputChar` holds what to add to `inputs[currRow]`
+			# * `inputChar` holds 1 character
+		visualAddToOutput() {
+			echo -n "$preDisplay$inputChar$postDisplay$(tput cub1)"
+			# local -i linesAdded=0 i=0
+			# dryAddToInput "$inputChar"
+			# linesAdded=$?
+			# for ((i = 0; i < linesAdded; i++)); do
+			# 	tput cud 2
+			# 	echo -n $'\r'
+			# 	((currRow++))
+			# done
+		}
 		# shellcheck disable=SC2119
 		if [ -n "$(getInputColorBg)" ]; then
 			preDisplay+="$(tput setab "$(getInputColorBg)")"
-			postDisplay+="$BG_BLACK"
+			postDisplay+="$RESET_COLOR_BACKGROUND"
 		fi
-		scrollBack() {
+		visualScrollLeft() {
 			local l_coord="$(getForPrior getCoord)"
 			if [ "$(getForPrior getInputColor)" = 1 ]; then
 				inputColorsBg[$l_coord]=3
@@ -452,21 +479,39 @@ _update() {
 			if (($(getCurrInputColNum) == 0 && currRow > 0)); then
 				tput cuu 2
 				tput hpa $((columns - 1))
-				echo -n "${1:-$(getForPrior getInput)}"$'\b'"$BG_BLACK$FG_WHITE"
+				echo -n "${1:-$(getForPrior getInput)}"$'\b'"$RESET_COLOR_BACKGROUND$RESET_COLOR_FOREGROUND"
 			else
-				echo -n $'\b'"${1:-$(getForPrior getInput)}"$'\b'"$BG_BLACK$FG_WHITE"
+				echo -n $'\b'"${1:-$(getForPrior getInput)}"$'\b'"$RESET_COLOR_BACKGROUND$RESET_COLOR_FOREGROUND"
 			fi
+		}
+		# TODO: Finish
+		logicalScrollLeft() {
+			if (($(getCurrInputColNum) == 0 && currRow <= 0)); then return; fi
+			visualScrollLeft
+			# local -i linesRemoved=0
+			# removeFromInput 1
+			# linesRemoved=$?
+			# ((currRow-=linesRemoved))
 		}
 		doBackspace() {
 			if (($(getCurrInputColNum) == 0 && currRow <= 0)); then return; fi
-			scrollBack "$1"
+			visualScrollLeft "$1"
 			local -i linesRemoved=0
 			removeFromInput 1
 			linesRemoved=$?
 			((currRow-=linesRemoved))
 		}
+		invalidCharacter() {
+			preDisplay+="${TPUT_COLOR[RED]}"
+			setInputColor 1
+			preDisplay+="$(tput smso)"
+			postDisplay="$(tput rmso)$postDisplay"
+			badInputs+="$inputChar"
+			inputChar="?"
+			_addToOutput
+		}
 		if [ "$inputChar" = "$(getTestChar)" ]; then
-			preDisplay+="$FG_GREEN"
+			preDisplay+="${TPUT_COLOR[GREEN]}"
 			setInputColor 2
 			_addToOutput
 		elif [ "$inputChar" = "$(tput kbs)" ]; then # Backspace
@@ -482,43 +527,52 @@ _update() {
 			else
 				read -rsN $MAX_READ_INT -u 3 -t .01 escapeSequence
 			fi
+			# TODO: If empty i.e. esc was pressed
 			# From the end of cache, search for the longest matching escape sequence.
-			for ((i = ${#escapeSequence}; i > 0; i--)); do
-				cache="${escapeSequence:$i}$cache"
-				escapeSequence="${escapeSequence:0:$i}"
-				if  [ $'\e'"$escapeSequence" = "${CTR_SEQ[home]}" ]; then # Home
+			for ((iEsc = ${#escapeSequence}; iEsc > 0; iEsc--)); do
+				cache="${escapeSequence:$iEsc}$cache"
+				escapeSequence="${escapeSequence:0:$iEsc}"
+				if  [ "${CTR_SEQ[home]}" = $'\e'"$escapeSequence" ]; then
 					# TODO: allow non-destructive scroll-back
 					##region################################# Actual Output #################################
 					# local -i currCol
 					# for ((currCol=$(getCurrInputColNum); currCol > 0; currCol--)); do
-					# 	doBackspace
-					# done
-					# unset currCol
+					# 	logicalScrollLeft
+					# done; unset currCol
 					##endregion############################## Actual Output #################################
 					##region################################# Debug Output #################################
 					inputChar='H'
-					preDisplay+="$(tput setab 4)"
-					postDisplay+="$(tput setab 0)"
+					preDisplay+="$(tput setab "${TPUT_COLOR[BLUE]}")"
+					postDisplay+="$RESET_COLOR_BACKGROUND"
 					_addToOutput
 					##endregion############################## Debug Output #################################
 					break
-				elif  [ $'\e'"$escapeSequence" = "${CTR_SEQ[end]}" ]; then # End
+				elif  [ "${CTR_SEQ[end]}" = $'\e'"$escapeSequence" ]; then
 					# TODO: Implement
-					##region################################# Actual Output #################################
-					
-					##endregion############################## Actual Output #################################
 					##region################################# Debug Output #################################
 					inputChar='E'
-					preDisplay+="$(tput setab 4)"
-					postDisplay+="$(tput setab 0)"
+					preDisplay+="$(tput setab "${TPUT_COLOR[BLUE]}")"
+					postDisplay+="$RESET_COLOR_BACKGROUND"
 					_addToOutput
 					##endregion############################## Debug Output #################################
+					break
+				elif  [ "${CTR_SEQ[left]}" = $'\e'"$escapeSequence" ]; then
+					# TODO: allow non-destructive scroll-back
+					##region################################# Debug Output #################################
+					inputChar='L'
+					preDisplay+="$(tput setab "${TPUT_COLOR[BLUE]}")"
+					postDisplay+="$RESET_COLOR_BACKGROUND"
+					visualAddToOutput
+					##endregion############################## Debug Output #################################
+					logicalScrollLeft
 					break
 				fi
 			done
-			unset escapeSequence
-		else # Incorrect character
-			preDisplay+="$FG_RED"
+			# If 
+			if ((iEsc <= 0)); then invalidCharacter; fi
+			unset escapeSequence iEsc
+		elif [[ "$inputChar" =~ ^[[:print:]]$ ]]; then # Incorrect character
+			preDisplay+="${TPUT_COLOR[RED]}"
 			setInputColor 1
 			if [ "$inputChar" = ' ' ]; then
 				preDisplay+="$(tput smso)"
@@ -526,8 +580,10 @@ _update() {
 				inputChar="_"
 			fi
 			_addToOutput
+		else
+			invalidCharacter
 		fi
-		# if ((currTime - lastUpdate > REFRESH_INTERVAL)); then
+		if ((currTime - lastUpdate > REFRESH_INTERVAL)); then
 			##region########################################### Status Line ###########################################
 			local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
 			local statusLine=$'\r'
@@ -555,6 +611,7 @@ _update() {
 			__addLine "getInput: $(getInput)"
 			__addLine "getForPrior 'getInput': $(getForPrior 'getInput')"
 			__addLine "getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')"
+			__addLine "badInputs (Length: ${#badInputs}): $badInputs"
 			# if ((${#words[@]} > 0)); then __addLine "last word: ${words[-1]}"; fi
 			local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
 			if (($(getCurrInputColNum) > 0)); then postStatusLine+="$(tput cuf "$(getCurrInputColNum)")"; fi
@@ -562,7 +619,7 @@ _update() {
 			unset statusLine preStatusLine postStatusLine __addLine
 			##endregion######################################## Status Line ###########################################
 			((lastUpdate=currTime))
-		# fi
+		fi
 	done
 }
 while ((currRow < rows)); do _update; done

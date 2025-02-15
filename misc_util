@@ -92,6 +92,29 @@ declare -rA TPUT_COLOR=(
 	[BRIGHT_CYAN]=14
 	[BRIGHT_WHITE]=15
 )
+declare -rA SET_COLOR_FOREGROUND=(
+	[BLACK]="$(tput setaf 0)"
+	[RED]="$(tput setaf 1)"
+	[GREEN]="$(tput setaf 2)"
+	[YELLOW]="$(tput setaf 3)"
+	[BLUE]="$(tput setaf 4)"
+	[MAGENTA]="$(tput setaf 5)"
+	[CYAN]="$(tput setaf 6)"
+	[WHITE]="$(tput setaf 7)"
+	[BRIGHT_BLACK]="$(tput setaf 8)"
+	[BRIGHT_RED]="$(tput setaf 9)"
+	[BRIGHT_GREEN]="$(tput setaf 10)"
+	[BRIGHT_YELLOW]="$(tput setaf 11)"
+	[BRIGHT_BLUE]="$(tput setaf 12)"
+	[BRIGHT_MAGENTA]="$(tput setaf 13)"
+	[BRIGHT_CYAN]="$(tput setaf 14)"
+	[BRIGHT_WHITE]="$(tput setaf 15)"
+	[RESET]=$'\e[39m'
+	[DEFAULT]=$'\e[39m'
+)
+declare -r RESET_COLOR_BACKGROUND=$'\e[49m'
+declare -r RESET_COLOR_FOREGROUND=$'\e[39m'
+declare -r TPUT_RESET_COLORS="$(tput op)"
 ##endregion################ TPUT COLORS ###################
 # /etc/inputrc
 # https://unix.stackexchange.com/questions/116562/key-bindings-table
@@ -104,6 +127,9 @@ declare -Ar CTR_SEQ=(
 	[left]=$'\e[D'
 )
 case "$1" in
+	TPUT_RESET_COLORS) echo -n "${TPUT_RESET_COLORS@A}"; exit 0;;
+	RESET_COLOR_BACKGROUND) echo -n "${RESET_COLOR_BACKGROUND@A}"; exit 0;;
+	RESET_COLOR_FOREGROUND) echo -n "${RESET_COLOR_FOREGROUND@A}"; exit 0;;
 	MAX_INT) echo -n "${MAX_INT@A}"; exit 0;;
 	MAX_READ_INT) echo -n "${MAX_READ_INT@A}"; exit 0;;
 	CTR_SEQ) echo -n "${CTR_SEQ[@]@A}"; exit 0;;
