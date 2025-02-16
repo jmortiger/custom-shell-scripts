@@ -443,9 +443,12 @@ isAtStartOfLine() { (($(getCurrInputColNum) == 0)); }
 hasJustEndedLine() { isAtStartOfLine && (($(getCurrInputRowNum) > 0)); }
 isAtWordOrLineStart() { isAtStartOfLine || isAtWordStart; }
 ##endregion######################################## Line/Word Boundaries ###########################################
+# TODO: If overflow becomes a problem, pre-subtract start time
 declare -ir startTime=$(date -u +'%-s')
-declare -i lastUpdate="$startTime"
-declare -a wordCompletionTimes=("$startTime")
+declare +i lastUpdate="$(date -u +'%-s%0N')"
+declare -i lastUpdate="${lastUpdate:0:-6}"
+declare -a wordStartTimes=("$lastUpdate")
+declare -a wordEndTimes=()
 declare -a badInputs=()
 declare -i allMistakesCount=0
 declare -i uniqueMistakesCount=0
@@ -461,7 +464,8 @@ _update() {
 			inputChar="${cache:0:1}"
 			cache="${cache:1}"
 		fi
-		local -i currTime=$(date -u +'%-s')
+		local +i currTime="$(date -u +'%-s%0N')"
+		local -i currTime="${currTime:0:-6}"
 		local preDisplay=
 		local postDisplay="$RESET_COLOR_FOREGROUND"
 		# Assumes
@@ -470,6 +474,21 @@ _update() {
 			# * `inputChar` holds 1 character
 		_addToOutput() {
 			echo -n "$preDisplay$inputChar$postDisplay"
+			# if isBeforeWordEnd || isAboutToEndLine; then
+			if isBeforeWordEnd; then
+				if ((${#wordStartTimes[@]} == ${#wordEndTimes[@]})); then
+					# TODO: Error message
+					doExit
+				fi
+				wordEndTimes+=("$currTime")
+			fi
+			if isBeforeWordStart; then
+				if ((${#wordStartTimes[@]} != ${#wordEndTimes[@]})); then
+					# TODO: Error message
+					doExit
+				fi
+				wordStartTimes+=("$currTime")
+			fi
 			local -i linesAdded=0 i=0
 			addToInput "$inputChar"
 			linesAdded=$?
@@ -532,6 +551,24 @@ _update() {
 		}
 		doBackspace() {
 			if (($(getCurrInputColNum) == 0 && currRow <= 0)); then return; fi
+			# if isAtWordEnd || isAboutToEndLine; then
+			if isAtWordEnd; then
+				if ((${#wordStartTimes[@]} != ${#wordEndTimes[@]})); then
+					# TODO: Error message
+					doExit
+				fi
+				unset 'wordEndTimes[-1]'
+			fi
+			if isAtWordStart; then
+				if ((${#wordStartTimes[@]} == ${#wordEndTimes[@]})); then
+					# TODO: Error message
+					echo "wordStartTimes ${#wordStartTimes[@]} == ${#wordEndTimes[@]} wordEndTimes"
+					echo "${wordStartTimes[*]} ${wordEndTimes[*]}"
+					sleep 5
+					doExit
+				fi
+				unset 'wordStartTimes[-1]'
+			fi
 			visualScrollLeft "$1"
 			local -i linesRemoved=0
 			removeFromInput 1
@@ -656,7 +693,7 @@ _update() {
 		else
 			invalidCharacter
 		fi
-		# if ((currTime - lastUpdate > REFRESH_INTERVAL)); then
+		# if ((currTime - lastUpdate > REFRESH_INTERVAL * 1000)); then
 			##region########################################### Status Line ###########################################
 			local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
 			local statusLine=$'\rStatus Line:'
@@ -700,9 +737,16 @@ _update() {
 			if isAtStartOfLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtStartOfLine"
 			if isAboutToEndLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAboutToEndLine"
 			__addLine "$RESET_COLOR_FOREGROUND"
+			__addLine "deltaWord: $((currTime - wordStartTimes[-1]))"
+			__addLine "wordStartTimes (L: ${#wordStartTimes[@]}): ${wordStartTimes[*]@Q}"
+			__addLine "wordEndTimes (L: ${#wordEndTimes[@]}): ${wordEndTimes[*]@Q}"
 			# __addLine "badInputs (Length: ${#badInputs[@]}): ${badInputs[*]@Q}"
 			# __addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
 			# IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]@K}"; IFS="$ORIG_IFS"
+			for ((i = 0; i < ${#wordEndTimes[@]}; i++)); do
+				statusLine+="([$i]: $((wordEndTimes[i] - wordStartTimes[i])) milliseconds) "
+			done
+			__addLine " "
 			# if ((${#words[@]} > 0)); then __addLine "last word: ${words[-1]}"; fi
 			local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
 			if (($(getCurrInputColNum) > 0)); then postStatusLine+="$(tput cuf "$(getCurrInputColNum)")"; fi
