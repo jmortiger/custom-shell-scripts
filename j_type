@@ -319,6 +319,29 @@ setForBeforePrior() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
 	setForPrior "$lCommand" "$lValue" $lRow $lCol
 }
+getForNext() {
+	local lCommand="$1"; shift
+	if ! [ "${lCommand:0:3}" = 'get' ]; then lCommand="get${lCommand@u}"; fi
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYNext "$@"); shift 2
+	$lCommand $lRow $lCol
+}
+setForNext() {
+	local lCommand="$1"; shift
+	local lValue="$1"; shift
+	if ! [ "${lCommand:0:3}" = 'set' ]; then lCommand="set${lCommand@u}"; fi
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYNext "$@"); shift 2
+	$lCommand "$lValue" $lRow $lCol
+}
+getForAfterNext() {
+	local lCommand="$1"; shift
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYNext "$@"); shift 2
+	getForNext "$lCommand" $lRow $lCol
+}
+setForAfterNext() {
+	local lCommand="$1"; shift; local lValue="$1"; shift
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYNext "$@"); shift 2
+	setForNext "$lCommand" "$lValue" $lRow $lCol
+}
 # shellcheck disable=SC2120
 getTestChar() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
@@ -408,13 +431,13 @@ removeFromInput() {
 }
 ##region########################################### Line/Word Boundaries ###########################################
 # If character at cursor position is alpha-numeric but the prior one wasn't
-isAtWordStart() { [[ $(getInput) =~ [[:alnum:]] ]] && ! [[ $(getForPrior Input) =~ [[:alnum:]] ]]; }
+isAtWordStart() { [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]] && ! [[ $(getForPrior TestChar) =~ ^[[:alnum:]]+$ ]]; }
 # If character at cursor position isn't alpha-numeric but the next one is
-isBeforeWordStart() { ! [[ $(getInput) =~ [[:alnum:]] ]] && [[ $(getForNext Input) =~ [[:alnum:]] ]]; }
+isBeforeWordStart() { ! [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]] && [[ $(getForNext TestChar) =~ ^[[:alnum:]]+$ ]]; }
 # If character at cursor position isn't alpha-numeric but the prior one was
-isAtWordEnd() { ! [[ $(getInput) =~ [[:alnum:]] ]] && [[ $(getForPrior Input) =~ [[:alnum:]] ]]; }
+isAtWordEnd() { ! [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]] && [[ $(getForPrior TestChar) =~ ^[[:alnum:]]+$ ]]; }
 # If character at cursor position is alpha-numeric but the next one isn't
-isBeforeWordEnd() { [[ $(getInput) =~ [[:alnum:]] ]] && ! [[ $(getForNext Input) =~ [[:alnum:]] ]]; }
+isBeforeWordEnd() { [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]] && ! [[ $(getForNext TestChar) =~ ^[[:alnum:]]+$ ]]; }
 isAboutToEndLine() { (($(getCurrInputColNum) == ${#testLines[$(getCurrInputRowNum)]} - 1)); }
 isAtStartOfLine() { (($(getCurrInputColNum) == 0)); }
 hasJustEndedLine() { isAtStartOfLine && (($(getCurrInputRowNum) > 0)); }
@@ -633,25 +656,25 @@ _update() {
 		else
 			invalidCharacter
 		fi
-		if ((currTime - lastUpdate > REFRESH_INTERVAL)); then
+		# if ((currTime - lastUpdate > REFRESH_INTERVAL)); then
 			##region########################################### Status Line ###########################################
 			local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
 			local statusLine=$'\rStatus Line:'
-			__addLine() { statusLine+="$1$(tput el)"$' \b\n'; }
+			__addLine() { local v="$1"; if [ -z "$v" ]; then read -rsN "$MAX_READ_INT" -t .01 v; fi; statusLine+="$v$(tput el)"$' \b\n'; }
 			IFS=$'\n'; __addLine "inputs: ${inputs[*]}"; IFS="$ORIG_IFS"
 			# __addLine "inputColorsBg: ${inputColorsBg[*]@A}"
 			# __addLine "inputColors: ${inputColors[*]}"
 			__addLine "getCurrInputColNum: $(getCurrInputColNum)"
-			__addLine "_getXY: $(_getXY)"
-			__addLine "_getXYPrior: $(_getXYPrior)"
 			# shellcheck disable=SC2119
 			__addLine "_getXYBeforePrior: $(_getXYBeforePrior)"
+			__addLine "_getXYPrior: $(_getXYPrior)"
+			__addLine "_getXY: $(_getXY)"
 			__addLine "_getXYNext: $(_getXYNext)"
 			# shellcheck disable=SC2119
 			__addLine "_getXYAfterNext: $(_getXYAfterNext)"
-			__addLine "getCoord: $(getCoord)"
-			__addLine "getForPrior getCoord: $(getForPrior getCoord)"
-			__addLine "getForBeforePrior getCoord: $(getForBeforePrior getCoord)"
+			# __addLine "getCoord: $(getCoord)"
+			# __addLine "getForPrior getCoord: $(getForPrior getCoord)"
+			# __addLine "getForBeforePrior getCoord: $(getForBeforePrior getCoord)"
 			# # shellcheck disable=SC2119
 			# __addLine "getInputColor: $(getInputColor)"
 			# __addLine "getForPrior 'getInputColor': $(getForPrior 'getInputColor')"
@@ -664,10 +687,22 @@ _update() {
 			# __addLine "getInput: $(getInput)"
 			# __addLine "getForPrior 'getInput': $(getForPrior 'getInput')"
 			# __addLine "getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')"
-			__addLine "badInputs (Length: ${#badInputs[@]}): ${badInputs[*]@Q}"
-			__addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
-			# IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]}"; IFS="$ORIG_IFS"
-			IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]@K}"; IFS="$ORIG_IFS"
+			__addLine "getTestChar: $(getTestChar)"
+			statusLine+="is alnum: "
+			if [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="curr "
+			if [[ $(getForPrior TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="prior "
+			if [[ $(getForNext TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="next"
+			__addLine "$RESET_COLOR_FOREGROUND"
+			if isAtWordStart; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtWordStart"
+			if isBeforeWordStart; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isBeforeWordStart"
+			if isAtWordEnd; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtWordEnd"
+			if isBeforeWordEnd; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isBeforeWordEnd"
+			if isAtStartOfLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtStartOfLine"
+			if isAboutToEndLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAboutToEndLine"
+			__addLine "$RESET_COLOR_FOREGROUND"
+			# __addLine "badInputs (Length: ${#badInputs[@]}): ${badInputs[*]@Q}"
+			# __addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
+			# IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]@K}"; IFS="$ORIG_IFS"
 			# if ((${#words[@]} > 0)); then __addLine "last word: ${words[-1]}"; fi
 			local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
 			if (($(getCurrInputColNum) > 0)); then postStatusLine+="$(tput cuf "$(getCurrInputColNum)")"; fi
@@ -675,7 +710,7 @@ _update() {
 			unset statusLine preStatusLine postStatusLine __addLine
 			##endregion######################################## Status Line ###########################################
 			((lastUpdate=currTime))
-		fi
+		# fi
 	done
 }
 while ((currRow < rows)); do _update; done
