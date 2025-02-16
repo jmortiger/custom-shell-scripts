@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
+
+# TODO: Inclusive/exclusive flags
+declare -a starts=()
+declare -a ends=()
+declare strings=()
+shopt -s extglob globasciiranges
+while (($# > 0)); do
+	if [[ "$1" =~ ^-?[[:digit:]]+$ ]]; then
+		starts+=("$1")
+		if [[ "$2" =~ ^-?[[:digit:]]+$ ]]; then
+			ends+=("$2")
+			shift
+		else
+			ends+=('')
+		fi
+	elif [[ "$1" =~ ^(-?[[:digit:]]+):(-?[[:digit:]]+)$ ]]; then
+		starts+=("${BASH_REMATCH[1]}")
+		ends+=("${BASH_REMATCH[2]}")
+	elif [ "$1" = '--' ]; then
+		shift
+		break
+	else
+		strings+=("$1")
+	fi
+	shift
+done
+strings+=("$*")
+declare -r string="${strings[*]}" starts ends
+# TODO: Option to enable escape sequences
+for ((i=0; i < ${#starts}; i++)); do
+	start="${starts[$i]}"
+	end="${ends[$i]}"
+	if [ -z "$end" ]; then
+		echo -nE "${string: $start}"
+	else
+		echo -nE "${string: $start:$end}"
+	fi
+done
+exit

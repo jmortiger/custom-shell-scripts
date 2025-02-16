@@ -10,6 +10,7 @@
 		"name": "bash_ext_dict",
 		"path": "./.cspell/bash_ext_dict.txt",
 		"addWords": true,
+		"noSuggest": false,
 	  },
 	  {
 		"name": "mount_dict",

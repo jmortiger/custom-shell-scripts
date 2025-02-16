@@ -248,7 +248,6 @@ rm -f "$inputStreamName"
 unset inputStreamName
 exec 3<&0
 ##endregion######################################## SETUP INPUT STREAM ###########################################
-# declare -r ORIG_IFS="$IFS"; IFS=$'\n'
 stty -echo; trap 'stty echo' EXIT
 ##region########################################### ARRAY GETTERS/SETTERS ###########################################
 _getXY() {
@@ -299,29 +298,26 @@ getCoord() {
 }
 getForPrior() {
 	local lCommand="$1"; shift
-	# if [ "${lCommand:0:3}" = 'set' ];
+	if ! [ "${lCommand:0:3}" = 'get' ]; then lCommand="get${lCommand@u}"; fi
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
 	$lCommand $lRow $lCol
 }
 setForPrior() {
 	local lCommand="$1"; shift
 	local lValue="$1"; shift
-	# if [ "${lCommand:0:3}" = 'set' ];
+	if ! [ "${lCommand:0:3}" = 'set' ]; then lCommand="set${lCommand@u}"; fi
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
 	$lCommand "$lValue" $lRow $lCol
 }
 getForBeforePrior() {
 	local lCommand="$1"; shift
-	# if [ "${lCommand:0:3}" = 'set' ];
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYBeforePrior "$@"); shift 2
-	$lCommand $lRow $lCol
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
+	getForPrior "$lCommand" $lRow $lCol
 }
 setForBeforePrior() {
-	local lCommand="$1"; shift
-	local lValue="$1"; shift
-	# if [ "${lCommand:0:3}" = 'set' ];
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYBeforePrior "$@"); shift 2
-	$lCommand "$lValue" $lRow $lCol
+	local lCommand="$1"; shift; local lValue="$1"; shift
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
+	setForPrior "$lCommand" "$lValue" $lRow $lCol
 }
 # shellcheck disable=SC2120
 getTestChar() {
@@ -343,11 +339,11 @@ getInputColorBg() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
 	local t="$(getCoord $lRow $lCol)"; echo -n "${inputColorsBg[$t]}"
 }
-setInput() {
-	local val="$1"; shift
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
-	inputs[lRow]="${inputs[$lRow]:0:$lCol}${val}${inputs[$lRow]:$((lCol + 1))}"
-}
+# setInput() {
+# 	local val="$1"; shift
+# 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
+# 	inputs[lRow]="${inputs[$lRow]:0:$lCol}${val}${inputs[$lRow]:$((lCol + 1))}"
+# }
 setInputColor() {
 	local val="$1"; shift
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
@@ -360,8 +356,8 @@ setInputColorBg() {
 }
 ##endregion######################################## ARRAY GETTERS/SETTERS ###########################################
 getCurrInputColNum()  { echo -n ${#inputs[$currRow]}; }
-getInputColNum()  { if [ -z "$1" ]; then echo -n ${#inputs[$currRow]}; else echo -n ${#inputs[$1]}; fi; }
-# setCurrInputColNum() { echo -n ${#inputs[$currRow]}; }
+getInputColNum()  { if [ -z "$1" ]; then getCurrInputColNum; else echo -n ${#inputs[$1]}; fi; }
+getCurrInputRowNum()  { echo -n $currRow; }
 addToInput() {
 	local -i linesAdded=0; local -i myCurrRow=$currRow; local -i myCurrCol=$(getCurrInputColNum)
 	for ((i = 0; i < "${#1}"; i++, myCurrCol++)); do
@@ -410,17 +406,40 @@ removeFromInput() {
 	done
 	return $linesRemoved
 }
-declare -i lastUpdate=$(date -u +'%-s')
-badInputs=''
+##region########################################### Line/Word Boundaries ###########################################
+# If character at cursor position is alpha-numeric but the prior one wasn't
+isAtWordStart() { [[ $(getInput) =~ [[:alnum:]] ]] && ! [[ $(getForPrior Input) =~ [[:alnum:]] ]]; }
+# If character at cursor position isn't alpha-numeric but the next one is
+isBeforeWordStart() { ! [[ $(getInput) =~ [[:alnum:]] ]] && [[ $(getForNext Input) =~ [[:alnum:]] ]]; }
+# If character at cursor position isn't alpha-numeric but the prior one was
+isAtWordEnd() { ! [[ $(getInput) =~ [[:alnum:]] ]] && [[ $(getForPrior Input) =~ [[:alnum:]] ]]; }
+# If character at cursor position is alpha-numeric but the next one isn't
+isBeforeWordEnd() { [[ $(getInput) =~ [[:alnum:]] ]] && ! [[ $(getForNext Input) =~ [[:alnum:]] ]]; }
+isAboutToEndLine() { (($(getCurrInputColNum) == ${#testLines[$(getCurrInputRowNum)]} - 1)); }
+isAtStartOfLine() { (($(getCurrInputColNum) == 0)); }
+hasJustEndedLine() { isAtStartOfLine && (($(getCurrInputRowNum) > 0)); }
+isAtWordOrLineStart() { isAtStartOfLine || isAtWordStart; }
+##endregion######################################## Line/Word Boundaries ###########################################
+declare -ir startTime=$(date -u +'%-s')
+declare -i lastUpdate="$startTime"
+declare -a wordCompletionTimes=("$startTime")
+declare -a badInputs=()
+declare -i allMistakesCount=0
+declare -i uniqueMistakesCount=0
+# Maps the `$row:$column:$incorrectCharacter` to the # of times that combination was typed; used to allow for contextual error reporting (i.e. provides info to determine if a certain sequence of keystrokes causes errors instead of just the expected & entered character).
+declare -A mistakeContext=()
+declare -A mistakeFreq=()
+# Can be used to replicate this run (think Doom replays).
+declare inputSequence=
 _update() {
-	local cache=''
+	local cache=
 	while ((${#cache} > 0)) || read -rsN 1 -u 3 -t .5 inputChar; do
 		if ((${#cache} > 0)); then
 			inputChar="${cache:0:1}"
 			cache="${cache:1}"
 		fi
 		local -i currTime=$(date -u +'%-s')
-		local preDisplay=''
+		local preDisplay=
 		local postDisplay="$RESET_COLOR_FOREGROUND"
 		# Assumes
 			# * Color handled in `preDisplay` & `postDisplay`
@@ -460,6 +479,7 @@ _update() {
 		visualScrollLeft() {
 			local l_coord="$(getForPrior getCoord)"
 			if [ "$(getForPrior getInputColor)" = 1 ]; then
+				setForPrior set
 				inputColorsBg[$l_coord]=3
 			fi
 			if [ -n "${inputColorsBg[$l_coord]}" ]; then
@@ -500,28 +520,33 @@ _update() {
 			setInputColor 1
 			preDisplay+="$(tput smso)"
 			postDisplay="$(tput rmso)$postDisplay"
-			badInputs+="$inputChar"
+			if [ "$inputChar" = $'\e' ]; then inputChar="^["; fi
+			badInputs+=("$inputChar$1")
 			inputChar="?"
-			_addToOutput
+			# _addToOutput
 		}
+		# If it's the correct character...
 		if [ "$inputChar" = "$(getTestChar)" ]; then
 			preDisplay+="$(tput setaf "${TPUT_COLOR[GREEN]}")"
 			setInputColor 2
 			_addToOutput
+		# ...it's a backspace...
 		elif [ "$inputChar" = "$(tput kbs)" ]; then # Backspace
 			# If there's nothing to backspace, skip
 			if (($(getCurrInputColNum) <= 0 && currRow <= 0)); then continue; fi
 			doBackspace ' '
 			# continue
+		# ...it's an escape...
 		elif [ "$inputChar" = $'\E' ]; then # ESCAPE SEQUENCE
 			local escapeSequence
 			if ((${#cache} > 0)); then
 				local escapeSequence="$cache"
-				cache=''
+				cache=
+				local fChunkedInput='false'
 			else
 				read -rsN $MAX_READ_INT -u 3 -t .01 escapeSequence
+				local fChunkedInput='true'
 			fi
-			# TODO: If empty i.e. esc was pressed
 			# From the end of cache, search for the longest matching escape sequence.
 			for ((iEsc = ${#escapeSequence}; iEsc > 0; iEsc--)); do
 				cache="${escapeSequence:$iEsc}$cache"
@@ -562,10 +587,40 @@ _update() {
 					break
 				fi
 			done
-			# If 
-			if ((iEsc <= 0)); then invalidCharacter; fi
-			unset escapeSequence iEsc
+			# If a match wasn't found...
+			if ((iEsc <= 0)); then
+				# # ...and cache is empty, only an escape (& maybe 1 char) was sent; it's likely the Esc key was pressed
+				# if ((${#cache} <= 0)); then
+				# ...and sequence is empty, only an escape was sent; it's likely the Esc key was pressed
+				if ((${#escapeSequence} <= 0)); then
+					echo &>'/dev/null' # Do nothing
+				# ...and the entirety of the input stream was read at once, then use that as the failed sequence
+				elif eval "$fChunkedInput"; then
+					invalidCharacter "$escapeSequence$cache"
+					cache=
+				else
+					invalidCharacter "$escapeSequence"
+				fi
+			fi
+			unset escapeSequence iEsc fChunkedInput
+		# ...it's a different printable character than expected...
 		elif [[ "$inputChar" =~ ^[[:print:]]$ ]]; then # Incorrect character
+			# Add to history
+			((allMistakesCount++))
+			local mistakeId="$(getCoord):$inputChar"
+			if [ -n "${mistakeContext[$mistakeId]}" ]; then
+				((mistakeContext[$mistakeId]++))
+			else
+				((mistakeContext[$mistakeId]=1))
+			fi
+			local mistakeId="$(getTestChar):$inputChar"
+			if [ -n "${mistakeFreq[$mistakeId]}" ]; then
+				((mistakeFreq[$mistakeId]++))
+			else
+				((mistakeFreq[$mistakeId]=1))
+			fi
+			unset mistakeId
+			# Output
 			preDisplay+="$(tput setaf "${TPUT_COLOR[RED]}")"
 			setInputColor 1
 			if [ "$inputChar" = ' ' ]; then
@@ -574,6 +629,7 @@ _update() {
 				inputChar="_"
 			fi
 			_addToOutput
+		# ...otherwise, it's a non-printable character that isn't a recognized control character.
 		else
 			invalidCharacter
 		fi
@@ -588,7 +644,11 @@ _update() {
 			__addLine "getCurrInputColNum: $(getCurrInputColNum)"
 			__addLine "_getXY: $(_getXY)"
 			__addLine "_getXYPrior: $(_getXYPrior)"
+			# shellcheck disable=SC2119
 			__addLine "_getXYBeforePrior: $(_getXYBeforePrior)"
+			__addLine "_getXYNext: $(_getXYNext)"
+			# shellcheck disable=SC2119
+			__addLine "_getXYAfterNext: $(_getXYAfterNext)"
 			__addLine "getCoord: $(getCoord)"
 			__addLine "getForPrior getCoord: $(getForPrior getCoord)"
 			__addLine "getForBeforePrior getCoord: $(getForBeforePrior getCoord)"
@@ -604,7 +664,10 @@ _update() {
 			# __addLine "getInput: $(getInput)"
 			# __addLine "getForPrior 'getInput': $(getForPrior 'getInput')"
 			# __addLine "getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')"
-			__addLine "badInputs (Length: ${#badInputs}): $badInputs"
+			__addLine "badInputs (Length: ${#badInputs[@]}): ${badInputs[*]@Q}"
+			__addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
+			# IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]}"; IFS="$ORIG_IFS"
+			IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]@K}"; IFS="$ORIG_IFS"
 			# if ((${#words[@]} > 0)); then __addLine "last word: ${words[-1]}"; fi
 			local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
 			if (($(getCurrInputColNum) > 0)); then postStatusLine+="$(tput cuf "$(getCurrInputColNum)")"; fi
