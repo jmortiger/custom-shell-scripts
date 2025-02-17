@@ -37,12 +37,8 @@ __EOF__
 ##endregion######################################## SHOW HELP & VERSION ###########################################
 readonly LOGFILE="$MY_DIR/$MY_NAME.log.txt"
 readonly WORDS_FILE="$MY_DIR/words.txt"
-# readonly -a DEFAULT_CHARACTER_LIST=(
-# 	asdfghjkl;wertyuio
-# 	aeiou
-# 	tyur
-# )
-readonly DEFAULT_CHARACTER_LIST='asdfjkl;ghqwertyuiopxczvbnm,.'
+# cspell:disable-next-line
+readonly DEFAULT_CHARACTER_LIST='asdfjkl;ghqwertyuiopxczvbnm,.' 
 declare -A CTR_SEQ=; eval "$(misc_util CTR_SEQ)"
 declare -A TPUT_COLOR=; eval "$(misc_util TPUT_COLOR)"
 declare -i MAX_READ_INT=; eval "$(misc_util MAX_READ_INT)"
@@ -124,16 +120,16 @@ function genTestSequence() {
 	RANDOM=$$
 	declare -g newTestLines=()
 	local l_current_word=''
-	# local -ir rows=
 	local -r punctAndSpace="$punctuationCharacters "
 	local -i j=0; local -i i=0
+	# l_current_word shouldn't be emptied before calling if punctuation is desired.
 	_validateAndAddChar() {
 		if [ "$1" = ' ' ]; then
-			# It doesn't end in space & isn't empty
+			# If it doesn't end in space & isn't empty...
 			if [ "${newTestLines[$j]: -1}" != ' ' ] && (("${#l_current_word}" > 0)); then
 				l_current_word=''
 				newTestLines[j]+="$1"
-			# ...forcing a space
+			# ...forcing a space...
 			elif [ -n "$2" ]; then
 				l_current_word=''
 				newTestLines[j]+=' '
@@ -149,7 +145,7 @@ function genTestSequence() {
 					l_current_word=''
 					newTestLines[j]+="$1 "
 					((i++))
-				# ...forcing a space
+				# ...forcing a space...
 				elif [ -n "$2" ]; then
 					l_current_word=''
 					newTestLines[j]+=' '
@@ -169,7 +165,7 @@ function genTestSequence() {
 		if eval "$f_properPunctuation"; then
 			_validateAndAddChar "${punctAndSpace:$((${#punctuationCharacters} > 0 ? RANDOM % (${#punctuationCharacters} + 1) : 0)):1}" 'force'
 		else
-			newTestLines[j]+="${punctAndSpace:$((${#punctuationCharacters} > 0 ? RANDOM % (${#punctuationCharacters} + 1) : 0)):1}" #' '
+			newTestLines[j]+="${punctAndSpace:$((${#punctuationCharacters} > 0 ? RANDOM % (${#punctuationCharacters} + 1) : 0)):1}"
 		fi
 	}
 	for ((j = 0; j < rows; j++)); do
@@ -221,23 +217,17 @@ function genTestSequence() {
 						newTestLines[j]+="$l_current_word"
 						# ...and there's another line...
 						if ((j + 1 < rows)); then
-							# ...start it w/ a space
+							# ...start it w/ a space/punctuation
 							((j++))
-							# newTestLines[j]+=' '
-							# ((i = ${#newTestLines[j]} - 1))
 							((i = 0))
-							# l_current_word=
-							# break
 						else # We're done
 							break 3
 						fi
-					else # It fits, but doesn't fill, the line (disregarding the trailing space)
+					else # It fits, but doesn't fill, the line (disregarding the trailing space/punctuation)
 						newTestLines[j]+="$l_current_word"
 						((i = ${#newTestLines[j]}))
-						# l_current_word=
-						# break
 					fi
-					# If it got here, it was successful and is waiting for a word terminator
+					# If it got here, it was successful and is waiting for a space/punctuation
 					# Increase chance for spaces
 					if ((RANDOM % 2 == 0)); then
 						_addPunctOrSpace
@@ -250,37 +240,6 @@ function genTestSequence() {
 				continue
 			fi
 			_validateAndAddChar "${characters:$((RANDOM % ${#characters})):1}"
-			# ((t_ind = RANDOM % ${#characters}))
-			# local tChar="${characters:$t_ind:1}"
-			# if [ "$tChar" = ' ' ]; then
-			# 	# It doesn't end in space & isn't empty
-			# 	if [ "${newTestLines[$j]: -1}" != ' ' ] && (("${#l_current_word}" > 0)); then
-			# 		l_current_word=''
-			# 		newTestLines[j]+="$tChar"
-			# 	else # Try again
-			# 		((i--))
-			# 	fi
-			# elif eval "$f_properPunctuation"; then
-			# 	if [[ "$tChar" =~ [\;\,\.\:\!] ]]; then
-			# 		# If there's space for the char + a space, it's preceded by a letter/number, & the word isn't empty
-			# 		if  ((${#newTestLines[$j]} + 2 < columns)) && 
-			# 			[[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && 
-			# 			(("${#l_current_word}" > 0)); then
-			# 			l_current_word=''
-			# 			newTestLines[j]+="$tChar "
-			# 			((i++))
-			# 		else # Try again
-			# 			((i--))
-			# 		fi
-			# 	else
-			# 		l_current_word+="$tChar"
-			# 		newTestLines[j]+="$tChar"
-			# 	fi
-			# else
-			# 	l_current_word+="$tChar"
-			# 	newTestLines[j]+="$tChar"
-			# fi
-			# unset tChar
 		done
 	done
 }
