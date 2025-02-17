@@ -60,7 +60,7 @@ declare -i columns=$(tput cols)
 declare characters=' '
 declare -a words=()
 # Dynamically generate nonsense words?
-declare f_genWords='true'
+declare f_genWords='false'
 declare f_properPunctuation='true'
 declare -n opt1=characters opt2=testPath opt3=characters
 while [[ -n "${1+x}" ]]; do
@@ -125,12 +125,62 @@ function genTestSequence() {
 	declare -g newTestLines=()
 	local l_current_word=''
 	# local -ir rows=
+	local -r punctAndSpace="$punctuationCharacters "
+	local -i j=0; local -i i=0
+	_validateAndAddChar() {
+		if [ "$1" = ' ' ]; then
+			# It doesn't end in space & isn't empty
+			if [ "${newTestLines[$j]: -1}" != ' ' ] && (("${#l_current_word}" > 0)); then
+				l_current_word=''
+				newTestLines[j]+="$1"
+			# ...forcing a space
+			elif [ -n "$2" ]; then
+				l_current_word=''
+				newTestLines[j]+=' '
+			else # Try again
+				((i--))
+			fi
+		elif eval "$f_properPunctuation"; then
+			if [[ "$1" =~ [\;\,\.\:\!] ]]; then
+				# If there's space for the char + a space, it's preceded by a letter/number, & the word isn't empty
+				if  ((${#newTestLines[$j]} + 2 < columns)) && 
+					[[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && 
+					(("${#l_current_word}" > 0)); then
+					l_current_word=''
+					newTestLines[j]+="$1 "
+					((i++))
+				# ...forcing a space
+				elif [ -n "$2" ]; then
+					l_current_word=''
+					newTestLines[j]+=' '
+				else # Try again
+					((i--))
+				fi
+			else
+				l_current_word+="$1"
+				newTestLines[j]+="$1"
+			fi
+		else
+			l_current_word+="$1"
+			newTestLines[j]+="$1"
+		fi
+	}
+	_addPunctOrSpace() {
+		if eval "$f_properPunctuation"; then
+			_validateAndAddChar "${punctAndSpace:$((${#punctuationCharacters} > 0 ? RANDOM % (${#punctuationCharacters} + 1) : 0)):1}" 'force'
+		else
+			newTestLines[j]+="${punctAndSpace:$((${#punctuationCharacters} > 0 ? RANDOM % (${#punctuationCharacters} + 1) : 0)):1}" #' '
+		fi
+	}
 	for ((j = 0; j < rows; j++)); do
 		for ((i = 0; i < columns; i++)); do
 			if ((${#l_current_word} >= maxWordLength)); then
-				l_current_word=''
-				# TODO: Add chance to add a punctuation or space if following grammar rules
-				newTestLines[j]+=' '
+				if eval "$f_properPunctuation" && ((${#punctuationCharacters} > 0)); then
+					_validateAndAddChar "${punctAndSpace:$((RANDOM % (${#punctuationCharacters} + 1))):1}" 'force'
+				else
+					newTestLines[j]+=' '
+				fi
+				l_current_word=
 				continue
 			fi
 			if ((${#words[@]} > 0)); then
@@ -138,9 +188,7 @@ function genTestSequence() {
 				while true; do
 					((t_ind = RANDOM % ${#words[@]}, loop = 0))
 					for ((t_ind = RANDOM % ${#words[@]}, loop = 0; loop < 100; loop++, t_ind = RANDOM % ${#words[@]})); do
-						if ! array_includes "$t_ind" "${badIndices[@]}"; then
-							break;
-						fi
+						if ! array_includes "$t_ind" "${badIndices[@]}"; then break; fi
 					done
 					l_current_word="${words[$t_ind]}"
 					local -i newLength=0
@@ -153,76 +201,86 @@ function genTestSequence() {
 							((newLength %= columns - 1, l_wordSlice=${#l_current_word} - newLength))
 							newTestLines[j]+="${l_current_word:0:$l_wordSlice}-"
 							((j++))
-							newTestLines[j]+="${l_current_word: -$newLength} "
-							l_current_word=
-							((i = ${#newTestLines[j]} - 1))
-							break
+							newTestLines[j]+="${l_current_word: -$newLength}"
+							((i = ${#newTestLines[j]}))
+							# l_current_word=
+							# break
 						# ...and there's not another line...
 						else
 							# ...and we've tried too many options...
 							if ((loop >= 100)); then
 								# TODO: Graceful early exit
 								break 2
-							# ...try another word
-							else
+							else # ...try another word
 								badIndices+=("$t_ind")
 								continue
 							fi
 						fi
-					# If it perfectly fills the line
+					# If it perfectly fills the line...
 					elif ((newLength == columns)); then
 						newTestLines[j]+="$l_current_word"
-						# If there's another line...
+						# ...and there's another line...
 						if ((j + 1 < rows)); then
 							# ...start it w/ a space
 							((j++))
-							newTestLines[j]+=' '
-							((i = ${#newTestLines[j]} - 1))
-							l_current_word=
-							break
-						else # ...or we're done
+							# newTestLines[j]+=' '
+							# ((i = ${#newTestLines[j]} - 1))
+							((i = 0))
+							# l_current_word=
+							# break
+						else # We're done
 							break 3
 						fi
 					else # It fits, but doesn't fill, the line (disregarding the trailing space)
-						newTestLines[j]+="$l_current_word "
-						((i = ${#newTestLines[j]} - 1))
-						l_current_word=
-						break
+						newTestLines[j]+="$l_current_word"
+						((i = ${#newTestLines[j]}))
+						# l_current_word=
+						# break
 					fi
+					# If it got here, it was successful and is waiting for a word terminator
+					# Increase chance for spaces
+					if ((RANDOM % 2 == 0)); then
+						_addPunctOrSpace
+					else
+						newTestLines[j]+=' '
+					fi
+					l_current_word=
+					break
 				done
 				continue
 			fi
-			((t_ind = RANDOM % ${#characters}))
-			local tChar="${characters:$t_ind:1}"
-			if [ "$tChar" = ' ' ]; then
-				# It doesn't end in space & isn't empty
-				if [ "${newTestLines[$j]: -1}" != ' ' ] && (("${#l_current_word}" > 0)); then
-					l_current_word=''
-					newTestLines[j]+="$tChar"
-				else # Try again
-					((i--))
-				fi
-			elif eval "$f_properPunctuation"; then
-				if [[ "$tChar" =~ [\;\,\.\:\!] ]]; then
-					# If there's space for the char + a space, it's preceded by a letter/number, & the word isn't empty
-					if  ((${#newTestLines[$j]} + 2 < columns)) && 
-						[[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && 
-						(("${#l_current_word}" > 0)); then
-						l_current_word=''
-						newTestLines[j]+="$tChar "
-						((i++))
-					else # Try again
-						((i--))
-					fi
-				else
-					l_current_word+="$tChar"
-					newTestLines[j]+="$tChar"
-				fi
-			else
-				l_current_word+="$tChar"
-				newTestLines[j]+="$tChar"
-			fi
-			unset tChar
+			_validateAndAddChar "${characters:$((RANDOM % ${#characters})):1}"
+			# ((t_ind = RANDOM % ${#characters}))
+			# local tChar="${characters:$t_ind:1}"
+			# if [ "$tChar" = ' ' ]; then
+			# 	# It doesn't end in space & isn't empty
+			# 	if [ "${newTestLines[$j]: -1}" != ' ' ] && (("${#l_current_word}" > 0)); then
+			# 		l_current_word=''
+			# 		newTestLines[j]+="$tChar"
+			# 	else # Try again
+			# 		((i--))
+			# 	fi
+			# elif eval "$f_properPunctuation"; then
+			# 	if [[ "$tChar" =~ [\;\,\.\:\!] ]]; then
+			# 		# If there's space for the char + a space, it's preceded by a letter/number, & the word isn't empty
+			# 		if  ((${#newTestLines[$j]} + 2 < columns)) && 
+			# 			[[ "${newTestLines[$j]: -1}" =~ [[:alnum:]] ]] && 
+			# 			(("${#l_current_word}" > 0)); then
+			# 			l_current_word=''
+			# 			newTestLines[j]+="$tChar "
+			# 			((i++))
+			# 		else # Try again
+			# 			((i--))
+			# 		fi
+			# 	else
+			# 		l_current_word+="$tChar"
+			# 		newTestLines[j]+="$tChar"
+			# 	fi
+			# else
+			# 	l_current_word+="$tChar"
+			# 	newTestLines[j]+="$tChar"
+			# fi
+			# unset tChar
 		done
 	done
 }
@@ -727,8 +785,8 @@ _update() {
 			if isAboutToEndLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAboutToEndLine"
 			__addLine "$RESET_COLOR_FOREGROUND"
 			__addLine "deltaWord: $((currTime - wordStartTimes[-1]))"
-			__addLine "wordStartTimes (L: ${#wordStartTimes[@]}): ${wordStartTimes[*]@Q}"
-			__addLine "wordEndTimes (L: ${#wordEndTimes[@]}): ${wordEndTimes[*]@Q}"
+			# __addLine "wordStartTimes (L: ${#wordStartTimes[@]}): ${wordStartTimes[*]@Q}"
+			# __addLine "wordEndTimes (L: ${#wordEndTimes[@]}): ${wordEndTimes[*]@Q}"
 			# __addLine "badInputs (Length: ${#badInputs[@]}): ${badInputs[*]@Q}"
 			# __addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
 			# IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]@K}"; IFS="$ORIG_IFS"
