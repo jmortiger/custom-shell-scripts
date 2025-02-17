@@ -41,7 +41,8 @@ readonly WORDS_FILE="$MY_DIR/words.txt"
 # 	asdfghjkl;wertyuio
 # 	aeiou
 # 	tyur
-# )asdfghjkl;wertyuioaeioutyurtyurtyurtyur
+# )
+readonly DEFAULT_CHARACTER_LIST='asdfjkl;ghqwertyuiopxczvbnm,.'
 declare -A CTR_SEQ=; eval "$(misc_util CTR_SEQ)"
 declare -A TPUT_COLOR=; eval "$(misc_util TPUT_COLOR)"
 declare -i MAX_READ_INT=; eval "$(misc_util MAX_READ_INT)"
@@ -89,10 +90,15 @@ while [[ -n "${1+x}" ]]; do
 			;;
 	esac
 done
+if [ -z "$characters" ]; then characters="$DEFAULT_CHARACTER_LIST"; fi
+declare -r punctuationCharacters="$(echo -nE "$characters" | sed -E 's/[^[:punct:]]//g')"
+declare -r alnumCharacters="$(echo -nE "$characters" | sed -E 's/[^[:alnum:]]//g')"
 if ! eval "$f_genWords"; then
 	# match only the words that are short enough & only have valid characters
 	mapfile -t words < <(grep --max-count=$maxDictSize -E --text -e "^[$characters]{1,$maxWordLength}$" "$WORDS_FILE")
 fi
+if ! [[ "$characters" =~ ' ' ]]; then characters+=' '; fi
+declare -r characters
 declare -r ORIG_IFS="$IFS"
 # 1: max length
 # 2: valid chars
@@ -230,25 +236,26 @@ function genTestSequence() {
 genTestSequence
 # unset words
 for item in "${newTestLines[@]}"; do testLines+=("$item"); done
-doExit() { tput rmcup; exit; }
+# TODO: Add params for exit status & error message
+function doExit() { tput rmcup; exit; }
 tput smcup; tput clear; trap 'tput rmcup' EXIT; trap 'doExit' INT
 echo -nE "$(array_join $'\n\n' "${testLines[@]}")"
 tput cup 1 0
 shopt -s globasciiranges extglob
+##region########################################### SETUP INPUT STREAM ###########################################
+declare streamFile="$(mktemp --dry-run "$HOME/Desktop/j_type_inputStream_XXXX")"
+if ! [[ "$streamFile" =~ ^$HOME/Desktop/j_type_inputStream_ ]]; then echo "Cannot safely rm -f $streamFile" 2>&1; exit 1; fi
+mkfifo "$streamFile"
+exec 3<>"$streamFile"; trap 'exec 3>&- 3<&-' EXIT
+rm -f "$streamFile"
+unset streamFile
+exec 3<&0
+##endregion######################################## SETUP INPUT STREAM ###########################################
+stty -echo; trap 'stty echo' EXIT
 declare -a inputs=('')
 declare -a inputColors=('')
 declare -A inputColorsBg=()
 declare -i currRow=0
-##region########################################### SETUP INPUT STREAM ###########################################
-declare inputStreamName="$(mktemp --dry-run "$HOME/Desktop/j_type_inputStream_XXXX")"
-if ! [[ "$inputStreamName" =~ ^$HOME/Desktop/j_type_inputStream_ ]]; then echo "Cannot safely rm -f $inputStreamName" 2>&1; exit 1; fi
-mkfifo "$inputStreamName"
-exec 3<>"$inputStreamName"; trap 'exec 3>&- 3<&-' EXIT
-rm -f "$inputStreamName"
-unset inputStreamName
-exec 3<&0
-##endregion######################################## SETUP INPUT STREAM ###########################################
-stty -echo; trap 'stty echo' EXIT
 ##region########################################### ARRAY GETTERS/SETTERS ###########################################
 _getXY() {
 	local -i lRow=
@@ -386,25 +393,7 @@ addToInput() {
 	for ((i = 0; i < "${#1}"; i++, myCurrCol++)); do
 		inputs[myCurrRow]+="${1:$i:1}"
 		if ((myCurrCol + 1 == columns)); then
-			((myCurrCol = -1))
-			((myCurrRow++))
-			((linesAdded++))
-		elif ((myCurrCol + 1 > columns)); then
-			echo "$myCurrCol > columns ($columns)"
-			sleep 3
-			exit 1 # TODO: THROW
-		fi
-	done
-	return $linesAdded
-}
-dryAddToInput() {
-	local -i linesAdded=0; local -i myCurrRow=$currRow; local -i myCurrCol=$(getCurrInputColNum)
-	for ((i = 0; i < "${#1}"; i++, myCurrCol++)); do
-		# inputs[myCurrRow]+="${1:$i:1}"
-		if ((myCurrCol + 1 == columns)); then
-			((myCurrCol = -1))
-			((myCurrRow++))
-			((linesAdded++))
+			((myCurrCol = -1, myCurrRow++, linesAdded++))
 		elif ((myCurrCol + 1 > columns)); then
 			echo "$myCurrCol > columns ($columns)"
 			sleep 3
@@ -726,8 +715,8 @@ _update() {
 			# __addLine "getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')"
 			__addLine "getTestChar: $(getTestChar)"
 			statusLine+="is alnum: "
-			if [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="curr "
 			if [[ $(getForPrior TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="prior "
+			if [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="curr "
 			if [[ $(getForNext TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="next"
 			__addLine "$RESET_COLOR_FOREGROUND"
 			if isAtWordStart; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtWordStart"
@@ -744,7 +733,7 @@ _update() {
 			# __addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
 			# IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]@K}"; IFS="$ORIG_IFS"
 			for ((i = 0; i < ${#wordEndTimes[@]}; i++)); do
-				statusLine+="([$i]: $((wordEndTimes[i] - wordStartTimes[i])) milliseconds) "
+				statusLine+="$i: $((wordEndTimes[i] - wordStartTimes[i])) ms; "
 			done
 			__addLine " "
 			# if ((${#words[@]} > 0)); then __addLine "last word: ${words[-1]}"; fi
