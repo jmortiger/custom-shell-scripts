@@ -286,19 +286,24 @@ _getXY() {
 	local -i lRow=
 	local -i lCol=
 	if [[ "$1" =~ ^([[:digit:]])+\:([[:digit:]])+$ ]]; then
-		local -ir lRow="${BASH_REMATCH[1]}"
-		local -ir lCol="${BASH_REMATCH[2]}"
+		lRow="${BASH_REMATCH[1]}"
+		lCol="${BASH_REMATCH[2]}"
 	else
 		if [ -n "$1" ]; then
-			local -ir lRow="$1"
+			lRow="$1"
 		else
-			local -ir lRow="$currRow"
+			lRow="$currRow"
 		fi
 		if [ -n "$2" ]; then
-			local -ir lCol="$2"
+			lCol="$2"
 		else
-			local -ir lCol="${#inputs[$lRow]}"
+			lCol="${#inputs[$lRow]}"
 		fi
+	fi
+	if ((lCol >= columns)); then
+		((lRow += lCol / columns, lCol %= columns))
+	elif ((lCol < 0 && lRow > 0)); then
+		((lRow += lCol / columns, lCol %= columns, lCol += lCol == 0 ? 0 : columns))
 	fi
 	echo $lRow $lCol
 }
@@ -306,14 +311,14 @@ _getXYNext() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@")
 	# if ((lCol >= columns && lRow < rows)); then
 	((lCol++))
-	if ((lCol >= columns)); then ((lCol = 0, lRow++)); fi
+	if ((lCol >= columns)); then ((lRow += lCol / columns, lCol %= columns)); fi
 	echo $lRow $lCol
 }
 _getXYAfterNext() { read -sr lRow lCol < <(_getXYNext "$@"); _getXYNext "$lRow" "$lCol"; }
 _getXYPrior() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@")
 	((lCol--))
-	if ((lCol < 0 && lRow > 0)); then ((lCol = columns - 1, lRow--)); fi
+	if ((lCol < 0)); then ((lRow += lCol / columns, lRow--, lCol %= columns, lCol += lCol == 0 ? 0 : columns)); fi
 	echo $lRow $lCol
 }
 _getXYBeforePrior() { read -sr lRow lCol < <(_getXYPrior "$@"); _getXYPrior "$lRow" "$lCol"; }
@@ -458,12 +463,63 @@ isAtWordOrLineStart() { isAtStartOfLine || isAtWordStart; }
 # 	done
 # done
 ##endregion######################################## Line/Word Boundaries ###########################################
-# generalTest() {
-# 	local cumulative="${testLines[*]}"
-# 	for ((i=0; i < )); do
-# 		command ...
-# 	done
-# }
+generalTest() {
+	# IFS=''; local -r cumulative="${testLines[*]}"; IFS="$ORIG_IFS"
+	local -r cumulative="$(array_join '' "${testLines[@]}")"
+	local -i i=0
+	local errored='false'
+	# echo "$cumulative"
+	for ((i = 2; i + 2 < ${#cumulative}; i++)); do
+		if ! [ "$(getForBeforePrior testChar 0 $i)" = "${cumulative:$((i - 2)):1}" ]; then
+			echo "getForBeforePrior testChar 0 $i failed ($(getForBeforePrior testChar 0 $i) != ${cumulative:$((i - 2)):1})"
+			_getXYBeforePrior 0 $i
+			_getXYPrior 0 $i
+			_getXY 0 $i
+			_getXYNext 0 $i
+			_getXYAfterNext 0 $i
+			errored='true'
+		fi
+		if ! [ "$(getForPrior testChar 0 $i)" = "${cumulative:$((i - 1)):1}" ]; then
+			echo "getForPrior testChar 0 $i failed ($(getForPrior testChar 0 $i) != ${cumulative:$((i - 1)):1})"
+			_getXYBeforePrior 0 $i
+			_getXYPrior 0 $i
+			_getXY 0 $i
+			_getXYNext 0 $i
+			_getXYAfterNext 0 $i
+			errored='true'
+		fi
+		if ! [ "$(getTestChar 0 $i)" = "${cumulative:$((i - 0)):1}" ]; then
+			echo "getTestChar 0 $i failed ($(getTestChar 0 $i) != ${cumulative:$((i - 0)):1})"
+			_getXYBeforePrior 0 $i
+			_getXYPrior 0 $i
+			_getXY 0 $i
+			_getXYNext 0 $i
+			_getXYAfterNext 0 $i
+			errored='true'
+		fi
+		if ! [ "$(getForNext testChar 0 $i)" = "${cumulative:$((i + 1)):1}" ]; then
+			echo "getForNext testChar 0 $i failed ($(getForNext testChar 0 $i) != ${cumulative:$((i + 1)):1})"
+			_getXYBeforePrior 0 $i
+			_getXYPrior 0 $i
+			_getXY 0 $i
+			_getXYNext 0 $i
+			_getXYAfterNext 0 $i
+			errored='true'
+		fi
+		if ! [ "$(getForAfterNext testChar 0 $i)" = "${cumulative:$((i + 2)):1}" ]; then
+			echo "getForAfterNext testChar 0 $i failed ($(getForAfterNext testChar 0 $i) != ${cumulative:$((i + 2)):1})"
+			_getXYBeforePrior 0 $i
+			_getXYPrior 0 $i
+			_getXY 0 $i
+			_getXYNext 0 $i
+			_getXYAfterNext 0 $i
+			errored='true'
+		fi
+	done
+	# if eval "$errored"; then doExit; fi
+	if ! eval "$errored"; then echo -n "$(tput setab 2) $(tput cub1)$RESET_COLOR_BACKGROUND"; fi
+}
+# generalTest
 # TODO: If overflow becomes a problem, pre-subtract start time
 # declare -ir startTime=$(date -u +'%-s')
 # declare +i startTime="$(date -u +'%-s%0N')"
