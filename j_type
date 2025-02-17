@@ -122,6 +122,7 @@ function genTestSequence() {
 	local l_current_word=''
 	local -r punctAndSpace="$punctuationCharacters "
 	local -i j=0; local -i i=0
+	local -i count=0
 	# l_current_word shouldn't be emptied before calling if punctuation is desired.
 	_validateAndAddChar() {
 		if [ "$1" = ' ' ]; then
@@ -170,6 +171,7 @@ function genTestSequence() {
 	}
 	for ((j = 0; j < rows; j++)); do
 		for ((i = 0; i < columns; i++)); do
+			echo -n $'\r'"$((count++))"
 			if ((${#l_current_word} >= maxWordLength)); then
 				if eval "$f_properPunctuation" && ((${#punctuationCharacters} > 0)); then
 					_validateAndAddChar "${punctAndSpace:$((RANDOM % (${#punctuationCharacters} + 1))):1}" 'force'
@@ -181,9 +183,14 @@ function genTestSequence() {
 			fi
 			if ((${#words[@]} > 0)); then
 				local -a badIndices=()
+				local -i c2=0
+				local -i loop=0
+				echo -n '      '
 				while true; do
-					((t_ind = RANDOM % ${#words[@]}, loop = 0))
-					for ((t_ind = RANDOM % ${#words[@]}, loop = 0; loop < 100; loop++, t_ind = RANDOM % ${#words[@]})); do
+					echo -n "$(tput cub 3)$((c2++))"
+					# echo -n $'\n'"$((c2++))$(tput cuu1)"
+					((t_ind = RANDOM % ${#words[@]}))
+					for ((t_ind = RANDOM % ${#words[@]}; loop < 100; loop++, t_ind = RANDOM % ${#words[@]})); do
 						if ! array_includes "$t_ind" "${badIndices[@]}"; then break; fi
 					done
 					l_current_word="${words[$t_ind]}"
@@ -206,6 +213,7 @@ function genTestSequence() {
 							# ...and we've tried too many options...
 							if ((loop >= 100)); then
 								# TODO: Graceful early exit
+								echo -n 'too many'
 								break 2
 							else # ...try another word
 								badIndices+=("$t_ind")
@@ -297,21 +305,15 @@ _getXY() {
 _getXYNext() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@")
 	# if ((lCol >= columns && lRow < rows)); then
-	if ((lCol >= columns)); then
-		((lCol = 0, lRow++))
-	else
-		((lCol++))
-	fi
+	((lCol++))
+	if ((lCol >= columns)); then ((lCol = 0, lRow++)); fi
 	echo $lRow $lCol
 }
 _getXYAfterNext() { read -sr lRow lCol < <(_getXYNext "$@"); _getXYNext "$lRow" "$lCol"; }
 _getXYPrior() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@")
-	if ((lCol <= 0 && lRow > 0)); then
-		((lCol = columns - 1, lRow--))
-	else
-		((lCol--))
-	fi
+	((lCol--))
+	if ((lCol < 0 && lRow > 0)); then ((lCol = columns - 1, lRow--)); fi
 	echo $lRow $lCol
 }
 _getXYBeforePrior() { read -sr lRow lCol < <(_getXYPrior "$@"); _getXYPrior "$lRow" "$lCol"; }
@@ -437,23 +439,41 @@ removeFromInput() {
 }
 ##region########################################### Line/Word Boundaries ###########################################
 # If character at cursor position is alpha-numeric but the prior one wasn't
-isAtWordStart() { [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]] && ! [[ $(getForPrior TestChar) =~ ^[[:alnum:]]+$ ]]; }
+isAtWordStart() { [[ $(getTestChar "$@") =~ ^[[:alnum:]]+$ ]] && ! [[ $(getForPrior TestChar "$@") =~ ^[[:alnum:]]+$ ]]; }
 # If character at cursor position isn't alpha-numeric but the next one is
-isBeforeWordStart() { ! [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]] && [[ $(getForNext TestChar) =~ ^[[:alnum:]]+$ ]]; }
+isBeforeWordStart() { ! [[ $(getTestChar "$@") =~ ^[[:alnum:]]+$ ]] && [[ $(getForNext TestChar "$@") =~ ^[[:alnum:]]+$ ]]; }
 # If character at cursor position isn't alpha-numeric but the prior one was
-isAtWordEnd() { ! [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]] && [[ $(getForPrior TestChar) =~ ^[[:alnum:]]+$ ]]; }
+isAtWordEnd() { ! [[ $(getTestChar "$@") =~ ^[[:alnum:]]+$ ]] && [[ $(getForPrior TestChar "$@") =~ ^[[:alnum:]]+$ ]]; }
 # If character at cursor position is alpha-numeric but the next one isn't
-isBeforeWordEnd() { [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]] && ! [[ $(getForNext TestChar) =~ ^[[:alnum:]]+$ ]]; }
+isBeforeWordEnd() { [[ $(getTestChar "$@") =~ ^[[:alnum:]]+$ ]] && ! [[ $(getForNext TestChar "$@") =~ ^[[:alnum:]]+$ ]]; }
 isAboutToEndLine() { (($(getCurrInputColNum) == ${#testLines[$(getCurrInputRowNum)]} - 1)); }
 isAtStartOfLine() { (($(getCurrInputColNum) == 0)); }
 hasJustEndedLine() { isAtStartOfLine && (($(getCurrInputRowNum) > 0)); }
 isAtWordOrLineStart() { isAtStartOfLine || isAtWordStart; }
+# declare -a wordStartPositions=()
+# declare -a wordEndPositions=()
+# for ((i=0; i < rows; i++)); do
+# 	for ((j=0; j < ${#testLines[i]}; j++)); do
+# 		if isAt
+# 	done
+# done
 ##endregion######################################## Line/Word Boundaries ###########################################
+# generalTest() {
+# 	local cumulative="${testLines[*]}"
+# 	for ((i=0; i < )); do
+# 		command ...
+# 	done
+# }
 # TODO: If overflow becomes a problem, pre-subtract start time
-declare -ir startTime=$(date -u +'%-s')
-declare +i lastUpdate="$(date -u +'%-s%0N')"
-declare -i lastUpdate="${lastUpdate:0:-6}"
-declare -a wordStartTimes=("$lastUpdate")
+# declare -ir startTime=$(date -u +'%-s')
+# declare +i startTime="$(date -u +'%-s%0N')"
+# declare -ir startTime="${startTime:0:-6}"
+# declare +i lastUpdateTime="$(date -u +'%-s%0N')"
+# declare -i lastUpdateTime="${lastUpdateTime:0:-6}"
+
+# The elapsed time since `startTime` in milliseconds.
+declare -i lastUpdateTime=0
+declare -a wordStartTimes=("0")
 declare -a wordEndTimes=()
 declare -a badInputs=()
 declare -i allMistakesCount=0
@@ -470,8 +490,9 @@ _update() {
 			inputChar="${cache:0:1}"
 			cache="${cache:1}"
 		fi
-		local +i currTime="$(date -u +'%-s%0N')"
-		local -i currTime="${currTime:0:-6}"
+		local +i currDeltaTime="$(date -u +'%-s%0N')"; currDeltaTime="${currDeltaTime:0:-6}"
+		if [ -z "$startTime" ]; then declare -r startTime="$currDeltaTime"; fi
+		local -i currDeltaTime="$(getDeltaTime -m --from "$startTime")"
 		local preDisplay=
 		local postDisplay="$RESET_COLOR_FOREGROUND"
 		# Assumes
@@ -486,14 +507,14 @@ _update() {
 					# TODO: Error message
 					doExit
 				fi
-				wordEndTimes+=("$currTime")
+				wordEndTimes+=("$currDeltaTime")
 			fi
 			if isBeforeWordStart; then
 				if ((${#wordStartTimes[@]} != ${#wordEndTimes[@]})); then
 					# TODO: Error message
 					doExit
 				fi
-				wordStartTimes+=("$currTime")
+				wordStartTimes+=("$currDeltaTime")
 			fi
 			local -i linesAdded=0 i=0
 			addToInput "$inputChar"
@@ -699,38 +720,29 @@ _update() {
 		else
 			invalidCharacter
 		fi
-		# if ((currTime - lastUpdate > REFRESH_INTERVAL * 1000)); then
+		# if ((currDeltaTime - lastUpdateTime > REFRESH_INTERVAL * 1000)); then
 			##region########################################### Status Line ###########################################
 			local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
 			local statusLine=$'\rStatus Line:'
 			__addLine() { local v="$1"; if [ -z "$v" ]; then read -rsN "$MAX_READ_INT" -t .01 v; fi; statusLine+="$v$(tput el)"$' \b\n'; }
-			IFS=$'\n'; __addLine "inputs: ${inputs[*]}"; IFS="$ORIG_IFS"
+			# IFS=$'\n'; __addLine "inputs: ${inputs[*]}"; IFS="$ORIG_IFS"
 			# __addLine "inputColorsBg: ${inputColorsBg[*]@A}"
 			# __addLine "inputColors: ${inputColors[*]}"
 			__addLine "getCurrInputColNum: $(getCurrInputColNum)"
 			# shellcheck disable=SC2119
-			__addLine "_getXYBeforePrior: $(_getXYBeforePrior)"
-			__addLine "_getXYPrior: $(_getXYPrior)"
-			__addLine "_getXY: $(_getXY)"
-			__addLine "_getXYNext: $(_getXYNext)"
+			__addLine "_getXY: BeforePrior=$(_getXYBeforePrior); Prior=$(_getXYPrior); curr=$(_getXY); Next=$(_getXYNext); AfterNext=$(_getXYAfterNext)"
+			__addLine "getCoord: beforePrior=$(getForBeforePrior getCoord); prior=$(getForPrior getCoord); curr=$(getCoord); Next=$(getForNext getCoord); AfterNext=$(getForAfterNext getCoord)"
 			# shellcheck disable=SC2119
-			__addLine "_getXYAfterNext: $(_getXYAfterNext)"
-			# __addLine "getCoord: $(getCoord)"
-			# __addLine "getForPrior getCoord: $(getForPrior getCoord)"
-			# __addLine "getForBeforePrior getCoord: $(getForBeforePrior getCoord)"
-			# # shellcheck disable=SC2119
-			# __addLine "getInputColor: $(getInputColor)"
-			# __addLine "getForPrior 'getInputColor': $(getForPrior 'getInputColor')"
-			# __addLine "getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')"
-			# # shellcheck disable=SC2119
-			# __addLine "getInputColorBg: $(getInputColorBg)"
-			# __addLine "getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg')"
-			# __addLine "getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')"
-			# # shellcheck disable=SC2119
-			# __addLine "getInput: $(getInput)"
-			# __addLine "getForPrior 'getInput': $(getForPrior 'getInput')"
-			# __addLine "getForBeforePrior 'getInput': $(getForBeforePrior 'getInput')"
-			__addLine "getTestChar: $(getTestChar)"
+			__addLine "getInputColor: beforePrior=$(getForBeforePrior getInputColor); prior=$(getForPrior getInputColor); curr=$(getInputColor); Next=$(getForNext getInputColor); AfterNext=$(getForAfterNext getInputColor)"
+			# __addLine "getInputColor: $(getInputColor)"; __addLine "getForPrior 'getInputColor': $(getForPrior 'getInputColor')"; __addLine "getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')"
+			# shellcheck disable=SC2119
+			__addLine "getInputColorBg: beforePrior=$(getForBeforePrior getInputColorBg); prior=$(getForPrior getInputColorBg); curr=$(getInputColorBg); Next=$(getForNext getInputColorBg); AfterNext=$(getForAfterNext getInputColorBg)"
+			# __addLine "getInputColorBg: $(getInputColorBg)"; __addLine "getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg'); __addLine "getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')"
+			# shellcheck disable=SC2119
+			__addLine "getInput: beforePrior=$(getForBeforePrior getInput); prior=$(getForPrior getInput); curr=$(getInput); Next=$(getForNext getInput); AfterNext=$(getForAfterNext getInput)"
+			# __addLine "getInput: $(getInput)"; __addLine "getForPrior getInput: $(getForPrior getInput)"; __addLine "getForBeforePrior getInput: $(getForBeforePrior getInput)"
+			# __addLine "getTestChar: $(getTestChar)"
+			__addLine "TestChar: beforePrior=$(getForBeforePrior TestChar); prior=$(getForPrior TestChar); curr=$(getTestChar); Next=$(getForNext TestChar); AfterNext=$(getForAfterNext TestChar)"
 			statusLine+="is alnum: "
 			if [[ $(getForPrior TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="prior "
 			if [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="curr "
@@ -743,23 +755,21 @@ _update() {
 			if isAtStartOfLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtStartOfLine"
 			if isAboutToEndLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAboutToEndLine"
 			__addLine "$RESET_COLOR_FOREGROUND"
-			__addLine "deltaWord: $((currTime - wordStartTimes[-1]))"
+			__addLine "deltaWord: $((currDeltaTime - wordStartTimes[-1]))"
+			__addLine "Length: wordStartTimes=${#wordStartTimes[@]}); wordEndTimes=${#wordEndTimes[@]})"
 			# __addLine "wordStartTimes (L: ${#wordStartTimes[@]}): ${wordStartTimes[*]@Q}"
 			# __addLine "wordEndTimes (L: ${#wordEndTimes[@]}): ${wordEndTimes[*]@Q}"
 			# __addLine "badInputs (Length: ${#badInputs[@]}): ${badInputs[*]@Q}"
 			# __addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
 			# IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]@K}"; IFS="$ORIG_IFS"
-			for ((i = 0; i < ${#wordEndTimes[@]}; i++)); do
-				statusLine+="$i: $((wordEndTimes[i] - wordStartTimes[i])) ms; "
-			done
-			__addLine " "
+			# for ((i = 0; i < ${#wordEndTimes[@]}; i++)); do statusLine+="$i: $((wordEndTimes[i] - wordStartTimes[i])) ms; "; done; __addLine " "
 			# if ((${#words[@]} > 0)); then __addLine "last word: ${words[-1]}"; fi
 			local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
 			if (($(getCurrInputColNum) > 0)); then postStatusLine+="$(tput cuf "$(getCurrInputColNum)")"; fi
 			echo -n "$preStatusLine$statusLine$postStatusLine"
 			unset statusLine preStatusLine postStatusLine __addLine
 			##endregion######################################## Status Line ###########################################
-			((lastUpdate=currTime))
+			((lastUpdateTime=currDeltaTime))
 		# fi
 	done
 }

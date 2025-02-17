@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
+
+declare from=
+declare format='%-s'
+declare fTruncate='false'
+while (($# > 0)); do
+	case "$1" in
+		-f | --from)
+			shift
+			declare -r from="$1"
+			;;
+		-s | --seconds)
+			declare -r format='%-s'
+			declare -r fTruncate='false'
+			;;
+		-m | --milliseconds)
+			declare -r format='%-s%0N'
+			declare -r fTruncate='true'
+			;;
+		-n | --nanoseconds)
+			declare -r format='%-s%0N'
+			declare -r fTruncate='false'
+			;;
+		# *) ;;
+	esac
+	shift
+done
+result="$(date -u +"$format")"
+eCode=$?
+if eval "$fTruncate"; then result="${result:0:-6}"; fi
+if [ -z "$from" ]; then result="$(bc -l <<< "$result - $from")"; eCode=$?; fi
+echo -nE "$result"
+exit $eCode
