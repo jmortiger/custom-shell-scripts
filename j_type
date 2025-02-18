@@ -8,7 +8,7 @@ if [[ "$MY_PATH" =~ ^(.*)/([^/]+)$ ]]; then
 	readonly MY_DIR="${BASH_REMATCH[1]}" MY_NAME="${BASH_REMATCH[2]}"
 else
 	readonly MY_DIR="$HOME" MY_NAME="$0"
-	echo "$MY_NAME: Failed to get dir" 1>&2
+	echo "$MY_NAME: Failed to get dir" 2>&1
 	exit 1
 fi
 ##endregion######################################## GET PATH, DIR, & NAME ###########################################
@@ -53,38 +53,22 @@ declare -i maxDictSize=100000
 declare -i maxWordLength=7
 declare -i rows=3
 declare -i columns=$(tput cols)
-declare characters=' '
+declare characters=''
 declare -a words=()
 # Dynamically generate nonsense words?
 declare f_genWords='true'
 declare f_properPunctuation='true'
-declare -n opt1=characters opt2=testPath opt3=characters
 while [[ -n "${1+x}" ]]; do
 	case "$1" in
 		(-h | --help) show_help; exit;;
 		(-v | --version) show_version; exit;;
-		# (-c | --coarseness)
-		# 	shift
-		# 	coarseInput="$1"
-		# 	shift
-		# 	;;
-		(*)
-			# if [[ -n "${opt1+x}" ]]; then
-			# 	if [[ -n "${opt2+x}" ]]; then
-			# 		if [[ -n "${opt3+x}" ]]; then
-			# 			exit 1
-			# 		else
-						opt3+="$1"
-			# 		fi
-			# 	else
-			# 		opt2="$1"
-			# 	fi
-			# else
-			# 	opt1="$1"
-			# fi
-			shift
-			;;
+		(-g | --genWords) f_genWords='true';;
+		(\+g | -!g | \+\+genWords | --!genWords) f_genWords='false';;
+		(-p | --properPunctuation) f_properPunctuation='true';;
+		(\+p | -!p | \+\+properPunctuation | --!properPunctuation) f_properPunctuation='false';;
+		(*) characters+="$1";;
 	esac
+	shift
 done
 if [ -z "$characters" ]; then characters="$DEFAULT_CHARACTER_LIST"; fi
 declare -r punctuationCharacters="$(echo -nE "$characters" | sed -E 's/[^[:punct:]]//g')"
@@ -111,9 +95,24 @@ getRandomWord() {
 	echo -n "${validWords[$t_ind]}"
 }
 ##endregion######################################## PARAMETERS ###########################################
-declare -a newTestLines=()
+# shellcheck disable=SC2317
+function storeStatisticsScreen() { true; }
+# TODO: Redirect for error message
+function doExit() {
+	tput clear
+	stty echo
+	if ((${1:-0} == 0)); then
+		storeStatisticsScreen
+	else
+		echo "$2" 2>&1
+	fi
+	tput rmcup
+	exit "${1:-0}"
+}
+tput smcup; tput clear; trap 'doExit' INT
 declare -a testLines=()
 ##region########################################### GENERATE TEST SEQUENCE ###########################################
+declare -a newTestLines=()
 # Dependent on:
 # * newTestLines
 function genTestSequence() {
@@ -256,31 +255,27 @@ function genTestSequence() {
 # 		genTestSequence
 # 	}
 # }
-##endregion######################################## GENERATE TEST SEQUENCE ###########################################
-
 genTestSequence
+tput clear
+##endregion######################################## GENERATE TEST SEQUENCE ###########################################
 # unset words
 for item in "${newTestLines[@]}"; do testLines+=("$item"); done
-function doStatistics() { true; }
-# TODO: Add params for exit status & error message
-function doExit() { doStatistics; tput rmcup; exit; }
-tput smcup; tput clear; trap 'tput rmcup' EXIT; trap 'doExit' INT
 echo -nE "$(array_join $'\n\n' "${testLines[@]}")"
 tput cup 1 0
 shopt -s globasciiranges extglob
 ##region########################################### SETUP INPUT STREAM ###########################################
 declare -ri INPUT_FD=3
 declare streamFile="$(mktemp --dry-run "$HOME/Desktop/j_type_inputStream_XXXX")"
-if ! [[ "$streamFile" =~ ^$HOME/Desktop/j_type_inputStream_ ]]; then echo "Cannot safely rm -f $streamFile" 2>&1; exit 1; fi
+if ! [[ "$streamFile" =~ ^$HOME/Desktop/j_type_inputStream_ ]]; then doExit 1 "Cannot safely rm -f $streamFile"; fi
 mkfifo "$streamFile"
 exec 3<>"$streamFile"
-# shellcheck disable=SC2064
-trap "exec $INPUT_FD>&- $INPUT_FD<&-" EXIT
 rm -f "$streamFile"
 unset streamFile
+# shellcheck disable=SC2064
+trap "exec $INPUT_FD>&- $INPUT_FD<&-" EXIT
 exec 3<&0
 ##endregion######################################## SETUP INPUT STREAM ###########################################
-stty -echo; trap 'stty echo' EXIT
+stty -echo
 declare -a inputs=('')
 declare -a inputColors=('')
 declare -A inputColorsBg=()
@@ -307,6 +302,7 @@ __restrictToBounds() {
 	# 	((lCol = columns - 1))
 	# fi
 }
+# Needs to end in a new line for easy usage w/ read
 getXY() {
 	local fBounded='true'
 	if [ "$1" = '--unbounded' ]; then
@@ -464,9 +460,10 @@ addToInput() {
 		if ((myCurrCol + 1 == columns)); then
 			((myCurrCol = -1, myCurrRow++, linesAdded++))
 		elif ((myCurrCol + 1 > columns)); then
-			echo "$myCurrCol > columns ($columns)"
-			sleep 3
-			exit 1 # TODO: THROW
+			# echo "$myCurrCol > columns ($columns)"
+			# sleep 3
+			# exit 1
+			doExit 1 "$myCurrCol > columns ($columns)"
 		fi
 	done
 	return $linesAdded
@@ -479,9 +476,10 @@ removeFromInput() {
 			((myCurrCol = $(getInputColNum $myCurrRow)))
 			((linesRemoved++))
 		elif ((myCurrCol < 0)); then
-			echo "$myCurrCol < 0"
-			sleep 3
-			exit 1 # TODO: THROW
+			# echo "$myCurrCol < 0"
+			# sleep 3
+			# exit 1 # TODO: THROW
+			doExit 1 "$myCurrCol < 0"
 		fi
 		inputs[myCurrRow]="${inputs[$myCurrRow]:0:$((myCurrCol - 1))}${inputs[$myCurrRow]:$myCurrCol}"
 	done
@@ -498,15 +496,10 @@ isAtWordEnd() { ! [[ $(getTestChar "$@") =~ ^[[:alnum:]]+$ ]] && [[ $(getForPrio
 isBeforeWordEnd() { [[ $(getTestChar "$@") =~ ^[[:alnum:]]+$ ]] && ! [[ $(getForNext TestChar "$@") =~ ^[[:alnum:]]+$ ]]; }
 isAboutToEndLine() { (($(getCurrInputColNum) == ${#testLines[$(getCurrInputRowNum)]} - 1)); }
 isAtStartOfLine() { (($(getCurrInputColNum) == 0)); }
-hasJustEndedLine() { isAtStartOfLine && (($(getCurrInputRowNum) > 0)); }
-isAtWordOrLineStart() { isAtStartOfLine || isAtWordStart; }
-# declare -a wordStartPositions=()
-# declare -a wordEndPositions=()
-# for ((i=0; i < rows; i++)); do
-# 	for ((j=0; j < ${#testLines[i]}; j++)); do
-# 		if isAt
-# 	done
-# done
+# hasJustEndedLine() { isAtStartOfLine && (($(getCurrInputRowNum) > 0)); }
+# isAtWordOrLineStart() { isAtStartOfLine || isAtWordStart; }
+# isAtStartPosition() { (($(getCurrInputRowNum) == 0 && $(getCurrInputColNum) == 0)); }
+# isAtEndPosition() { (($(getCurrInputRowNum) + 1 == rows && $(getCurrInputColNum) + 1 == columns)); }
 ##endregion######################################## Line/Word Boundaries ###########################################
 generalTest() {
 	# IFS=''; local -r cumulative="${testLines[*]}"; IFS="$ORIG_IFS"
@@ -565,19 +558,23 @@ generalTest() {
 	if ! eval "$errored"; then echo -n "$(tput setab 2) $(tput cub1)$RESET_COLOR_BACKGROUND"; fi
 }
 # generalTest
-# TODO: If overflow becomes a problem, pre-subtract start time
-# declare -ir startTime=$(date -u +'%-s')
-# declare +i startTime="$(date -u +'%-s%0N')"
-# declare -ir startTime="${startTime:0:-6}"
-# declare +i lastUpdateTime="$(date -u +'%-s%0N')"
-# declare -i lastUpdateTime="${lastUpdateTime:0:-6}"
-declare startTime="$(date -u +'%-s%0N')"
 declare startDate="$(date --iso-8601='seconds')"
 
 # The elapsed time since `startTime` in milliseconds.
 declare -i lastUpdateTime=0
 declare -a wordStartTimes=("0")
 declare -a wordEndTimes=()
+declare -a wordStartPositions=('0:0')
+# TODO: finish
+# getWordCompletionData() {
+# 	local -i r=; local -i c=; read -sr r c < <(getXY "$@")
+# 	local word=
+# 	while ! isAtWordEnd $r $c; do
+# 		word+="$(getTestChar $r $c)"
+# 		read -sr r c < <(getXYNext $r $c)
+# 	done
+# }
+declare -i recognizedKeystrokes=0
 declare -a badInputs=()
 declare -i allMistakesCount=0
 declare -i uniqueMistakesCount=0
@@ -585,9 +582,10 @@ declare -i uniqueMistakesCount=0
 declare -A mistakeContext=()
 declare -A mistakeFreq=()
 # Can be used to replicate this run (think Doom replays).
+# TODO: Add to whenever recognizedKeystrokes is incremented
 declare inputSequence=
 declare -r STATS_FILE="$MY_DIR/jTypeStats.txt"
-function doStatistics() {
+function storeStatisticsScreen() {
 	output=$(cat <<-_EOF_
 	$startDate
 	${testLines[@]@A}
@@ -644,6 +642,7 @@ _update() {
 					doExit
 				fi
 				wordStartTimes+=("$currDeltaTime")
+				wordStartPositions+=("$(getForNext coord)")
 			fi
 			local -i linesAdded=0 i=0
 			addToInput "$inputChar"
@@ -724,6 +723,7 @@ _update() {
 					doExit
 				fi
 				unset 'wordStartTimes[-1]'
+				unset 'wordStartPositions[-1]'
 			fi
 			visualScrollLeft "$1"
 			local -i linesRemoved=0
@@ -746,12 +746,13 @@ _update() {
 			preDisplay+="$(tput setaf "${TPUT_COLOR[GREEN]}")"
 			setInputColor 2
 			_addToOutput
+			((recognizedKeystrokes++))
 		# ...it's a backspace...
 		elif [ "$inputChar" = "$(tput kbs)" ]; then # Backspace
 			# If there's nothing to backspace, skip
 			if (($(getCurrInputColNum) <= 0 && currRow <= 0)); then continue; fi
 			doBackspace ' '
-			# continue
+			((recognizedKeystrokes++))
 		# ...it's an escape...
 		elif [ "$inputChar" = $'\E' ]; then # ESCAPE SEQUENCE
 			local escapeSequence
@@ -814,28 +815,24 @@ _update() {
 				elif eval "$fChunkedInput"; then
 					invalidCharacter "$escapeSequence$cache"
 					cache=
-				else
-					invalidCharacter "$escapeSequence"
-				fi
-			fi
+				else invalidCharacter "$escapeSequence"; fi
+			else ((recognizedKeystrokes++)); fi
 			unset escapeSequence iEsc fChunkedInput
 		# ...it's a different printable character than expected...
 		elif [[ "$inputChar" =~ ^[[:print:]]$ ]]; then # Incorrect character
-			# Add to history
+			##region################################# Add to history #################################
+			((recognizedKeystrokes++))
 			((allMistakesCount++))
 			local mistakeId="$(getCoord):$inputChar"
 			if [ -n "${mistakeContext[$mistakeId]}" ]; then
 				((mistakeContext[$mistakeId]++))
-			else
-				((mistakeContext[$mistakeId]=1))
-			fi
+			else ((mistakeContext[$mistakeId]=1)); fi
 			local mistakeId="$(getTestChar):$inputChar"
 			if [ -n "${mistakeFreq[$mistakeId]}" ]; then
 				((mistakeFreq[$mistakeId]++))
-			else
-				((mistakeFreq[$mistakeId]=1))
-			fi
+			else ((mistakeFreq[$mistakeId]=1)); fi
 			unset mistakeId
+			##endregion############################## Add to history #################################
 			# Output
 			preDisplay+="$(tput setaf "${TPUT_COLOR[RED]}")"
 			setInputColor 1
@@ -903,4 +900,4 @@ _update() {
 	done
 }
 while ((currRow < rows)); do _update; done
-tput rmcup
+doExit
