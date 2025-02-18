@@ -56,7 +56,7 @@ declare -i columns=$(tput cols)
 declare characters=' '
 declare -a words=()
 # Dynamically generate nonsense words?
-declare f_genWords='false'
+declare f_genWords='true'
 declare f_properPunctuation='true'
 declare -n opt1=characters opt2=testPath opt3=characters
 while [[ -n "${1+x}" ]]; do
@@ -261,17 +261,21 @@ function genTestSequence() {
 genTestSequence
 # unset words
 for item in "${newTestLines[@]}"; do testLines+=("$item"); done
+function doStatistics() { true; }
 # TODO: Add params for exit status & error message
-function doExit() { tput rmcup; exit; }
+function doExit() { doStatistics; tput rmcup; exit; }
 tput smcup; tput clear; trap 'tput rmcup' EXIT; trap 'doExit' INT
 echo -nE "$(array_join $'\n\n' "${testLines[@]}")"
 tput cup 1 0
 shopt -s globasciiranges extglob
 ##region########################################### SETUP INPUT STREAM ###########################################
+declare -ri INPUT_FD=3
 declare streamFile="$(mktemp --dry-run "$HOME/Desktop/j_type_inputStream_XXXX")"
 if ! [[ "$streamFile" =~ ^$HOME/Desktop/j_type_inputStream_ ]]; then echo "Cannot safely rm -f $streamFile" 2>&1; exit 1; fi
 mkfifo "$streamFile"
-exec 3<>"$streamFile"; trap 'exec 3>&- 3<&-' EXIT
+exec 3<>"$streamFile"
+# shellcheck disable=SC2064
+trap "exec $INPUT_FD>&- $INPUT_FD<&-" EXIT
 rm -f "$streamFile"
 unset streamFile
 exec 3<&0
@@ -282,7 +286,33 @@ declare -a inputColors=('')
 declare -A inputColorsBg=()
 declare -i currRow=0
 ##region########################################### ARRAY GETTERS/SETTERS ###########################################
-_getXY() {
+__restrictToBounds() {
+	local -i lRow=$1; local -i lCol=$2
+	if ((lCol >= columns)) || ((lCol < 0)); then
+		((lRow += lCol / columns, lRow -= lCol >= 0 ? 0 : 1, lCol %= columns, lCol += lCol >= 0 ? 0 : columns))
+	fi
+	if ((lRow < 0)); then
+		((lRow = 0, lCol = 0))
+	elif ((lRow >= rows)); then
+		((lRow = rows - 1, lCol = columns - 1))
+	fi
+	echo $lRow $lCol
+	if ((lCol < 0 || lCol >= columns)); then
+		# TODO: Error
+		return 1
+	fi
+	# if ((lCol < 0)); then
+	# 	((lCol = 0))
+	# elif ((lCol >= columns)); then
+	# 	((lCol = columns - 1))
+	# fi
+}
+getXY() {
+	local fBounded='true'
+	if [ "$1" = '--unbounded' ]; then
+		fBounded='false'
+		shift
+	fi; local -r fBounded
 	local -i lRow=
 	local -i lCol=
 	if [[ "$1" =~ ^([[:digit:]])+\:([[:digit:]])+$ ]]; then
@@ -300,112 +330,127 @@ _getXY() {
 			lCol="${#inputs[$lRow]}"
 		fi
 	fi
-	if ((lCol >= columns)); then
-		((lRow += lCol / columns, lCol %= columns))
-	elif ((lCol < 0 && lRow > 0)); then
-		((lRow += lCol / columns, lCol %= columns, lCol += lCol == 0 ? 0 : columns))
+	if eval "$fBounded"; then
+		__restrictToBounds $lRow $lCol
+	else
+		echo $lRow $lCol
 	fi
-	echo $lRow $lCol
 }
-_getXYNext() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@")
+getXYUnbounded() { getXY --unbounded "$@"; }
+isInBounds() {
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
+	((lRow >= 0 && lCol >= 0 && lRow < rows && lCol < columns))
+}
+getXYNext() {
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@")
 	# if ((lCol >= columns && lRow < rows)); then
 	((lCol++))
 	if ((lCol >= columns)); then ((lRow += lCol / columns, lCol %= columns)); fi
 	echo $lRow $lCol
 }
-_getXYAfterNext() { read -sr lRow lCol < <(_getXYNext "$@"); _getXYNext "$lRow" "$lCol"; }
-_getXYPrior() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@")
+getXYAfterNext() { read -sr lRow lCol < <(getXYNext "$@"); getXYNext "$lRow" "$lCol"; }
+getXYPrior() {
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@")
 	((lCol--))
-	if ((lCol < 0)); then ((lRow += lCol / columns, lRow--, lCol %= columns, lCol += lCol == 0 ? 0 : columns)); fi
+	if ((lCol < 0)); then
+		((lRow += lCol / columns, lRow -= lCol >= 0 ? 0 : 1, lCol %= columns, lCol += lCol >= 0 ? 0 : columns))
+	fi
 	echo $lRow $lCol
 }
-_getXYBeforePrior() { read -sr lRow lCol < <(_getXYPrior "$@"); _getXYPrior "$lRow" "$lCol"; }
+getXYBeforePrior() { read -sr lRow lCol < <(getXYPrior "$@"); getXYPrior "$lRow" "$lCol"; }
+isInBounds() {
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
+	((lRow >= 0 && lCol >= 0 && lRow < rows && lCol < columns))
+}
+restrictToBounds() {
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY --unbounded "$@")
+	if ((lCol >= columns)) || ((lCol < 0)); then
+		((lRow += lCol / columns, lRow -= lCol >= 0 ? 0 : 1, lCol %= columns, lCol += lCol >= 0 ? 0 : columns))
+	fi
+}
 getCoord() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
 	echo -n "$lRow:$lCol"
 	# echo -n "$currRow:${#inputs[$currRow]}"
 }
 getForPrior() {
 	local lCommand="$1"; shift
 	if ! [ "${lCommand:0:3}" = 'get' ]; then lCommand="get${lCommand@u}"; fi
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYPrior "$@"); shift 2
 	$lCommand $lRow $lCol
 }
 setForPrior() {
 	local lCommand="$1"; shift
 	local lValue="$1"; shift
 	if ! [ "${lCommand:0:3}" = 'set' ]; then lCommand="set${lCommand@u}"; fi
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYPrior "$@"); shift 2
 	$lCommand "$lValue" $lRow $lCol
 }
 getForBeforePrior() {
 	local lCommand="$1"; shift
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYPrior "$@"); shift 2
 	getForPrior "$lCommand" $lRow $lCol
 }
 setForBeforePrior() {
 	local lCommand="$1"; shift; local lValue="$1"; shift
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYPrior "$@"); shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYPrior "$@"); shift 2
 	setForPrior "$lCommand" "$lValue" $lRow $lCol
 }
 getForNext() {
 	local lCommand="$1"; shift
 	if ! [ "${lCommand:0:3}" = 'get' ]; then lCommand="get${lCommand@u}"; fi
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYNext "$@"); shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYNext "$@"); shift 2
 	$lCommand $lRow $lCol
 }
 setForNext() {
 	local lCommand="$1"; shift
 	local lValue="$1"; shift
 	if ! [ "${lCommand:0:3}" = 'set' ]; then lCommand="set${lCommand@u}"; fi
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYNext "$@"); shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYNext "$@"); shift 2
 	$lCommand "$lValue" $lRow $lCol
 }
 getForAfterNext() {
 	local lCommand="$1"; shift
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYNext "$@"); shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYNext "$@"); shift 2
 	getForNext "$lCommand" $lRow $lCol
 }
 setForAfterNext() {
 	local lCommand="$1"; shift; local lValue="$1"; shift
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXYNext "$@"); shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYNext "$@"); shift 2
 	setForNext "$lCommand" "$lValue" $lRow $lCol
 }
-# shellcheck disable=SC2120
 getTestChar() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
 	local t="${testLines[$lRow]}"; echo -n "${t: $lCol:1}"
 }
 # shellcheck disable=SC2120
 getInput() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
 	local t="${inputs[$lRow]}"; echo -n "${t: $lCol:1}"
 }
 # shellcheck disable=SC2120
 getInputColor() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
 	local t="${inputColors[$lRow]}"; echo -n "${t: $lCol:1}"
 }
 # shellcheck disable=SC2120
 getInputColorBg() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
 	local t="$(getCoord $lRow $lCol)"; echo -n "${inputColorsBg[$t]}"
 }
 # setInput() {
 # 	local val="$1"; shift
-# 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
+# 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol; shift 2
 # 	inputs[lRow]="${inputs[$lRow]:0:$lCol}${val}${inputs[$lRow]:$((lCol + 1))}"
 # }
 setInputColor() {
 	local val="$1"; shift
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol; shift 2
 	inputColors[lRow]="${inputColors[$lRow]:0:$lCol}${val}${inputColors[$lRow]:$((lCol + 1))}"
 }
 setInputColorBg() {
 	local val="$1"; shift
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(_getXY "$@"); local -ir lRow lCol; shift 2
+	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol; shift 2
 	local t="$(getCoord $lRow $lCol)"; inputColorsBg[$t]="$val"
 }
 ##endregion######################################## ARRAY GETTERS/SETTERS ###########################################
@@ -472,47 +517,47 @@ generalTest() {
 	for ((i = 2; i + 2 < ${#cumulative}; i++)); do
 		if ! [ "$(getForBeforePrior testChar 0 $i)" = "${cumulative:$((i - 2)):1}" ]; then
 			echo "getForBeforePrior testChar 0 $i failed ($(getForBeforePrior testChar 0 $i) != ${cumulative:$((i - 2)):1})"
-			_getXYBeforePrior 0 $i
-			_getXYPrior 0 $i
-			_getXY 0 $i
-			_getXYNext 0 $i
-			_getXYAfterNext 0 $i
+			getXYBeforePrior 0 $i
+			getXYPrior 0 $i
+			getXY 0 $i
+			getXYNext 0 $i
+			getXYAfterNext 0 $i
 			errored='true'
 		fi
 		if ! [ "$(getForPrior testChar 0 $i)" = "${cumulative:$((i - 1)):1}" ]; then
 			echo "getForPrior testChar 0 $i failed ($(getForPrior testChar 0 $i) != ${cumulative:$((i - 1)):1})"
-			_getXYBeforePrior 0 $i
-			_getXYPrior 0 $i
-			_getXY 0 $i
-			_getXYNext 0 $i
-			_getXYAfterNext 0 $i
+			getXYBeforePrior 0 $i
+			getXYPrior 0 $i
+			getXY 0 $i
+			getXYNext 0 $i
+			getXYAfterNext 0 $i
 			errored='true'
 		fi
 		if ! [ "$(getTestChar 0 $i)" = "${cumulative:$((i - 0)):1}" ]; then
 			echo "getTestChar 0 $i failed ($(getTestChar 0 $i) != ${cumulative:$((i - 0)):1})"
-			_getXYBeforePrior 0 $i
-			_getXYPrior 0 $i
-			_getXY 0 $i
-			_getXYNext 0 $i
-			_getXYAfterNext 0 $i
+			getXYBeforePrior 0 $i
+			getXYPrior 0 $i
+			getXY 0 $i
+			getXYNext 0 $i
+			getXYAfterNext 0 $i
 			errored='true'
 		fi
 		if ! [ "$(getForNext testChar 0 $i)" = "${cumulative:$((i + 1)):1}" ]; then
 			echo "getForNext testChar 0 $i failed ($(getForNext testChar 0 $i) != ${cumulative:$((i + 1)):1})"
-			_getXYBeforePrior 0 $i
-			_getXYPrior 0 $i
-			_getXY 0 $i
-			_getXYNext 0 $i
-			_getXYAfterNext 0 $i
+			getXYBeforePrior 0 $i
+			getXYPrior 0 $i
+			getXY 0 $i
+			getXYNext 0 $i
+			getXYAfterNext 0 $i
 			errored='true'
 		fi
 		if ! [ "$(getForAfterNext testChar 0 $i)" = "${cumulative:$((i + 2)):1}" ]; then
 			echo "getForAfterNext testChar 0 $i failed ($(getForAfterNext testChar 0 $i) != ${cumulative:$((i + 2)):1})"
-			_getXYBeforePrior 0 $i
-			_getXYPrior 0 $i
-			_getXY 0 $i
-			_getXYNext 0 $i
-			_getXYAfterNext 0 $i
+			getXYBeforePrior 0 $i
+			getXYPrior 0 $i
+			getXY 0 $i
+			getXYNext 0 $i
+			getXYAfterNext 0 $i
 			errored='true'
 		fi
 	done
@@ -526,6 +571,8 @@ generalTest() {
 # declare -ir startTime="${startTime:0:-6}"
 # declare +i lastUpdateTime="$(date -u +'%-s%0N')"
 # declare -i lastUpdateTime="${lastUpdateTime:0:-6}"
+declare startTime="$(date -u +'%-s%0N')"
+declare startDate="$(date --iso-8601='seconds')"
 
 # The elapsed time since `startTime` in milliseconds.
 declare -i lastUpdateTime=0
@@ -539,9 +586,35 @@ declare -A mistakeContext=()
 declare -A mistakeFreq=()
 # Can be used to replicate this run (think Doom replays).
 declare inputSequence=
+declare -r STATS_FILE="$MY_DIR/jTypeStats.txt"
+function doStatistics() {
+	output=$(cat <<-_EOF_
+	$startDate
+	${testLines[@]@A}
+	${inputs[@]@A}
+	${inputColors[@]@A}
+	${inputColorsBg[@]@A}
+	${currRow@A}
+	${lastUpdateTime@A}
+	${wordStartTimes[@]@A}
+	${wordEndTimes[@]@A}
+	${badInputs[@]@A}
+	${allMistakesCount@A}
+	${uniqueMistakesCount@A}
+	${mistakeContext[@]@A}
+	${mistakeFreq[@]@A}
+	${inputSequence@A}
+	${rows@A}
+	${columns@A}
+	_EOF_
+	)
+	read -rN 1 -p $'STATISTICS:\n'"$output"$'\n'"$(tput smso)Store statistics to '$STATS_FILE'? (y/n)$(tput rmso) "
+	if [ "$REPLY" = 'n' ] || [ "$REPLY" = 'N' ]; then return; fi
+	echo -E "$output" >>"$STATS_FILE"
+}
 _update() {
 	local cache=
-	while ((${#cache} > 0)) || read -rsN 1 -u 3 -t .5 inputChar; do
+	while ((${#cache} > 0)) || read -rsN 1 -u $INPUT_FD -t .5 inputChar; do
 		if ((${#cache} > 0)); then
 			inputChar="${cache:0:1}"
 			cache="${cache:1}"
@@ -687,7 +760,7 @@ _update() {
 				cache=
 				local fChunkedInput='false'
 			else
-				read -rsN $MAX_READ_INT -u 3 -t .01 escapeSequence
+				read -rsN $MAX_READ_INT -u $INPUT_FD -t .01 escapeSequence
 				local fChunkedInput='true'
 			fi
 			# From the end of cache, search for the longest matching escape sequence.
@@ -786,8 +859,8 @@ _update() {
 			# __addLine "inputColors: ${inputColors[*]}"
 			__addLine "getCurrInputColNum: $(getCurrInputColNum)"
 			# shellcheck disable=SC2119
-			__addLine "_getXY: BeforePrior=$(_getXYBeforePrior); Prior=$(_getXYPrior); curr=$(_getXY); Next=$(_getXYNext); AfterNext=$(_getXYAfterNext)"
-			__addLine "getCoord: beforePrior=$(getForBeforePrior getCoord); prior=$(getForPrior getCoord); curr=$(getCoord); Next=$(getForNext getCoord); AfterNext=$(getForAfterNext getCoord)"
+			__addLine "getXY: BeforePrior=$(getXYBeforePrior); Prior=$(getXYPrior); curr=$(getXY); Next=$(getXYNext); AfterNext=$(getXYAfterNext)"
+			__addLine "getCoord: beforePrior=$(getForBeforePrior Coord); prior=$(getForPrior Coord); curr=$(getCoord); Next=$(getForNext Coord); AfterNext=$(getForAfterNext Coord)"
 			# shellcheck disable=SC2119
 			__addLine "getInputColor: beforePrior=$(getForBeforePrior getInputColor); prior=$(getForPrior getInputColor); curr=$(getInputColor); Next=$(getForNext getInputColor); AfterNext=$(getForAfterNext getInputColor)"
 			# __addLine "getInputColor: $(getInputColor)"; __addLine "getForPrior 'getInputColor': $(getForPrior 'getInputColor')"; __addLine "getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')"
