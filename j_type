@@ -59,14 +59,19 @@ declare -a words=()
 # Dynamically generate nonsense words?
 declare fGenWords='true'
 declare fProperPunctuation='true'
+# declare fReplay='false'
 while [[ -n "${1+x}" ]]; do
 	case "$1" in
 		(-h | --help) show_help; exit;;
 		(-v | --version) show_version; exit;;
+		(-l | --lines) shift; declare -ir rows="$1";;
+		(-w | --width) shift; declare -ir columns="$1";;
 		(-g | --genWords) fGenWords='true';;
 		(\+g | -!g | \+\+genWords | --!genWords) fGenWords='false';;
 		(-p | --properPunctuation) fProperPunctuation='true';;
 		(\+p | -!p | \+\+properPunctuation | --!properPunctuation) fProperPunctuation='false';;
+		# (-r | --replay)
+		# 	;;
 		(*) characters+="$1";;
 	esac
 	shift
@@ -610,6 +615,84 @@ function storeStatisticsScreen() {
 	echo -E "$output" >>"$STATS_FILE"
 }
 _update() {
+	# Putting this before _update makes it very slow for whatever reason.
+	# shellcheck disable=SC2120
+	function printStatus() {
+		local -a flags=()
+		if (($# == 0)); then
+			local -ar flags=(
+				'--deltaWord'
+				'--wordTimesLength'
+				'--linePositWordFlags'
+				'--positAlnum'
+				'--testChar'
+				'--input'
+				'--xy'
+				# '--wordStartTimes'
+				# '--wordEndTimes'
+				# '--badInputs'
+				# '--mistakesCount'
+				# '--mistakeFreq'
+				# '--calcWordTimes'
+				# '--lastDictWord'
+				# '--inputColor'
+				# '--inputColorBg'
+				# '--coord'
+				# '--getCurrInputColNum'
+				# '--inputs'
+			)
+		else
+			local -ar flags=("$@")
+		fi
+		local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
+		local statusLine=$'\rStatus Line:'
+		__addLine() { statusLine+="$*$(tput el)"$' \b\n'; }
+		array_includes '--inputs' "${flags[@]}" && { IFS=$'\n'; __addLine "inputs: ${inputs[*]}"; IFS="$ORIG_IFS"; }
+		array_includes '--getCurrInputColNum' "${flags[@]}" && __addLine "getCurrInputColNum: $(getCurrInputColNum)"
+		# shellcheck disable=SC2119
+		array_includes '--xy' "${flags[@]}" && __addLine "getXY: BeforePrior=$(getXYBeforePrior); Prior=$(getXYPrior); curr=$(getXY); Next=$(getXYNext); AfterNext=$(getXYAfterNext)"
+		array_includes '--coord' "${flags[@]}" && __addLine "getCoord: beforePrior=$(getForBeforePrior Coord); prior=$(getForPrior Coord); curr=$(getCoord); Next=$(getForNext Coord); AfterNext=$(getForAfterNext Coord)"
+		# shellcheck disable=SC2119
+		array_includes '--inputColor' "${flags[@]}" && __addLine "getInputColor: beforePrior=$(getForBeforePrior getInputColor); prior=$(getForPrior getInputColor); curr=$(getInputColor); Next=$(getForNext getInputColor); AfterNext=$(getForAfterNext getInputColor)"
+		# shellcheck disable=SC2119
+		array_includes '--inputColorBg' "${flags[@]}" && __addLine "getInputColorBg: beforePrior=$(getForBeforePrior getInputColorBg); prior=$(getForPrior getInputColorBg); curr=$(getInputColorBg); Next=$(getForNext getInputColorBg); AfterNext=$(getForAfterNext getInputColorBg)"
+		# shellcheck disable=SC2119
+		array_includes '--input' "${flags[@]}" && __addLine "getInput: beforePrior=$(getForBeforePrior getInput); prior=$(getForPrior getInput); curr=$(getInput); Next=$(getForNext getInput); AfterNext=$(getForAfterNext getInput)"
+		array_includes '--testChar' "${flags[@]}" && __addLine "TestChar: beforePrior=$(getForBeforePrior TestChar); prior=$(getForPrior TestChar); curr=$(getTestChar); Next=$(getForNext TestChar); AfterNext=$(getForAfterNext TestChar)"
+		if array_includes '--positAlnum' "${flags[@]}"; then
+			statusLine+="is alnum: "
+			if [[ $(getForPrior TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="prior "
+			if [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="curr "
+			if [[ $(getForNext TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="next"
+			__addLine "$RESET_COLOR_FOREGROUND"
+		fi
+		if array_includes '--linePositWordFlags' "${flags[@]}"; then
+			# shellcheck disable=SC2119
+			if isAtWordStart; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtWordStart"
+			# shellcheck disable=SC2119
+			if isBeforeWordStart; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isBeforeWordStart"
+			# shellcheck disable=SC2119
+			if isAtWordEnd; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtWordEnd"
+			# shellcheck disable=SC2119
+			if isBeforeWordEnd; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isBeforeWordEnd"
+			if isAtStartOfLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtStartOfLine"
+			if isAboutToEndLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAboutToEndLine"
+			__addLine "$RESET_COLOR_FOREGROUND"
+		fi
+		array_includes '--deltaWord' "${flags[@]}" && __addLine "deltaWord: $((currDeltaTime - wordStartTimes[-1]))"
+		array_includes '--wordTimesLength' "${flags[@]}" && __addLine "Length: wordStartTimes=${#wordStartTimes[@]}); wordEndTimes=${#wordEndTimes[@]})"
+		array_includes '--wordStartTimes' "${flags[@]}" && __addLine "wordStartTimes (L=${#wordStartTimes[@]}): ${wordStartTimes[*]@Q}"
+		array_includes '--wordEndTimes' "${flags[@]}" && __addLine "wordEndTimes (L=${#wordEndTimes[@]}): ${wordEndTimes[*]@Q}"
+		array_includes '--badInputs' "${flags[@]}" && __addLine "badInputs (L=${#badInputs[@]}): ${badInputs[*]@Q}"
+		array_includes '--mistakesCount' "${flags[@]}" && __addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
+		array_includes '--mistakeFreq' "${flags[@]}" && { IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]@K}"; IFS="$ORIG_IFS"; }
+		array_includes '--calcWordTimes' "${flags[@]}" && { for ((i = 0; i < ${#wordEndTimes[@]}; i++)); do statusLine+="$i: $((wordEndTimes[i] - wordStartTimes[i])) ms; "; done; __addLine " "; }
+		array_includes '--lastDictWord' "${flags[@]}" && ((${#words[@]} > 0)) && __addLine "last word: ${words[-1]}"
+		local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
+		if (($(getCurrInputColNum) > 0)); then postStatusLine+="$(tput cuf "$(getCurrInputColNum)")"; fi
+		echo -n "$preStatusLine$statusLine$postStatusLine"
+		unset statusLine preStatusLine postStatusLine __addLine
+	}
 	local cache=
 	while ((${#cache} > 0)) || read -rsN 1 -u $INPUT_FD -t .5 inputChar; do
 		if ((${#cache} > 0)); then
@@ -838,50 +921,7 @@ _update() {
 			invalidCharacter
 		fi
 		# if ((currDeltaTime - lastUpdateTime > REFRESH_INTERVAL * 1000)); then
-			##region########################################### Status Line ###########################################
-			local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
-			local statusLine=$'\rStatus Line:'
-			__addLine() { statusLine+="$*$(tput el)"$' \b\n'; }
-			# IFS=$'\n'; __addLine "inputs: ${inputs[*]}"; IFS="$ORIG_IFS"
-			# __addLine "inputColorsBg: ${inputColorsBg[*]@A}"
-			# __addLine "inputColors: ${inputColors[*]}"
-			__addLine "getCurrInputColNum: $(getCurrInputColNum)"
-			# shellcheck disable=SC2119
-			__addLine "getXY: BeforePrior=$(getXYBeforePrior); Prior=$(getXYPrior); curr=$(getXY); Next=$(getXYNext); AfterNext=$(getXYAfterNext)"
-			__addLine "getCoord: beforePrior=$(getForBeforePrior Coord); prior=$(getForPrior Coord); curr=$(getCoord); Next=$(getForNext Coord); AfterNext=$(getForAfterNext Coord)"
-			# shellcheck disable=SC2119
-			__addLine "getInputColor: beforePrior=$(getForBeforePrior getInputColor); prior=$(getForPrior getInputColor); curr=$(getInputColor); Next=$(getForNext getInputColor); AfterNext=$(getForAfterNext getInputColor)"
-			# shellcheck disable=SC2119
-			__addLine "getInputColorBg: beforePrior=$(getForBeforePrior getInputColorBg); prior=$(getForPrior getInputColorBg); curr=$(getInputColorBg); Next=$(getForNext getInputColorBg); AfterNext=$(getForAfterNext getInputColorBg)"
-			# shellcheck disable=SC2119
-			__addLine "getInput: beforePrior=$(getForBeforePrior getInput); prior=$(getForPrior getInput); curr=$(getInput); Next=$(getForNext getInput); AfterNext=$(getForAfterNext getInput)"
-			__addLine "TestChar: beforePrior=$(getForBeforePrior TestChar); prior=$(getForPrior TestChar); curr=$(getTestChar); Next=$(getForNext TestChar); AfterNext=$(getForAfterNext TestChar)"
-			statusLine+="is alnum: "
-			if [[ $(getForPrior TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="prior "
-			if [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="curr "
-			if [[ $(getForNext TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="next"
-			__addLine "$RESET_COLOR_FOREGROUND"
-			if isAtWordStart; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtWordStart"
-			if isBeforeWordStart; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isBeforeWordStart"
-			if isAtWordEnd; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtWordEnd"
-			if isBeforeWordEnd; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isBeforeWordEnd"
-			if isAtStartOfLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtStartOfLine"
-			if isAboutToEndLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAboutToEndLine"
-			__addLine "$RESET_COLOR_FOREGROUND"
-			__addLine "deltaWord: $((currDeltaTime - wordStartTimes[-1]))"
-			__addLine "Length: wordStartTimes=${#wordStartTimes[@]}); wordEndTimes=${#wordEndTimes[@]})"
-			# __addLine "wordStartTimes (L: ${#wordStartTimes[@]}): ${wordStartTimes[*]@Q}"
-			# __addLine "wordEndTimes (L: ${#wordEndTimes[@]}): ${wordEndTimes[*]@Q}"
-			# __addLine "badInputs (Length: ${#badInputs[@]}): ${badInputs[*]@Q}"
-			# __addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
-			# IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]@K}"; IFS="$ORIG_IFS"
-			# for ((i = 0; i < ${#wordEndTimes[@]}; i++)); do statusLine+="$i: $((wordEndTimes[i] - wordStartTimes[i])) ms; "; done; __addLine " "
-			# if ((${#words[@]} > 0)); then __addLine "last word: ${words[-1]}"; fi
-			local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
-			if (($(getCurrInputColNum) > 0)); then postStatusLine+="$(tput cuf "$(getCurrInputColNum)")"; fi
-			echo -n "$preStatusLine$statusLine$postStatusLine"
-			unset statusLine preStatusLine postStatusLine __addLine
-			##endregion######################################## Status Line ###########################################
+			printStatus # --wordTimesLength
 			((lastUpdateTime=currDeltaTime))
 		# fi
 	done
