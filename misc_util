@@ -234,17 +234,15 @@ while [ "$1" != "" ] && [ "$1" != '--' ]; do
 		    return_on_failure=$1
 		    ;;
 		# #endregion Values
-        -h | --help )
-            show_help
-            exit
-            ;;
+        -h | --help ) _show_help; exit;;
+        -v | --version ) _show_version; exit;;
         * )
             if $($useLabels); then
                 LABELS[${#LABELS[@]}]=$1
             elif $($useValues); then
                 VALUES[${#VALUES[@]}]=$1
             else
-                show_help
+                _show_help
                 exit 1
             fi
             ;;
@@ -257,14 +255,8 @@ done
 declare -n opt1=testCommand opt2=testPath opt3=testFile
 while [[ -n "${1+x}" ]]; do
 	case "$1" in
-		(-h | --help)
-			show_help
-			exit
-			;;
-		(-v | --version)
-			show_version
-			exit
-			;;
+		(-h | --help) _show_help; exit;;
+		(-v | --version) _show_version; exit;;
 		# (-c | --coarseness)
 		# 	shift
 		# 	coarseInput="$1"
@@ -297,7 +289,7 @@ done
 #########################endregion GET OPTIONS#########################
 
 ##region################## SHOW_HELP/VERSION TEMPLATE ####################
-show_help() {
+_show_help() {
 	# or:	$0 [-c COARSENESS] [-d SEPARATOR] NUMERATOR DENOMINATOR
 	# -c, --coarseness COARSENESS: precision. Defaults to $DEFAULT_COARSENESS.
 	# -d, --decimal SEPARATOR: the fractional separator. Defaults to $DEFAULT_DECIMAL
@@ -313,7 +305,7 @@ Options:
 	-v, --version: Shows version info.
 __EOF__
 }
-show_version() {
+_show_version() {
 	cat << __EOF__
 $0 1.0.0
 

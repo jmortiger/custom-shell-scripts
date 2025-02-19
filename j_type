@@ -45,10 +45,11 @@ declare -i MAX_READ_INT=; eval "$(misc_util MAX_READ_INT)"
 declare RESET_COLOR_BACKGROUND=; eval "$(misc_util RESET_COLOR_BACKGROUND)"
 declare RESET_COLOR_FOREGROUND=; eval "$(misc_util RESET_COLOR_FOREGROUND)"
 ##region########################################### PARAMETERS ###########################################
-# The time in seconds after which an update will be forced.
+# The time in milliseconds after which an update will be forced.
 declare -ir FORCE_REFRESH_INTERVAL=5
-# The time in seconds after which an update will be attempted.
+# The time in milliseconds after which an update will be attempted.
 declare -ir REFRESH_INTERVAL=1
+# The maximum # of words to use for test generation.
 declare -i maxDictSize=100000
 declare -i maxWordLength=7
 declare -i rows=3
@@ -56,16 +57,16 @@ declare -i columns=$(tput cols)
 declare characters=''
 declare -a words=()
 # Dynamically generate nonsense words?
-declare f_genWords='true'
-declare f_properPunctuation='true'
+declare fGenWords='true'
+declare fProperPunctuation='true'
 while [[ -n "${1+x}" ]]; do
 	case "$1" in
 		(-h | --help) show_help; exit;;
 		(-v | --version) show_version; exit;;
-		(-g | --genWords) f_genWords='true';;
-		(\+g | -!g | \+\+genWords | --!genWords) f_genWords='false';;
-		(-p | --properPunctuation) f_properPunctuation='true';;
-		(\+p | -!p | \+\+properPunctuation | --!properPunctuation) f_properPunctuation='false';;
+		(-g | --genWords) fGenWords='true';;
+		(\+g | -!g | \+\+genWords | --!genWords) fGenWords='false';;
+		(-p | --properPunctuation) fProperPunctuation='true';;
+		(\+p | -!p | \+\+properPunctuation | --!properPunctuation) fProperPunctuation='false';;
 		(*) characters+="$1";;
 	esac
 	shift
@@ -73,7 +74,7 @@ done
 if [ -z "$characters" ]; then characters="$DEFAULT_CHARACTER_LIST"; fi
 declare -r punctuationCharacters="$(echo -nE "$characters" | sed -E 's/[^[:punct:]]//g')"
 declare -r alnumCharacters="$(echo -nE "$characters" | sed -E 's/[^[:alnum:]]//g')"
-if ! eval "$f_genWords"; then
+if ! eval "$fGenWords"; then
 	# match only the words that are short enough & only have valid characters
 	mapfile -t words < <(grep --max-count=$maxDictSize -E --text -e "^[$characters]{1,$maxWordLength}$" "$WORDS_FILE")
 fi
@@ -82,16 +83,23 @@ declare -r characters
 declare -r ORIG_IFS="$IFS"
 # 1: max length
 # 2: valid chars
+# 3...: invalid indices
 getRandomWord() {
 	local -a validWords
 	if [ -n "${words[*]}" ]; then
 		IFS=$'\n'
-		mapfile -t validWords < <(echo -n "${words[*]}" | grep --max-count=$maxDictSize -E --text -e "^[$characters]{1,$1}$")
+		mapfile -t validWords < <(echo -n "${words[*]}" | grep --max-count=$maxDictSize -E --text -e "^[${2:-$characters}]{1,${1:-$maxWordLength}}$")
 		IFS="$ORIG_IFS"
 	else
 		mapfile -t validWords < <(grep --max-count=$maxDictSize -E --text -e "^[${2:-$characters}]{1,${1:-$maxWordLength}}$" "$WORDS_FILE")
 	fi
-	local -i t_ind=$RANDOM%${#validWords[@]}
+	local -i t_ind=$RANDOM%${#validWords[@]} safety=0
+	# if shift 2 && [ -n "$*" ]; then
+	if shift 2; then
+		while ((safety++ < 100)) && array_includes $t_ind "$@"; do
+			t_ind=$RANDOM%${#validWords[@]}
+		done
+	fi
 	echo -n "${validWords[$t_ind]}"
 }
 ##endregion######################################## PARAMETERS ###########################################
@@ -103,10 +111,11 @@ function doExit() {
 	stty echo
 	if ((${1:-0} == 0)); then
 		storeStatisticsScreen
+		tput rmcup
 	else
+		tput rmcup
 		echo "$2" 2>&1
 	fi
-	tput rmcup
 	exit "${1:-0}"
 }
 tput smcup; tput clear; trap 'doExit' INT
@@ -136,7 +145,7 @@ function genTestSequence() {
 			else # Try again
 				((i--))
 			fi
-		elif eval "$f_properPunctuation"; then
+		elif eval "$fProperPunctuation"; then
 			if [[ "$1" =~ [\;\,\.\:\!] ]]; then
 				# If there's space for the char + a space, it's preceded by a letter/number, & the word isn't empty
 				if  ((${#newTestLines[$j]} + 2 < columns)) && 
@@ -162,7 +171,7 @@ function genTestSequence() {
 		fi
 	}
 	_addPunctOrSpace() {
-		if eval "$f_properPunctuation"; then
+		if eval "$fProperPunctuation"; then
 			_validateAndAddChar "${punctAndSpace:$((${#punctuationCharacters} > 0 ? RANDOM % (${#punctuationCharacters} + 1) : 0)):1}" 'force'
 		else
 			newTestLines[j]+="${punctAndSpace:$((${#punctuationCharacters} > 0 ? RANDOM % (${#punctuationCharacters} + 1) : 0)):1}"
@@ -172,7 +181,7 @@ function genTestSequence() {
 		for ((i = 0; i < columns; i++)); do
 			echo -n $'\r'"$((count++))"
 			if ((${#l_current_word} >= maxWordLength)); then
-				if eval "$f_properPunctuation" && ((${#punctuationCharacters} > 0)); then
+				if eval "$fProperPunctuation" && ((${#punctuationCharacters} > 0)); then
 					_validateAndAddChar "${punctAndSpace:$((RANDOM % (${#punctuationCharacters} + 1))):1}" 'force'
 				else
 					newTestLines[j]+=' '
@@ -458,11 +467,8 @@ addToInput() {
 	for ((i = 0; i < "${#1}"; i++, myCurrCol++)); do
 		inputs[myCurrRow]+="${1:$i:1}"
 		if ((myCurrCol + 1 == columns)); then
-			((myCurrCol = -1, myCurrRow++, linesAdded++))
+			((linesAdded++, myCurrRow++, myCurrCol = -1))
 		elif ((myCurrCol + 1 > columns)); then
-			# echo "$myCurrCol > columns ($columns)"
-			# sleep 3
-			# exit 1
 			doExit 1 "$myCurrCol > columns ($columns)"
 		fi
 	done
@@ -472,13 +478,8 @@ removeFromInput() {
 	local -i linesRemoved=0; local -i myCurrRow=$currRow; local -i myCurrCol=$(getInputColNum $myCurrRow)
 	for ((i = 0; i < "$1"; i++, myCurrCol--)); do
 		if ((myCurrCol == 0 && myCurrRow > 0)); then
-			((myCurrRow--))
-			((myCurrCol = $(getInputColNum $myCurrRow)))
-			((linesRemoved++))
+			((linesRemoved++, myCurrRow--, myCurrCol = $(getInputColNum $myCurrRow)))
 		elif ((myCurrCol < 0)); then
-			# echo "$myCurrCol < 0"
-			# sleep 3
-			# exit 1 # TODO: THROW
 			doExit 1 "$myCurrCol < 0"
 		fi
 		inputs[myCurrRow]="${inputs[$myCurrRow]:0:$((myCurrCol - 1))}${inputs[$myCurrRow]:$myCurrCol}"
@@ -502,11 +503,9 @@ isAtStartOfLine() { (($(getCurrInputColNum) == 0)); }
 # isAtEndPosition() { (($(getCurrInputRowNum) + 1 == rows && $(getCurrInputColNum) + 1 == columns)); }
 ##endregion######################################## Line/Word Boundaries ###########################################
 generalTest() {
-	# IFS=''; local -r cumulative="${testLines[*]}"; IFS="$ORIG_IFS"
 	local -r cumulative="$(array_join '' "${testLines[@]}")"
 	local -i i=0
 	local errored='false'
-	# echo "$cumulative"
 	for ((i = 2; i + 2 < ${#cumulative}; i++)); do
 		if ! [ "$(getForBeforePrior testChar 0 $i)" = "${cumulative:$((i - 2)):1}" ]; then
 			echo "getForBeforePrior testChar 0 $i failed ($(getForBeforePrior testChar 0 $i) != ${cumulative:$((i - 2)):1})"
@@ -653,21 +652,13 @@ _update() {
 				((currRow++))
 			done
 		}
-		# Assumes
+		# Adds the input to the display w/o changing the cursor position or the background variables.
+			# Assumes
 			# * Color handled in `preDisplay` & `postDisplay`
 			# * `inputChar` holds what to add to `inputs[currRow]`
 			# * `inputChar` holds 1 character
-		visualAddToOutput() {
-			echo -n "$preDisplay$inputChar$postDisplay$(tput cub1)"
-			# local -i linesAdded=0 i=0
-			# dryAddToInput "$inputChar"
-			# linesAdded=$?
-			# for ((i = 0; i < linesAdded; i++)); do
-			# 	tput cud 2
-			# 	echo -n $'\r'
-			# 	((currRow++))
-			# done
-		}
+		# shellcheck disable=SC2120
+		visualAddToOutput() { echo -n "$preDisplay${1:-$inputChar}$postDisplay$(tput cub1)"; }
 		# shellcheck disable=SC2119
 		if [ -n "$(getInputColorBg)" ]; then
 			preDisplay+="$(tput setab "$(getInputColorBg)")"
@@ -850,7 +841,7 @@ _update() {
 			##region########################################### Status Line ###########################################
 			local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
 			local statusLine=$'\rStatus Line:'
-			__addLine() { local v="$1"; if [ -z "$v" ]; then read -rsN "$MAX_READ_INT" -t .01 v; fi; statusLine+="$v$(tput el)"$' \b\n'; }
+			__addLine() { statusLine+="$*$(tput el)"$' \b\n'; }
 			# IFS=$'\n'; __addLine "inputs: ${inputs[*]}"; IFS="$ORIG_IFS"
 			# __addLine "inputColorsBg: ${inputColorsBg[*]@A}"
 			# __addLine "inputColors: ${inputColors[*]}"
@@ -860,14 +851,10 @@ _update() {
 			__addLine "getCoord: beforePrior=$(getForBeforePrior Coord); prior=$(getForPrior Coord); curr=$(getCoord); Next=$(getForNext Coord); AfterNext=$(getForAfterNext Coord)"
 			# shellcheck disable=SC2119
 			__addLine "getInputColor: beforePrior=$(getForBeforePrior getInputColor); prior=$(getForPrior getInputColor); curr=$(getInputColor); Next=$(getForNext getInputColor); AfterNext=$(getForAfterNext getInputColor)"
-			# __addLine "getInputColor: $(getInputColor)"; __addLine "getForPrior 'getInputColor': $(getForPrior 'getInputColor')"; __addLine "getForBeforePrior 'getInputColor': $(getForBeforePrior 'getInputColor')"
 			# shellcheck disable=SC2119
 			__addLine "getInputColorBg: beforePrior=$(getForBeforePrior getInputColorBg); prior=$(getForPrior getInputColorBg); curr=$(getInputColorBg); Next=$(getForNext getInputColorBg); AfterNext=$(getForAfterNext getInputColorBg)"
-			# __addLine "getInputColorBg: $(getInputColorBg)"; __addLine "getForPrior 'getInputColorBg': $(getForPrior 'getInputColorBg'); __addLine "getForBeforePrior 'getInputColorBg': $(getForBeforePrior 'getInputColorBg')"
 			# shellcheck disable=SC2119
 			__addLine "getInput: beforePrior=$(getForBeforePrior getInput); prior=$(getForPrior getInput); curr=$(getInput); Next=$(getForNext getInput); AfterNext=$(getForAfterNext getInput)"
-			# __addLine "getInput: $(getInput)"; __addLine "getForPrior getInput: $(getForPrior getInput)"; __addLine "getForBeforePrior getInput: $(getForBeforePrior getInput)"
-			# __addLine "getTestChar: $(getTestChar)"
 			__addLine "TestChar: beforePrior=$(getForBeforePrior TestChar); prior=$(getForPrior TestChar); curr=$(getTestChar); Next=$(getForNext TestChar); AfterNext=$(getForAfterNext TestChar)"
 			statusLine+="is alnum: "
 			if [[ $(getForPrior TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="prior "
