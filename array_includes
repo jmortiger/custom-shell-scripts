@@ -17,9 +17,21 @@ fi
 # 	exit 1
 # fi
 ##endregion######################################## GET PATH, DIR, & NAME ###########################################
+if [[ "$1" =~ ^(declare|local|readonly)([[:blank:]]-([[:alpha:]]+)[[:blank:]])[^[:blank:]=]+=\((.*)\)$ ]] && brm=("${BASH_REMATCH[2]}" "${BASH_REMATCH[4]}") && [[ "${BASH_REMATCH[3]}" =~ 'a' ]]; then
+	# # shellcheck disable=SC2086
+	# declare ${brm[0]} values=(${brm[1]})
+	declare +a +A execLine="declare -a values=()"
+	$execLine
+	mapfile -t values< <(echo -nE "${brm[1]}" | sed -E 's/(\[[[:digit:]]+\]=)?('$'\"([^\"]*)\"|\'([^\']*)\')[[:blank:]]?/''\3\4''\n''/g')
+	if ! shift; then exit 255; fi
+	for arg in "$@"; do
+		if array_includes "$arg" "${values[@]}"; then exit 0; fi
+	done
+	exit 2
+fi
 declare value="$1"
 if ! shift; then exit 255; fi
 for arg in "$@"; do
 	if [ "$value" = "$arg" ]; then exit 0; fi
 done
-exit 1
+exit "${ec:-1}"

@@ -1,0 +1,36 @@
+#!/usr/bin/env bats
+
+function setup() {
+	# load 'test_helper/bats-support/load'
+	# load 'test_helper/bats-assert/load'
+
+	bats_require_minimum_version 1.5.0
+
+	# get the containing directory of this file
+    # use $BATS_TEST_FILENAME instead of ${BASH_SOURCE[0]} or $0,
+    # as those will point to the bats executable's location or the preprocessed file respectively
+    DIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
+    # make executables in src/ visible to PATH
+    PATH="$DIR/../src:$PATH"
+}
+
+@test "Works for single item" {
+	declare -a items=('hi' 'ho' 'hi' 'ho' 'off' 'to' 'work we go')
+	! array_includes "hello" "${items[@]}"
+	array_includes "off" "${items[@]}"
+	array_includes "work we go" "${items[@]}"
+	! array_includes "work" "${items[@]}"
+}
+@test "Works for multiple items" {
+	declare -a items=('hi' 'ho' 'hi' 'ho' 'off' 'to' 'work we go')
+	declare -a testItems=('hello' 'dolly')
+	! array_includes "${testItems[@]@A}" "${items[@]}"
+	declare -a testItems=('hello' 'hi')
+	echo "${testItems[@]@A}"
+	echo "${items[@]@Q}"
+	run array_includes "${testItems[*]@A}" "${items[@]}"
+	echo "$output"
+	run -0 array_includes "${testItems[*]@A}" "${items[@]}"
+	declare -a testItems=('work we' 'go')
+	! array_includes "${testItems[@]@A}" "${items[@]}"
+}
