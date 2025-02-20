@@ -142,17 +142,21 @@ declare -Ar CTR_SEQ=(
 	[right]=$'\e[C'
 	[left]=$'\e[D'
 )
-case "$1" in
-	TPUT_RESET_COLORS) echo -n "${TPUT_RESET_COLORS@A}"; exit 0;;
-	RESET_COLOR_BACKGROUND) echo -n "${RESET_COLOR_BACKGROUND@A}"; exit 0;;
-	RESET_COLOR_FOREGROUND) echo -n "${RESET_COLOR_FOREGROUND@A}"; exit 0;;
-	MAX_INT) echo -n "${MAX_INT@A}"; exit 0;;
-	MAX_READ_INT) echo -n "${MAX_READ_INT@A}"; exit 0;;
-	CTR_SEQ) echo -n "${CTR_SEQ[@]@A}"; exit 0;;
-	TPUT_COLOR) echo -n "${TPUT_COLOR[@]@A}"; exit 0;;
-	SIGNAL) echo -n "${SIGNAL[@]@A}"; exit 0;;
-	# *) exit 1;;
-esac
+fUsed='false'
+while (($# > 0)); do
+	case "$1" in
+		TPUT_RESET_COLORS) echo -n "${TPUT_RESET_COLORS@A};"; fUsed='true';;
+		RESET_COLOR_BACKGROUND) echo -n "${RESET_COLOR_BACKGROUND@A};"; fUsed='true';;
+		RESET_COLOR_FOREGROUND) echo -n "${RESET_COLOR_FOREGROUND@A};"; fUsed='true';;
+		MAX_INT) echo -n "${MAX_INT@A};"; fUsed='true';;
+		MAX_READ_INT) echo -n "${MAX_READ_INT@A};"; fUsed='true';;
+		CTR_SEQ) echo -n "${CTR_SEQ[@]@A};"; fUsed='true';;
+		TPUT_COLOR) echo -n "${TPUT_COLOR[@]@A};"; fUsed='true';;
+		SIGNAL) echo -n "${SIGNAL[@]@A};"; fUsed='true';;
+		*) break;;
+	esac
+	shift
+done; if eval "$fUsed"; then exit 0; fi; unset fUsed
 ##endregion######################################## CONSTANTS ###########################################
 # New uses $LINENO/BASH_LINENO
 ##region################################# OLD EXIT WITH ERROR AND LINE #################################

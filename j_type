@@ -38,12 +38,9 @@ __EOF__
 readonly LOGFILE="$MY_DIR/$MY_NAME.log.txt"
 readonly WORDS_FILE="$MY_DIR/words.txt"
 # cspell:disable-next-line
-readonly DEFAULT_CHARACTER_LIST='asdfjkl;ghqwertyuiopxczvbnm,.' 
-declare -A CTR_SEQ=; eval "$(misc_util CTR_SEQ)"
-declare -A TPUT_COLOR=; eval "$(misc_util TPUT_COLOR)"
-declare -i MAX_READ_INT=; eval "$(misc_util MAX_READ_INT)"
-declare RESET_COLOR_BACKGROUND=; eval "$(misc_util RESET_COLOR_BACKGROUND)"
-declare RESET_COLOR_FOREGROUND=; eval "$(misc_util RESET_COLOR_FOREGROUND)"
+readonly DEFAULT_CHARACTER_LIST='asdfjkl;ghqwertyuiopxczvbnm,.'
+declare -A CTR_SEQ=; declare -A TPUT_COLOR=; declare -i MAX_READ_INT=; declare RESET_COLOR_BACKGROUND=; declare RESET_COLOR_FOREGROUND=
+eval "$(misc_util CTR_SEQ TPUT_COLOR MAX_READ_INT RESET_COLOR_BACKGROUND RESET_COLOR_FOREGROUND)"
 ##region########################################### PARAMETERS ###########################################
 # The time in milliseconds after which an update will be forced.
 declare -ir FORCE_REFRESH_INTERVAL=5
