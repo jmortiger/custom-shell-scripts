@@ -7,6 +7,7 @@ elif [ "$1" = '--version' ]; then
 fi
 
 declare from=
+declare result=''
 declare format='%-s'
 declare fTruncate='false'
 while (($# > 0)); do
@@ -14,6 +15,10 @@ while (($# > 0)); do
 		-f | --from)
 			shift
 			declare -r from="$1"
+			;;
+		-t | --to)
+			shift
+			[ -n "$1" ] && declare -r result="$1"
 			;;
 		-s | --seconds)
 			declare -r format='%-s'
@@ -31,9 +36,15 @@ while (($# > 0)); do
 	esac
 	shift
 done
-result="$(date -u +"$format")"
-eCode=$?
-if eval "$fTruncate"; then result="${result:0:-6}"; fi
-if [ -z "$from" ]; then result="$(bc -l <<< "$result - $from")"; eCode=$?; fi
-echo -nE "$result"
+((eCode=0))
+# set -e
+if [ -z "$result" ]; then
+	result="$(date -u +"$format")"
+	((eCode=$?))
+	if eval "$fTruncate"; then result="${result:0:-6}"; fi
+	# declare -r result
+fi
+# if [ -n "$from" ]; then result="$(bc -l <<< "$result - $from")"; ((eCode=$?)); fi
+if [ -n "$from" ]; then bc -l <<< "$result - $from"; exit; fi
+echo -E "$result"
 exit $eCode

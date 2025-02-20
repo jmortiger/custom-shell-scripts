@@ -43,9 +43,10 @@ declare -A CTR_SEQ=; declare -A TPUT_COLOR=; declare -i MAX_READ_INT=; declare R
 eval "$(misc_util CTR_SEQ TPUT_COLOR MAX_READ_INT RESET_COLOR_BACKGROUND RESET_COLOR_FOREGROUND)"
 ##region########################################### PARAMETERS ###########################################
 # The time in milliseconds after which an update will be forced.
-declare -ir FORCE_REFRESH_INTERVAL=5
+# TODO: Implement
+declare -ir FORCE_REFRESH_INTERVAL=5000
 # The time in milliseconds after which an update will be attempted.
-declare -ir REFRESH_INTERVAL=1
+declare -ir REFRESH_INTERVAL=500
 # The maximum # of words to use for test generation.
 declare -i maxDictSize=100000
 declare -i maxWordLength=7
@@ -304,8 +305,7 @@ __restrictToBounds() {
 	fi
 	echo $lRow $lCol
 	if ((lCol < 0 || lCol >= columns)); then
-		# TODO: Error
-		return 1
+		doExit 127 "Bad Bounding"
 	fi
 	# if ((lCol < 0)); then
 	# 	((lCol = 0))
@@ -559,22 +559,50 @@ generalTest() {
 	if ! eval "$errored"; then echo -n "$(tput setab 2) $(tput cub1)$RESET_COLOR_BACKGROUND"; fi
 }
 # generalTest
-declare startDate="$(date --iso-8601='seconds')"
-
+declare startTime=''
+# The last time the status was updated, in milliseconds since `startTime`.
+declare -i lastStatusUpdateTime=0
 # The elapsed time since `startTime` in milliseconds.
 declare -i lastUpdateTime=0
+# The elapsed time since `lastUpdateTime` in milliseconds.
+declare -i currDeltaTime=''
+# The elapsed time since `startTime` in milliseconds.
+declare currUpdateTime=''
+declare -r startDate="$(date --iso-8601='seconds')"
+
 declare -a wordStartTimes=("0")
 declare -a wordEndTimes=()
 declare -a wordStartPositions=('0:0')
-# TODO: finish
-# getWordCompletionData() {
-# 	local -i r=; local -i c=; read -sr r c < <(getXY "$@")
-# 	local word=
-# 	while ! isAtWordEnd $r $c; do
-# 		word+="$(getTestChar $r $c)"
-# 		read -sr r c < <(getXYNext $r $c)
-# 	done
-# }
+function calcWordTime() {
+	local -i wordIndex=0
+	if (($# >= 2 || $# <= 0)); then
+		local -ir wordIndex=$(indexOf "$(getCoord "$@")" "${wordStartPositions[@]}")
+		if ((wordIndex == -1)); then
+			doExit 111 "input $* wordStartPositions ${wordStartPositions[*]}"
+		fi
+	else
+		local -ir wordIndex="$1"
+	fi
+	if ((${#wordEndTimes[@]} > wordIndex)); then
+		getDeltaTime -m --from "${wordStartTimes[$wordIndex]}" --to "${wordEndTimes[$wordIndex]}"
+	else
+		getDeltaTime -m --from "${wordStartTimes[$wordIndex]}" --to "$currUpdateTime"
+	fi
+}
+function getWordCompletionData() {
+	local -i r=; local -i c=; read -sr r c < <(getXY "$@")
+	local -ir startR=r; local -ir startC=c
+	local word=
+	local -i endR=r; local -i endC=c
+	while ! isAtWordEnd $r $c; do
+		word+="$(getTestChar $r $c)"
+		((endR=r, endC=c))
+		read -sr r c < <(getXYNext $r $c)
+	done
+	local -ir wordIndex=$(indexOf "$startR:$startC" "${wordStartPositions[@]}")
+	local -r wordTime=$(calcWordTime "$wordIndex")
+	echo "$startR" "$startC" "$endR" "$endC" "$word" "$wordIndex" "$wordTime"
+}
 declare -i recognizedKeystrokes=0
 declare -a badInputs=()
 declare -i allMistakesCount=0
@@ -587,6 +615,7 @@ declare -A mistakeFreq=()
 declare inputSequence=
 declare -r STATS_FILE="$MY_DIR/jTypeStats.txt"
 function storeStatisticsScreen() {
+	# ${lastUpdateTime@A}
 	output=$(cat <<-_EOF_
 	$startDate
 	${testLines[@]@A}
@@ -594,7 +623,6 @@ function storeStatisticsScreen() {
 	${inputColors[@]@A}
 	${inputColorsBg[@]@A}
 	${currRow@A}
-	${lastUpdateTime@A}
 	${wordStartTimes[@]@A}
 	${wordEndTimes[@]@A}
 	${badInputs[@]@A}
@@ -625,8 +653,9 @@ _update() {
 				'--testChar'
 				'--input'
 				'--xy'
-				# '--wordStartTimes'
-				# '--wordEndTimes'
+				# '--wordStartPositions'
+				'--wordStartTimes'
+				'--wordEndTimes'
 				# '--badInputs'
 				# '--mistakesCount'
 				# '--mistakeFreq'
@@ -637,33 +666,39 @@ _update() {
 				# '--coord'
 				# '--getCurrInputColNum'
 				# '--inputs'
+				'--currDeltaTime'
+				'--currUpdateTime'
+				'--lastUpdateTime'
+				--wordData
 			)
 		else
 			local -ar flags=("$@")
 		fi
 		local preStatusLine="$(tput cud $((rows * 2 - currRow * 2)))"
 		local statusLine=$'\rStatus Line:'
+		_show() { array_includes "$1" "${flags[@]}"; }
 		__addLine() { statusLine+="$*$(tput el)"$' \b\n'; }
-		array_includes '--inputs' "${flags[@]}" && { IFS=$'\n'; __addLine "inputs: ${inputs[*]}"; IFS="$ORIG_IFS"; }
-		array_includes '--getCurrInputColNum' "${flags[@]}" && __addLine "getCurrInputColNum: $(getCurrInputColNum)"
+		IFS=' '
+		_show '--inputs' && __addLine "inputs: $(array_join $'\n' ${inputs[@]})"
+		_show '--getCurrInputColNum' && __addLine "getCurrInputColNum: $(getCurrInputColNum)"
 		# shellcheck disable=SC2119
-		array_includes '--xy' "${flags[@]}" && __addLine "getXY: BeforePrior=$(getXYBeforePrior); Prior=$(getXYPrior); curr=$(getXY); Next=$(getXYNext); AfterNext=$(getXYAfterNext)"
-		array_includes '--coord' "${flags[@]}" && __addLine "getCoord: beforePrior=$(getForBeforePrior Coord); prior=$(getForPrior Coord); curr=$(getCoord); Next=$(getForNext Coord); AfterNext=$(getForAfterNext Coord)"
+		_show '--xy' && __addLine "getXY: BeforePrior=$(getXYBeforePrior); Prior=$(getXYPrior); curr=$(getXY); Next=$(getXYNext); AfterNext=$(getXYAfterNext)"
+		_show '--coord' && __addLine "getCoord: beforePrior=$(getForBeforePrior Coord); prior=$(getForPrior Coord); curr=$(getCoord); Next=$(getForNext Coord); AfterNext=$(getForAfterNext Coord)"
 		# shellcheck disable=SC2119
-		array_includes '--inputColor' "${flags[@]}" && __addLine "getInputColor: beforePrior=$(getForBeforePrior getInputColor); prior=$(getForPrior getInputColor); curr=$(getInputColor); Next=$(getForNext getInputColor); AfterNext=$(getForAfterNext getInputColor)"
+		_show '--inputColor' && __addLine "getInputColor: beforePrior=$(getForBeforePrior getInputColor); prior=$(getForPrior getInputColor); curr=$(getInputColor); Next=$(getForNext getInputColor); AfterNext=$(getForAfterNext getInputColor)"
 		# shellcheck disable=SC2119
-		array_includes '--inputColorBg' "${flags[@]}" && __addLine "getInputColorBg: beforePrior=$(getForBeforePrior getInputColorBg); prior=$(getForPrior getInputColorBg); curr=$(getInputColorBg); Next=$(getForNext getInputColorBg); AfterNext=$(getForAfterNext getInputColorBg)"
+		_show '--inputColorBg' && __addLine "getInputColorBg: beforePrior=$(getForBeforePrior getInputColorBg); prior=$(getForPrior getInputColorBg); curr=$(getInputColorBg); Next=$(getForNext getInputColorBg); AfterNext=$(getForAfterNext getInputColorBg)"
 		# shellcheck disable=SC2119
-		array_includes '--input' "${flags[@]}" && __addLine "getInput: beforePrior=$(getForBeforePrior getInput); prior=$(getForPrior getInput); curr=$(getInput); Next=$(getForNext getInput); AfterNext=$(getForAfterNext getInput)"
-		array_includes '--testChar' "${flags[@]}" && __addLine "TestChar: beforePrior=$(getForBeforePrior TestChar); prior=$(getForPrior TestChar); curr=$(getTestChar); Next=$(getForNext TestChar); AfterNext=$(getForAfterNext TestChar)"
-		if array_includes '--positAlnum' "${flags[@]}"; then
+		_show '--input' && __addLine "getInput: beforePrior=$(getForBeforePrior getInput); prior=$(getForPrior getInput); curr=$(getInput); Next=$(getForNext getInput); AfterNext=$(getForAfterNext getInput)"
+		_show '--testChar' && __addLine "TestChar: beforePrior=$(getForBeforePrior TestChar); prior=$(getForPrior TestChar); curr=$(getTestChar); Next=$(getForNext TestChar); AfterNext=$(getForAfterNext TestChar)"
+		if _show '--positAlnum'; then
 			statusLine+="is alnum: "
 			if [[ $(getForPrior TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="prior "
 			if [[ $(getTestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="curr "
 			if [[ $(getForNext TestChar) =~ ^[[:alnum:]]+$ ]]; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+="next"
 			__addLine "$RESET_COLOR_FOREGROUND"
 		fi
-		if array_includes '--linePositWordFlags' "${flags[@]}"; then
+		if _show '--linePositWordFlags'; then
 			# shellcheck disable=SC2119
 			if isAtWordStart; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAtWordStart"
 			# shellcheck disable=SC2119
@@ -676,15 +711,21 @@ _update() {
 			if isAboutToEndLine; then statusLine+="$(tput setaf "${TPUT_COLOR[GREEN]}")"; else statusLine+="$(tput setaf "${TPUT_COLOR[RED]}")"; fi; statusLine+=" isAboutToEndLine"
 			__addLine "$RESET_COLOR_FOREGROUND"
 		fi
-		array_includes '--deltaWord' "${flags[@]}" && __addLine "deltaWord: $((currDeltaTime - wordStartTimes[-1]))"
-		array_includes '--wordTimesLength' "${flags[@]}" && __addLine "Length: wordStartTimes=${#wordStartTimes[@]}); wordEndTimes=${#wordEndTimes[@]})"
-		array_includes '--wordStartTimes' "${flags[@]}" && __addLine "wordStartTimes (L=${#wordStartTimes[@]}): ${wordStartTimes[*]@Q}"
-		array_includes '--wordEndTimes' "${flags[@]}" && __addLine "wordEndTimes (L=${#wordEndTimes[@]}): ${wordEndTimes[*]@Q}"
-		array_includes '--badInputs' "${flags[@]}" && __addLine "badInputs (L=${#badInputs[@]}): ${badInputs[*]@Q}"
-		array_includes '--mistakesCount' "${flags[@]}" && __addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
-		array_includes '--mistakeFreq' "${flags[@]}" && { IFS=$';'; __addLine "Mistake Frequency: ${mistakeFreq[*]@K}"; IFS="$ORIG_IFS"; }
-		array_includes '--calcWordTimes' "${flags[@]}" && { for ((i = 0; i < ${#wordEndTimes[@]}; i++)); do statusLine+="$i: $((wordEndTimes[i] - wordStartTimes[i])) ms; "; done; __addLine " "; }
-		array_includes '--lastDictWord' "${flags[@]}" && ((${#words[@]} > 0)) && __addLine "last word: ${words[-1]}"
+		_show '--currDeltaTime' && __addLine "currDeltaTime: $currDeltaTime"
+		_show '--currUpdateTime' && __addLine "currUpdateTime: $currUpdateTime"
+		_show '--lastUpdateTime' && __addLine "lastUpdateTime: $lastUpdateTime"
+		_show '--deltaWord' && __addLine "deltaWord: $((currUpdateTime - wordStartTimes[-1]))"
+		_show '--wordTimesLength' && __addLine "Length: wordStartTimes=${#wordStartTimes[@]}); wordEndTimes=${#wordEndTimes[@]})"
+		_show '--wordStartPositions' && __addLine "wordStartPositions (L=${#wordStartPositions[@]}): ${wordStartPositions[*]@Q}"
+		_show '--wordStartTimes' && __addLine "wordStartTimes (L=${#wordStartTimes[@]}): ${wordStartTimes[*]@Q}"
+		_show '--wordEndTimes' && __addLine "wordEndTimes (L=${#wordEndTimes[@]}): ${wordEndTimes[*]@Q}"
+		_show '--badInputs' && __addLine "badInputs (L=${#badInputs[@]}): ${badInputs[*]@Q}"
+		_show '--mistakesCount' && __addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
+		_show '--mistakeFreq' && __addLine "Mistake Frequency: $(array_join ';' ${mistakeFreq[@]@K})"
+		_show '--calcWordTimes' && { for ((i = 0; i < ${#wordEndTimes[@]}; i++)); do statusLine+="$i: $((wordEndTimes[i] - wordStartTimes[i])) ms; "; done; __addLine " "; }
+		_show '--wordData' && { for item in "${wordStartPositions[@]}"; do statusLine+="$(getWordCompletionData "$item"); "; done; __addLine " "; }
+		_show '--lastDictWord' && ((${#words[@]} > 0)) && __addLine "last word: ${words[-1]}"
+		IFS="$ORIG_IFS"
 		local postStatusLine="$(tput vpa $((currRow * 2 + 1)))"
 		if (($(getCurrInputColNum) > 0)); then postStatusLine+="$(tput cuf "$(getCurrInputColNum)")"; fi
 		echo -n "$preStatusLine$statusLine$postStatusLine"
@@ -692,13 +733,16 @@ _update() {
 	}
 	local cache=
 	while ((${#cache} > 0)) || read -rsN 1 -u $INPUT_FD -t .5 inputChar; do
-		if ((${#cache} > 0)); then
-			inputChar="${cache:0:1}"
-			cache="${cache:1}"
+		if ((${#cache} > 0)); then inputChar="${cache:0:1}"; cache="${cache:1}"; fi
+		##region########################################### Update Time ###########################################
+		declare -g +i currUpdateTime="$(date -u +'%-s%0N')"; currUpdateTime="${currUpdateTime:0:-6}"
+		if [ -z "$startTime" ]; then
+			declare -gr startTime="$currUpdateTime"
+			declare -g lastUpdateTime='0'
+			declare -g currUpdateTime='0'
 		fi
-		local +i currDeltaTime="$(date -u +'%-s%0N')"; currDeltaTime="${currDeltaTime:0:-6}"
-		if [ -z "$startTime" ]; then declare -r startTime="$currDeltaTime"; fi
-		local -i currDeltaTime="$(getDeltaTime -m --from "$startTime")"
+		declare -gi currDeltaTime="$(getDeltaTime -m --from "$lastUpdateTime" --to "$currUpdateTime")"
+		##endregion######################################## Update Time ###########################################
 		local preDisplay=
 		local postDisplay="$RESET_COLOR_FOREGROUND"
 		# Assumes
@@ -707,20 +751,17 @@ _update() {
 			# * `inputChar` holds 1 character
 		_addToOutput() {
 			echo -n "$preDisplay$inputChar$postDisplay"
-			# if isBeforeWordEnd || isAboutToEndLine; then
 			if isBeforeWordEnd; then
 				if ((${#wordStartTimes[@]} == ${#wordEndTimes[@]})); then
-					# TODO: Error message
-					doExit
+					doExit 11 "ending word but start and end times are same length (${#wordEndTimes[@]}) S: ${wordStartTimes[@]} E: ${wordEndTimes[@]}"
 				fi
-				wordEndTimes+=("$currDeltaTime")
+				wordEndTimes+=("$currUpdateTime")
 			fi
 			if isBeforeWordStart; then
 				if ((${#wordStartTimes[@]} != ${#wordEndTimes[@]})); then
-					# TODO: Error message
-					doExit
+					doExit 12 "Starting word but start and end times are different lengths (${#wordEndTimes[@]}) S(${#wordStartTimes[@]}): ${wordStartTimes[@]} E(${#wordEndTimes[@]}): ${wordEndTimes[@]}"
 				fi
-				wordStartTimes+=("$currDeltaTime")
+				wordStartTimes+=("$currUpdateTime")
 				wordStartPositions+=("$(getForNext coord)")
 			fi
 			local -i linesAdded=0 i=0
@@ -777,21 +818,15 @@ _update() {
 		}
 		doBackspace() {
 			if (($(getCurrInputColNum) == 0 && currRow <= 0)); then return; fi
-			# if isAtWordEnd || isAboutToEndLine; then
 			if isAtWordEnd; then
 				if ((${#wordStartTimes[@]} != ${#wordEndTimes[@]})); then
-					# TODO: Error message
-					doExit
+					doExit 13 "Undoing word end but start and end times are different lengths (${#wordEndTimes[@]}) S(${#wordStartTimes[@]}): ${wordStartTimes[@]} E(${#wordEndTimes[@]}): ${wordEndTimes[@]}"
 				fi
 				unset 'wordEndTimes[-1]'
 			fi
 			if isAtWordStart; then
 				if ((${#wordStartTimes[@]} == ${#wordEndTimes[@]})); then
-					# TODO: Error message
-					echo "wordStartTimes ${#wordStartTimes[@]} == ${#wordEndTimes[@]} wordEndTimes"
-					echo "${wordStartTimes[*]} ${wordEndTimes[*]}"
-					sleep 5
-					doExit
+					doExit 14 "Undoing word start but start and end times are same length (${#wordEndTimes[@]}) S: ${wordStartTimes[@]} E: ${wordEndTimes[@]}"
 				fi
 				unset 'wordStartTimes[-1]'
 				unset 'wordStartPositions[-1]'
@@ -810,12 +845,11 @@ _update() {
 			if [ "$inputChar" = $'\e' ]; then inputChar="^["; fi
 			badInputs+=("$inputChar$1")
 			inputChar="?"
-			# _addToOutput
 		}
 		# If it's the correct character...
 		if [ "$inputChar" = "$(getTestChar)" ]; then
 			preDisplay+="$(tput setaf "${TPUT_COLOR[GREEN]}")"
-			setInputColor 2
+			setInputColor "${TPUT_COLOR[GREEN]}"
 			_addToOutput
 			((recognizedKeystrokes++))
 		# ...it's a backspace...
@@ -906,7 +940,7 @@ _update() {
 			##endregion############################## Add to history #################################
 			# Output
 			preDisplay+="$(tput setaf "${TPUT_COLOR[RED]}")"
-			setInputColor 1
+			setInputColor "${TPUT_COLOR[RED]}"
 			if [ "$inputChar" = ' ' ]; then
 				preDisplay+="$(tput smso)"
 				postDisplay="$(tput rmso)$postDisplay"
@@ -917,10 +951,11 @@ _update() {
 		else
 			invalidCharacter
 		fi
-		# if ((currDeltaTime - lastUpdateTime > REFRESH_INTERVAL * 1000)); then
+		# if ((currUpdateTime - lastStatusUpdateTime > REFRESH_INTERVAL)); then
 			printStatus # --wordTimesLength
-			((lastUpdateTime=currDeltaTime))
+			((lastStatusUpdateTime=currUpdateTime))
 		# fi
+		((lastUpdateTime=currUpdateTime))
 	done
 }
 while ((currRow < rows)); do _update; done
