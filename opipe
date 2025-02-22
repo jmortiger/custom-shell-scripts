@@ -56,7 +56,6 @@ readonly TERM_CAPS_AVAILABLE="$(infocmp)"
 
 ##region####################### Check if needed termcap's supported #######################
 for ((i = 0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
-	# if ! [[ "$TERM_CAPS_AVAILABLE" =~ ${TERM_CAPS_REQUIRED[$i]}= ]]; then
 	# shellcheck disable=SC2076
 	if ! [[ "$TERM_CAPS_AVAILABLE" =~ "${TERM_CAPS_REQUIRED[$i]}=" ]]; then
 		err_msg="Missing terminal capability ${TERM_CAPS_REQUIRED[$i]}; executing command w/o status checking"
@@ -68,7 +67,7 @@ for ((i = 0; i < ${#TERM_CAPS_REQUIRED[@]}; i++)); do
 done; unset i err_msg
 ##endregion#################### Check if needed termcap's supported #######################
 
-# #region Determine output terminator/status line precursor (cud1 compatibility)
+##region Determine output terminator/status line precursor (cud1 compatibility)
 declare t_trail=$'\r'; t_trail+="$(tput $STATUS_MODE_IN)"
 declare TPUT_CUD1="$(tput cud1)"
 if [[ $TERM_CAPS_AVAILABLE =~ 'cud1=\n,' ]]; then TPUT_CUD1=$'\n'; fi
@@ -78,9 +77,9 @@ for ((i = 0; i < DEFAULT_STATUS_SPACING; i++)); do dt_pre_sl+=$'\n'; done
 dt_pre_sl+="$t_trail"
 readonly dt_pre_sl
 unset t_trail i
-# #endregion Determine output terminator/status line precursor (cud1 compatibility)
+##endregion Determine output terminator/status line precursor (cud1 compatibility)
 
-##region########################################### CHECK ARGS FOR TEST FILES ###########################################
+##region########################################## CHECK ARGS FOR TEST FILES ##########################################
 
 # The # of tests that will be executed in this run.
 declare -i TEST_COUNT=0
@@ -90,7 +89,7 @@ for arg in "$@"; do
 	# elif [[ "$arg" =~ ^(.+\.rb):([[:digit:]]+)$ ]]
 	fi
 done
-##endregion######################################## CHECK ARGS FOR TEST FILES ###########################################
+##endregion####################################### CHECK ARGS FOR TEST FILES ##########################################
 
 _log $'\n' "$(date)"
 declare colored_cumulative=''
@@ -108,13 +107,13 @@ function display_text() {
 		local -r deltaRaw="$delta"
 		local -r prior_whole_text="$4"
 	# The last printed, non-vertical-whitespace character printed by `display_text`.
-	local last_char="${prior_whole_text: -1}"
+	local last_char="${prior_whole_text: -1:1}"
 	if [[ "$last_char" =~ [$V_CTRL_STUB] ]]; then local -r last_char=''; else local -r last_char; fi
 	# If there's a prior character, add it to the delta to redraw it.
 	if [[ -n "${last_char+x}" ]]; then local -r delta="$last_char$delta"; fi
 	local l_cumulative_output=''
 	if ((${#last_status} > 0)); then
-		local -ir prior_rows="$(profile_text --display_mode --col_at _ "$prior_whole_text")"
+		local -ir prior_cols="$(profile_text --display_mode --col_at _ "$prior_whole_text")"
 		l_cumulative_output+="$(tput hpa 0)"
 		local -i t_statusRows=$(profile_text --display_mode -r "$last_status")
 		if (("${#deltaRaw}" == 0)); then
@@ -138,7 +137,7 @@ function display_text() {
 			l_cumulative_output+="$(tput el)"
 			l_cumulative_output+="$(tput cuu1)"
 		done
-		l_cumulative_output+="$(tput hpa "$prior_rows")"
+		l_cumulative_output+="$(tput hpa "$prior_cols")"
 	fi
 	if ((${#print_colors[@]} == 0)) || ((${#print_colors[@]} == 1)) && [[ "${print_colors[0]}" =~ ^-$|^$current_color$ ]]; then
 		l_cumulative_output+="$(tput setaf $current_color)$delta$(tput setaf $DEFAULT_COLOR_FOREGROUND)"
@@ -160,14 +159,13 @@ function display_text() {
 		elif [[ "${print_indices[0]}" == 0 ]]; then
 			t_d+=$(tput setaf "${print_colors[0]}")
 			# shellcheck disable=SC2004
-			((current_color=${print_colors[0]}))
-			((i+=1))
+			((current_color = print_colors[0], i += 1))
 		fi
-		for ((; i < ${#print_colors[@]}; t_last_index=${print_indices[$i]}+${#last_char}, i++)); do
+		for ((; i < ${#print_colors[@]}; t_last_index = print_indices[i] + ${#last_char}, i++)); do
 			t_d+="${delta:$t_last_index:$((${print_indices[$i]}+${#last_char}-t_last_index))}"
 			if ! [[ "${print_colors[$i]}" =~ ^-$|^$current_color$ ]]; then
 				t_d+=$(tput setaf "${print_colors[$i]}")
-				((current_color=${print_colors[$i]}))
+				((current_color = print_colors[i]))
 			fi
 		done
 		t_d+="${delta:$t_last_index}"
@@ -278,7 +276,6 @@ function parse_status() {
 }
 declare -i TIME_TESTS_BEGAN=-1
 declare TIME_TESTS_BEGAN_STRING=''
-function gen_item() { echo -n "$2: $(($1 * 100 / i_complete))% ($1)"; }
 function gen_status_text() {
 	if [ -n "$1" ]; then
 		local -i l_currentTime="$1"
@@ -290,6 +287,9 @@ function gen_status_text() {
 	local results="${TIME_TESTS_BEGAN_STRING}ELAPSED: $(format_seconds $elapsed) (${elapsed}s)"
 	local test_results="Completed: $i_complete/$TEST_COUNT ($((TEST_COUNT == 0 ? 0 : i_complete * 100 / TEST_COUNT))%; $remaining left)"
 	if ((i_complete > 0)); then
+		if ! type gen_item &> /dev/null; then
+			function gen_item() { echo -n "$2: $(($1 * 100 / i_complete))% ($1)"; }
+		fi
 		test_results+=", $(gen_item $i_successful .), $(gen_item $i_failure F), $(gen_item $i_error E), $(gen_item $i_warning W), $(gen_item $i_correction C)"
 		results+="; REMAINING: $(format_seconds "$(decimal_calc $((remaining * elapsed)) $i_complete 1000)")"
 		results+="; AVG: $(decimal_calc $elapsed $i_complete 1000) s/run"
@@ -334,10 +334,7 @@ function do_stop() {
 # #endregion Exit handling
 # #region Input loop
 declare -i c_iterations=0; declare -i start_int=0
-# Set up shopt
-	readonly extglob_off=$( if [[ $(shopt extglob) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
-	readonly globasciiranges_off=$( if [[ $(shopt globasciiranges) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
-	readonly patsub_replacement_off=$( if [[ $(shopt patsub_replacement) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
+shopt -s extglob globasciiranges patsub_replacement
 tput civis
 status_text=$DEFAULT_STATUS_TEXT
 cumulative=""
@@ -350,9 +347,6 @@ function read_input_stream() {
 	fi
 }
 function process_delta() {
-	if eval "$extglob_off"; then shopt -s extglob; fi
-	if eval "$globasciiranges_off"; then shopt -s globasciiranges; fi
-	if eval "$patsub_replacement_off"; then shopt -s patsub_replacement; fi
 	results_string="${cumulative:start_int}"
 	eval "$DO_LOG" && (echo "$results_string" >> "$LOGFILE")
 	if eval $ONE_CHAR_INPUT; then
@@ -367,19 +361,16 @@ function process_delta() {
 		fi
 		parse_status "$line"
 	fi
-	if eval "$extglob_off"; then shopt -u extglob; fi
-	if eval "$globasciiranges_off"; then shopt -u globasciiranges; fi
-	if eval "$patsub_replacement_off"; then shopt -u patsub_replacement; fi
 	status_text="$(gen_status_text)"
 	eval "$DO_LOG" && (echo "$status_text" >> "$LOGFILE")
 }
 declare -i lastUpdate=0
-((lastUpdate=$(date -u +'%-s')))
+((lastUpdate = $(date -u +'%-s')))
 while eval $is_active; do
 	declare -i currTime=0
 	((c_iterations+=1))
 	read_input_stream
-	((currTime=$(date -u +'%-s')))
+	((currTime = $(date -u +'%-s')))
 	if [ -z "$line" ]; then
 		# eval "$DO_LOG" && (echo -n "(empty)" >> "$LOGFILE")
 		if kill -0 $sub_pid > /dev/null 2>&1; then
