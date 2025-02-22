@@ -14,7 +14,7 @@ __EOF__
 }
 show_version() {
 	cat << __EOF__
-$0 3.0.0
+$0 4.0.0
 
 Copyright (C) 2025 Justin Morris
 __EOF__
@@ -54,9 +54,9 @@ else
 	declare -ir timeInput="$1"
 	declare formatStr="S"
 fi
-if ((timeInput > 86400)); then formatStr="$((timeInput / 86400))days %H hrs %M min %$formatStr s"
-elif ((timeInput > 3600)); then formatStr="%-H:%M:%$formatStr"
-elif ((timeInput > 60)); then formatStr="%-M:%$formatStr"
+if ((timeInput >= 86400)); then formatStr="$((timeInput / 86400))days %H hrs %M min %$formatStr s"
+elif ((timeInput >= 3600)); then formatStr="%-H:%M:%$formatStr"
+elif ((timeInput >= 60)); then formatStr="%-M:%$formatStr"
 else formatStr="%-${formatStr}s"
 fi
 date -u -d "@$timeInput" +"$sign$formatStr"

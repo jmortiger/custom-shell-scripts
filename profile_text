@@ -87,10 +87,8 @@ __EOF__
 
 readonly ORIG_IFS=$IFS
 # #region PARAMS
-# readonly extglob_off=$( if [[ $(shopt extglob) =~ on$ ]]; then echo 'false'; else echo 'true'; fi )
-# if eval $extglob_off; then; shopt -s 'extglob'; fi
-declare -i TERM_COLS=$(tput cols) TERM_ROWS=$(tput lines)
-declare -i initial_line_offset=0 initial_line_offset_unwrapped=0
+declare -i TERM_COLS=$(tput cols) TERM_ROWS=$(tput lines) INITIAL_ROW_OFFSET=0
+declare -i initial_column_offset=0 initial_column_offset_unwrapped=0
 declare p_trailing_control_chars='true'
 declare flagTrackRows='false'
 declare flagTrackUnwrapped='false'
@@ -121,7 +119,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 				declare -r -i p_debugLevel=255
 			fi
 			;;
-		( --output\(_|-\)columns )
+		( --output[_-]columns )
 			shift
 			if [[ "$1" =~ ^[123456789]+[[:digit:]]*$ ]]; then
 				if ! declare -r -g -i TERM_COLS="$1"; then exit 1; fi
@@ -132,7 +130,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
             	exit 1
 			fi
 			;;&
-		( --output\(_|-\)rows )
+		( --output[_-]rows )
 			shift
 			if [[ "$1" =~ ^[123456789]+[[:digit:]]*$ ]]; then
 				if ! declare -r -g -i TERM_ROWS="$1"; then exit 1; fi
@@ -143,10 +141,21 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
             	exit 1
 			fi
 			;;&
-		( --initial\(_|-\)column\(_|-\)offset )
+		( --initial[_-]row[_-]offset )
 			shift
 			if [[ "$1" =~ ^[[:digit:]]+$ ]]; then
-				if ! declare -g -i initial_line_offset="$1" initial_line_offset_unwrapped="$1"; then exit 1; fi
+				if ! declare -r -g -i INITIAL_ROW_OFFSET="$1"; then exit 1; fi
+			# elif [ "$1" = '_' ]; then :; # index is last entry
+			else
+				echo "initial_row_offset must be a non-negative integer; value was '$1'"
+            	show_help
+            	exit 1
+			fi
+			;;&
+		( --initial[_-]column[_-]offset )
+			shift
+			if [[ "$1" =~ ^[[:digit:]]+$ ]]; then
+				if ! declare -g -i initial_column_offset="$1" initial_column_offset_unwrapped="$1"; then exit 1; fi
 			# elif [ "$1" = '_' ]; then :; # index is last entry
 			else
 				echo "initial_column_offset must be a non-negative integer; value was '$1'"
@@ -154,22 +163,22 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
             	exit 1
 			fi
 			;;&
-		( --edit\(_|-\)mode )
+		( --edit[_-]mode )
 			if ! declare -r flagEditMode='true'; then exit 1; fi
 			;;&
-		( --display\(_|-\)mode )
+		( --display[_-]mode )
 			if ! declare -r flagEditMode='false'; then exit 1; fi
 			;;&
-		( --no\(_|-\)trailing\(_|-\)control )
+		( --no[_-]trailing[_-]control )
 			if ! declare -r p_trailing_control_chars='false'; then exit 1; fi
 			;;&
-		( --trailing\(_|-\)control )
+		( --trailing[_-]control )
 			if ! declare -r p_trailing_control_chars='true'; then exit 1; fi
 			;;&
 		( -r | --rows )
 			if ! declare -r p_output=$C_OUTPUT_ROWS; then exit 1; fi
 			;;&
-		( --max\(_|-\)col\(_|-\)at )
+		( --max[_-]col[_-]at )
 			if ! declare -r p_output=$C_OUTPUT_MAX_COLS_AT; then exit 1; fi
 			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
 				p_trailing_control_chars='false'
@@ -177,7 +186,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagTrackRows='true' flagMaxCharMode='false'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( -m | --max\(_|-\)col )
+		( -m | --max[_-]col )
 			if ! declare -r p_output=$C_OUTPUT_MAX_COLS; then exit 1; fi
 			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
 				p_trailing_control_chars='false'
@@ -185,7 +194,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagTrackRows='true' flagMaxCharMode='false'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( --max\(_|-\)chars\(_|-\)in\(_|-\)row )
+		( --max[_-]chars[_-]in[_-]row )
 			declare -r p_output=$C_OUTPUT_MAX_CHARACTERS_IN_A_ROW
 			if ! declare -r p_output=$C_OUTPUT_MAX_CHARACTERS_IN_A_ROW; then exit 1; fi
 			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
@@ -194,7 +203,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagTrackRows='true' flagMaxCharMode='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( --row\(_|-\)preceded\(_|-\)by )
+		( --row[_-]preceded[_-]by )
 			if ! declare -r p_output=$C_OUTPUT_ROW_PRECEDED_BY; then exit 1; fi
 			shift
 			if [[ "$1" =~ ^(-|\+)?[[:digit:]]+$ ]]; then
@@ -210,7 +219,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagTrackRows='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( --row\(_|-\)succeeded\(_|-\)by )
+		( --row[_-]succeeded[_-]by )
 			declare -r p_output=$C_OUTPUT_ROW_SUCCEEDED_BY
 			if [ ! $? ]; then exit 1; fi
 			shift
@@ -228,7 +237,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagTrackRows='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( --chars\(_|-\)at )
+		( --chars[_-]at )
 			declare -r p_output=$C_OUTPUT_CHARS_AT
 			if [ ! $? ]; then exit 1; fi
 			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
@@ -248,7 +257,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagMaxCharMode='true'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( -c | --col\(_|-\)at )
+		( -c | --col[_-]at )
 			declare -r p_output=$C_OUTPUT_COLS_AT
 			if [ ! $? ]; then exit 1; fi
 			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
@@ -268,7 +277,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			declare -r flagMaxCharMode='false'
 			# if [ ! $? ]; then exit 1; fi
 			;;&
-		( --row\(_|-\)at )
+		( --row[_-]at )
 			declare -r p_output=$C_OUTPUT_ROW_AT
 			if [ ! $? ]; then exit 1; fi
 			shift
@@ -301,7 +310,7 @@ done
 # echo "Out of param loop"
 if [[ -z "${p_output+SET}" ]]; then declare -r p_output=$C_OUTPUT_ROWS; fi
 # #region Validate
-((initial_line_offset%=TERM_COLS))
+((initial_column_offset%=TERM_COLS))
 # #endregion Validate
 # #endregion PARAMS
 
@@ -314,8 +323,8 @@ declare -r -i C_LENGTH=${#text}
 declare -i c_rows=1 # c_rows_unwrapped=1
 
 declare -a rows=("") # rows_unwrapped=("")
-# declare -i initial_line_offset=0 initial_line_offset_unwrapped=0
-declare -a row_ilos=([0]=$initial_line_offset) # row_ilos_unwrapped=([0]=$initial_line_offset_unwrapped)
+# declare -i initial_column_offset=0 initial_column_offset_unwrapped=0
+declare -a row_ilos=([0]=$initial_column_offset) # row_ilos_unwrapped=([0]=$initial_column_offset_unwrapped)
 declare -i char_offset=0 trailing_count=0
 declare uninterrupted_line="" # uninterrupted_line_unwrapped=""
 declare -i max_col=-1 max_col_at=-1
@@ -339,19 +348,19 @@ while is_not_at_end; do
 	# echo "$char_offset"
 	# [[ -n "${ctl_char+x}" ]] && echo "matched ${BASH_REMATCH[*]}"
 	# uninterrupted_line_unwrapped=$uninterrupted_line
-	# ((initial_line_offset_unwrapped+=${#uninterrupted_line}))
+	# ((initial_column_offset_unwrapped+=${#uninterrupted_line}))
 	if ! eval $flagTrackRows; then
-		((initial_line_offset+=${#uninterrupted_line}, t=initial_line_offset <= 0 || initial_line_offset%TERM_COLS>0?initial_line_offset:initial_line_offset-1, c_rows+=t/TERM_COLS))
-		# ((initial_line_offset+=${#uninterrupted_line}))
+		((initial_column_offset+=${#uninterrupted_line}, t=initial_column_offset <= 0 || initial_column_offset%TERM_COLS>0?initial_column_offset:initial_column_offset-1, c_rows+=t/TERM_COLS))
+		# ((initial_column_offset+=${#uninterrupted_line}))
 		# # If accounting for the cursor & at the end or the line doesn't perfectly fill the last row, 
-		# if ((initial_line_offset%TERM_COLS>0)) || eval $flagEditMode && is_at_end; then 
-		# 	((t=initial_line_offset))
+		# if ((initial_column_offset%TERM_COLS>0)) || eval $flagEditMode && is_at_end; then 
+		# 	((t=initial_column_offset))
 		# else
-		# 	((t=initial_line_offset-1))
+		# 	((t=initial_column_offset-1))
 		# fi
 		# ((c_rows+=t/TERM_COLS))
 	else
-		((t_ilo=initial_line_offset, t_spaceInLine=TERM_COLS-t_ilo, initial_line_offset+=${#uninterrupted_line}))
+		((t_ilo=initial_column_offset, t_spaceInLine=TERM_COLS-t_ilo, initial_column_offset+=${#uninterrupted_line}))
 		for ((t_off=0, t_inc=1; ${#uninterrupted_line} - t_off > 0; t_off+=t_spaceInLine, t_spaceInLine=TERM_COLS, c_rows+=t_inc, t_ilo=0)); do
 			# if ((t_off + t_spaceInLine > ${#uninterrupted_line})); then
 			# if ((t_spaceInLine > ${#uninterrupted_line} - t_off)); then
@@ -394,74 +403,74 @@ while is_not_at_end; do
 		($'\v')
 			# echo 'control char=\v'
 			((c_rows+=1, c_rows_unwrapped+=1)) # For the new line
-			((initial_line_offset%=TERM_COLS))
+			((initial_column_offset%=TERM_COLS))
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
-				row_ilos+=("$initial_line_offset") # row_ilos+=($((TERM_COLS - t_spaceInLine)))
+				row_ilos+=("$initial_column_offset") # row_ilos+=($((TERM_COLS - t_spaceInLine)))
 				rows+=("")
 			fi
 			;;
 		($'\f')
 			# echo 'control char=\f'
 			((c_rows+=1, c_rows_unwrapped+=1)) # For the new line
-			((initial_line_offset%=TERM_COLS))
+			((initial_column_offset%=TERM_COLS))
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
-				row_ilos+=("$initial_line_offset") # row_ilos+=($((TERM_COLS - t_spaceInLine)))
+				row_ilos+=("$initial_column_offset") # row_ilos+=($((TERM_COLS - t_spaceInLine)))
 				rows+=("")
 			fi
 			;;
 		($'\r')
 			# echo 'control char=\r'
-			# ((trailing_count=initial_line_offset_unwrapped))
-			((initial_line_offset=0, initial_line_offset_unwrapped=0))
+			# ((trailing_count=initial_column_offset_unwrapped))
+			((initial_column_offset=0, initial_column_offset_unwrapped=0))
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
-				# row_ilos[-1]=("$initial_line_offset") # row_ilos+=("0")
+				# row_ilos[-1]=("$initial_column_offset") # row_ilos+=("0")
 			fi
 			;;
 		($'\b')
 			# echo 'control char=\b'
-			# ((trailing_count=initial_line_offset_unwrapped))
-			((initial_line_offset-=1, initial_line_offset_unwrapped-=1))
+			# ((trailing_count=initial_column_offset_unwrapped))
+			((initial_column_offset-=1, initial_column_offset_unwrapped-=1))
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
-				# row_ilos[-1]=("$initial_line_offset") # row_ilos+=("0")
+				# row_ilos[-1]=("$initial_column_offset") # row_ilos+=("0")
 			fi
 			;;
 		($'\n')
 			# echo 'control char=\n'
 			((c_rows+=1)) # For the new line
-			((initial_line_offset=0))
+			((initial_column_offset=0))
 			if eval $flagTrackUnwrapped; then
 				((c_rows_unwrapped+=1)) # For the new line
-				((initial_line_offset_unwrapped=0))
+				((initial_column_offset_unwrapped=0))
 			fi
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
 				rows+=("")
-				row_ilos+=("$initial_line_offset") # row_ilos+=("0")
+				row_ilos+=("$initial_column_offset") # row_ilos+=("0")
 			fi
 			;;
 		(*)
 			# echo "control char=idk, $ctl_char"
 			((c_rows+=1)) # For the new line
-			((initial_line_offset=0))
+			((initial_column_offset=0))
 			if eval $flagTrackUnwrapped; then
 				((c_rows_unwrapped+=1)) # For the new line
-				((initial_line_offset_unwrapped=0))
+				((initial_column_offset_unwrapped=0))
 			fi
 			if eval $flagTrackRows; then 
 				if eval $p_trailing_control_chars; then rows[-1]+="$ctl_char"; fi
 				rows+=("")
-				row_ilos+=("$initial_line_offset") # row_ilos+=("0")
+				row_ilos+=("$initial_column_offset") # row_ilos+=("0")
 			fi
 			;;
 		# fi
 	# fi
 	esac
 	# If accounting for the cursor, at the end, & the line perfectly fills the last row.
-	if eval $flagEditMode && ((initial_line_offset > 0 && initial_line_offset%TERM_COLS==0)) && is_at_end; then
+	if eval $flagEditMode && ((initial_column_offset > 0 && initial_column_offset%TERM_COLS==0)) && is_at_end; then
 		if eval $flagTrackRows; then 
 			rows+=("")
 			row_ilos+=("0")
