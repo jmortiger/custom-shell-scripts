@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
 # cspell:ignore icos OVERRIDERS extglob
-readonly C_OUTPUT_ROWS='ROWS'
-readonly C_OUTPUT_MAX_COLS='MAX_COLUMNS'
-readonly C_OUTPUT_MAX_CHARACTERS_IN_A_ROW='MAX_CHARS'
-readonly C_OUTPUT_MAX_COLS_AT='MAX_COLUMNS_AT'
-readonly C_OUTPUT_COLS_AT='COLUMNS_AT'
-readonly C_OUTPUT_CHARS_AT='CHARS_AT'
-readonly C_OUTPUT_ROW_AT='ROW_AT'
-readonly C_OUTPUT_ROW_PRECEDED_BY='ROW_PRECEDED'
-readonly C_OUTPUT_ROW_SUCCEEDED_BY='ROW_SUCCEEDED'
+readonly C_OUTPUT_ROWS='_0_C_OUTPUT_ROWS'
+readonly C_OUTPUT_MAX_COLS='_1_C_OUTPUT_MAX_COLS'
+readonly C_OUTPUT_MAX_CHARACTERS_IN_A_ROW='_2_C_OUTPUT_MAX_CHARACTERS_IN_A_ROW'
+readonly C_OUTPUT_MAX_COLS_AT='_3_C_OUTPUT_MAX_COLS_AT'
+readonly C_OUTPUT_COLS_AT='_4_C_OUTPUT_COLS_AT'
+readonly C_OUTPUT_CHARS_AT='_5_C_OUTPUT_CHARS_AT'
+readonly C_OUTPUT_ROW_AT='_6_C_OUTPUT_ROW_AT'
+readonly C_OUTPUT_ROW_PRECEDED_BY='_7_C_OUTPUT_ROW_PRECEDED_BY'
+readonly C_OUTPUT_ROW_SUCCEEDED_BY='_8_C_OUTPUT_ROW_SUCCEEDED_BY'
 readonly C_OUTPUT_COLS_AT_REGEX='^[[:digit:]]+$|^_$'
 readonly CTRL_CHAR_PATTERN='[^[:print:][:blank:]]'
 readonly NON_CTRL_CHAR_PATTERN='[[:print:][:blank:]]'
@@ -36,7 +36,7 @@ Output Modifiers:
 
 	-r, --rows: get the total number of rows
 
-	-c, --col_at INDEX: Get the # of columns on the specified row INDEX (or, if '_', the last index). Negative indices are subtracted from length (e.g. -1 = length - 1). By default, turns off appending control characters (See '--no_trailing_control').
+	-c, --col_at INDEX: Get the # of columns on the specified row INDEX (or, if '_', the last index), accounting for lines not starting at 0 (e.g. after a vertical tab). Negative indices are subtracted from length (e.g. -1 = length - 1). By default, turns off appending control characters (See '--no_trailing_control'). Result is incremented by 1 if in edit mode (See '--edit-mode') to count the cursor.
 
 	--chars_at INDEX: Get the # of characters on the specified row INDEX (or, if '_', the last index). Negative indices are subtracted from length (e.g. -1 = length - 1). By default, turns off appending control characters (See '--no_trailing_control').
 
@@ -98,6 +98,7 @@ declare flagTrackUnwrapped='false'
 declare flagEditMode='false'
 # declare flagDebug='false'
 declare -i p_debugLevel=0
+declare -i p_index=0; unset -v p_index
 declare flagMaxCharMode='true'
 shopt -s 'extglob'
 allow_continue='true'
@@ -248,15 +249,13 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			shift
 			;;
 		( --chars[_-]at )
-			declare -r p_output=$C_OUTPUT_CHARS_AT
-			if [ ! $? ]; then exit 1; fi
+			if ! declare -r p_output=$C_OUTPUT_CHARS_AT; then exit 1; fi
 			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
 				p_trailing_control_chars='false'
 			fi
 			shift
 			if [[ "$1" =~ ^(-|\+)?[[:digit:]]+$ ]]; then
-		    	declare -r -g -i p_index="$1"
-				if [ ! $? ]; then exit 1; fi
+				if ! declare -r -g -i p_index="$1"; then exit 1; fi
 			elif [ "$1" = '_' ]; then :; # index is last entry
 			else
 				echo "chars_at must be a signed integer or a _; value was '$1'"
@@ -269,11 +268,10 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			shift
 			;;
 		( -c | --col[_-]at )
-			declare -r p_output=$C_OUTPUT_COLS_AT
-			if [ ! $? ]; then exit 1; fi
-			if ! declare -p p_trailing_control_chars | grep -q -P -e '-r' -; then
-				p_trailing_control_chars='false'
-			fi
+			if ! declare -r p_output=$C_OUTPUT_COLS_AT; then exit 1; fi
+			# if ! declare -p p_trailing_control_chars | grep -q -E -e 'declare[[:blank:]]-[[:alpha:]]*r' -; then
+			p_trailing_control_chars='false' &>'/dev/null'
+			# fi
 			shift
 			if [[ "$1" =~ ^(-|\+)?[[:digit:]]+$ ]]; then
 		    	declare -r -g -i p_index="$1"
@@ -290,12 +288,10 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			shift
 			;;
 		( --row[_-]at )
-			declare -r p_output=$C_OUTPUT_ROW_AT
-			if [ ! $? ]; then exit 1; fi
+			if ! declare -r p_output=$C_OUTPUT_ROW_AT; then exit 1; fi
 			shift
 			if [[ "$1" =~ ^(-|\+)?[[:digit:]]+$ ]]; then
-		    	declare -r -g -i p_index="$1"
-				if [ ! $? ]; then exit 1; fi
+				if ! declare -r -g -i p_index="$1"; then exit 1; fi
 			elif [ "$1" = '_' ]; then :; # index is last entry
 			else
 				echo "row_at must be a signed integer or a _; value was '$1'"
@@ -463,13 +459,14 @@ while is_not_at_end; do
 		# fi
 	# fi
 	esac
-	# If accounting for the cursor, at the end, & the line perfectly fills the last row.
-	if eval $flagEditMode && ((initial_column_offset > 0 && initial_column_offset%TERM_COLS==0)) && is_at_end; then
+	# If accounting for the cursor, at the end, & the line isn't at the start & perfectly fills the last row...
+	if eval $flagEditMode && is_at_end && ((initial_column_offset > 0 && initial_column_offset%TERM_COLS==0)); then
 		if eval $flagTrackRows; then 
 			rows+=("")
 			row_icos+=("0")
 		fi
 		((c_rows+=1))
+		break
 	fi
 	# echo "c_rows after: $c_rows"
 	if [[ -n "${p_index+x}" ]] && ((p_index+1 < c_rows)); then break; fi
@@ -484,39 +481,23 @@ case "$p_output" in
 		echo $max_col_at
 		;;
 	("$C_OUTPUT_COLS_AT")
-		# if [[ -z "${p_index+x}" ]]; then ((p_index=${#rows[@]}-1)); fi
-		# echo "Index: $p_index"
-		# echo "Answer: ${#rows[$p_index]}"
-		if [[ -z "${p_index+x}" ]]; then
-			# ((p_index=${#rows[@]}-1))
-			# echo "Index: $p_index"
-			# echo "${#rows[-1]}"
-			echo $((${#rows[-1]}+${row_icos[-1]}))
-		else
-			# echo "Index: $p_index"
-			# echo "${#rows[$p_index]}"
-			echo $((${#rows[$p_index]}+${row_icos[$p_index]}))
+		if [[ -z "${p_index+x}" ]]; then ((p_index=${#rows[@]}-1)); fi
+		((temp = ${#rows[$p_index]} + row_icos[p_index]))
+		if eval $flagEditMode && ((p_index == ${#rows[@]} - 1 || p_index == -1)); then
+			((++temp))
 		fi
+		echo "$temp"
 		;;
 	("$C_OUTPUT_CHARS_AT")
-		# if [[ -z "${p_index+x}" ]]; then
-		# 	echo "${#rows[-1]}"
-		# else
-		# 	echo "${#rows[$p_index]}"
-		# fi
 		if [[ -z "${p_index+x}" ]]; then ((p_index = -1)); fi
 		echo "${#rows[$p_index]}"
 		;;
 	("$C_OUTPUT_ROW_AT")
 		if [[ -z "${p_index+x}" ]]; then ((p_index=${#rows[@]}-1)); fi
-		# echo "Index: $p_index"
-		# IFS=$'\0'; echo "${rows[*]}"; IFS="$ORIG_IFS"
 		echo "${rows[$p_index]}"
 		;;
 	("$C_OUTPUT_ROW_PRECEDED_BY")
 		if [[ -z "${p_index+x}" ]]; then ((p_index=${#rows[@]}-1)); fi
-		# echo "Index: $p_index"
-		# IFS=$'\0'; echo "${rows[*]}"; 
 		IFS=$'\0'
 		if [[ "${rows[*]:0:$((p_index-1))}" =~ $p_regex ]]; then 
 			IFS="$ORIG_IFS"
@@ -528,8 +509,6 @@ case "$p_output" in
 		;;
 	("$C_OUTPUT_ROW_SUCCEEDED_BY")
 		if [[ -z "${p_index+x}" ]]; then ((p_index=0)); fi
-		# echo "Index: $p_index"
-		# IFS=$'\0'; echo "${rows[*]}"; 
 		IFS=$'\0'
 		if [[ "${rows[*]:$p_index}" =~ $p_regex ]]; then 
 			IFS="$ORIG_IFS"
@@ -540,7 +519,6 @@ case "$p_output" in
 		IFS="$ORIG_IFS"
 		;;
 	("$C_OUTPUT_ROWS")
-		# if eval $flagTrackRows; then echo "$c_rows == ${#rows[@]}"; IFS='%'; echo "${rows[*]}"; IFS=$ORIG_IFS; else echo $c_rows; fi
 		echo $c_rows
 		;;
 	(*)
