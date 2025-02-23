@@ -7,7 +7,7 @@ elif [ "$1" = '--version' ]; then
 fi
 declare retVal='--name'
 if [[ "$1" =~ -([pdna]|-(path|dir|directory|name|all)) ]]; then
-	retVal="$1"
+	retVal="-$1"
 	shift
 fi
 declare -r retVal

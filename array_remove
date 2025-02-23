@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
+declare -r numericMatcher='^[-+]?[[:digit:]]+$'
+declare f_all='false'
+declare f_at='false'
+# declare toRemove
+declare delim=$'\n' # declare delim=$'\003'
+# declare eot=$'\n' # declare delim=$'\003'
+while true; do
+	case "$1" in
+		-d | --delim ) shift; declare -r delim="$1";;
+		-s | --single | -o | --one ) declare -r f_all='false';;
+		-a | --all) declare -r f_all='true';;
+		--at) declare -r f_at='true'; [[ "$2" =~ $numericMatcher ]] && shift && declare toRemove="$1";;
+		*) break;;
+	esac
+	shift
+done
+declare -r f_all f_at delim
+declare -a result=()
+if eval "$f_at"; then
+	if ! [ -v toRemove ]; then
+		declare toRemove="$1"
+		if ! shift; then
+			echo "No array elements" 2>&1
+			exit 1
+		fi
+	fi
+	declare -r toRemove="$toRemove"
+	# TODO: account for octal & such https://www.gnu.org/software/bash/manual/bash.html#Shell-Arithmetic
+	if ! [[ "$toRemove" =~ $numericMatcher ]]; then
+		echo "Cannot remove non-numeric index $toRemove" 2>&1
+		exit 1
+	else
+		declare -i toRemove # If octal or whatever, fixes it for upcoming error messages
+		if ((toRemove >= $#)); then
+			echo "Cannot remove index $toRemove that exceeds array length of $#" 2>&1
+			exit 1
+		elif ((toRemove < 0 && toRemove * 1 >= $#)); then
+			echo "Cannot remove negative index $toRemove that exceeds array length of $#" 2>&1
+			exit 1
+		fi
+	fi
+	result=("$@")
+	unset "result[$toRemove]"
+	# result=("${result[@]}") # Fixes indices
+else
+	if ! [ -v toRemove ]; then
+		declare toRemove="$1"
+		if (($# == 1)); then
+			echo "No array elements" 2>&1
+			exit 1
+		fi
+	fi
+	declare -r toRemove="$toRemove"
+	while (($# > 1)) && shift; do
+		if [ "$1" = "$toRemove" ]; then
+			if eval "$f_all"; then
+				continue
+			fi
+			if shift; then
+				result+=("$@")
+			fi
+			break
+		fi
+		result+=("$1")
+	done
+fi
+IFS="$delim"
+# if [ "$delim" = $'\n' ]; then
+# 	echo "${result[*]}"
+# else
+	echo -nE "${result[*]}$delim"
+# fi
+exit

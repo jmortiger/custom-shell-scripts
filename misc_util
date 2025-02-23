@@ -150,9 +150,9 @@ while (($# > 0)); do
 		RESET_COLOR_FOREGROUND) echo -n "${RESET_COLOR_FOREGROUND@A};"; fUsed='true';;
 		MAX_INT) echo -n "${MAX_INT@A};"; fUsed='true';;
 		MAX_READ_INT) echo -n "${MAX_READ_INT@A};"; fUsed='true';;
-		CTR_SEQ) echo -n "${CTR_SEQ[@]@A};"; fUsed='true';;
-		TPUT_COLOR) echo -n "${TPUT_COLOR[@]@A};"; fUsed='true';;
-		SIGNAL) echo -n "${SIGNAL[@]@A};"; fUsed='true';;
+		CTR_SEQ) echo -n "${CTR_SEQ[*]@A};"; fUsed='true';;
+		TPUT_COLOR) echo -n "${TPUT_COLOR[*]@A};"; fUsed='true';;
+		SIGNAL) echo -n "${SIGNAL[*]@A};"; fUsed='true';;
 		*) break;;
 	esac
 	shift
@@ -307,6 +307,8 @@ Usage:	$0
 Options:
 	-h, --help: Shows this help text.
 	-v, --version: Shows version info.
+Examples:
+	input	description
 __EOF__
 }
 _show_version() {

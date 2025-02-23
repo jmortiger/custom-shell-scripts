@@ -14,11 +14,10 @@ function setup() {
     PATH="$DIR/../src:$PATH"
 }
 
-@test "Works Forward" {
+@test "Works" {
 	declare -a items=('hi' 'ho' 'hi' 'ho' 'off' 'to' 'work we go')
-	# ! indexOf "hello" "${items[@]}"
-	run -2 indexOf "hello" "${items[@]}"
-	[ "$output" = "-1" ]
+	run -1 indexOf "hello" "${items[@]}"
+	assert_output -1
 	run -0 indexOf "hi" "${items[@]}"
 	assert_output 0
 	run -0 indexOf "ho" "${items[@]}"
@@ -27,15 +26,34 @@ function setup() {
 	assert_output 4
 	run -0 indexOf "work we go" "${items[@]}"
 	assert_output 6
-	# ! indexOf "work" "${items[@]}"
 	run indexOf "work" "${items[@]}"
-	[ "$output" = "-1" ]
+	assert_output -1
+}
+@test "Works with different flag order" {
+	declare -a items=('hi' 'ho' 'hi' 'ho' 'off' 'to' 'work we go')
+	run -0 indexOf --value 'ho' --first "${items[@]}"
+	assert_output 1
+}
+@test "Works Forward" {
+	declare -a items=('hi' 'ho' 'hi' 'ho' 'off' 'to' 'work we go')
+	run -1 indexOf --first "hello" "${items[@]}"
+	assert_output -1
+	run -0 indexOf --first "hi" "${items[@]}"
+	assert_output 0
+	run -0 indexOf --first "ho" "${items[@]}"
+	assert_output 1
+	run -0 indexOf --first "off" "${items[@]}"
+	assert_output 4
+	run -0 indexOf --first "work we go" "${items[@]}"
+	assert_output 6
+	run indexOf --first "work" "${items[@]}"
+	assert_output -1
 }
 @test "Works Backwards" {
 	declare -a items=('hi' 'ho' 'hi' 'ho' 'off' 'to' 'work we go')
 	# ! indexOf --last "hello" "${items[@]}"
-	run -2 indexOf --last "hello" "${items[@]}"
-	[ "$output" = "-1" ]
+	run -1 indexOf --last "hello" "${items[@]}"
+	assert_output -1
 	run -0 indexOf --last "hi" "${items[@]}"
 	assert_output 2
 	run -0 indexOf --last "ho" "${items[@]}"
@@ -44,9 +62,8 @@ function setup() {
 	assert_output 4
 	run -0 indexOf --last "work we go" "${items[@]}"
 	assert_output 6
-	# ! indexOf --last "work" "${items[@]}"
 	run indexOf --last "work" "${items[@]}"
-	[ "$output" = "-1" ]
+	assert_output -1
 }
 # @test "Works for multiple items" {
 # 	declare -a items=('hi' 'ho' 'hi' 'ho' 'off' 'to' 'work we go')

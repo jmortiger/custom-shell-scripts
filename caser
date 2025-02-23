@@ -4,7 +4,7 @@ show_help() {
 	# or:	$0 [-c COARSENESS] [-d SEPARATOR] NUMERATOR DENOMINATOR
 	# -c, --coarseness COARSENESS: precision. Defaults to $DEFAULT_COARSENESS.
 	cat << __EOF__
-Quick converter between snake_case, camelCase, PascalCase, and CONSTANT_CASE.
+INCOMPLETE; Quick converter between snake_case, camelCase, PascalCase, and CONSTANT_CASE.
 
 Usage:	$0 -c TEXT
 	or:	$0 --camel TEXT

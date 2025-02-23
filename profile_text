@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 
-# cspell:ignore icos OVERRIDERS extglob
+# cspell:ignore icos OVERRIDERS
+##region########################################### GET PATH, DIR, & NAME ###########################################
+readonly MY_PATH=$(realpath "$0")
+MY_DIR=''
+MY_NAME=''
+if [[ "$MY_PATH" =~ ^(.*)/([^/]+)$ ]]; then
+	readonly MY_DIR="${BASH_REMATCH[1]}" MY_NAME="${BASH_REMATCH[2]}"
+else
+	readonly MY_DIR="$HOME" MY_NAME="$0"
+	echo "$MY_NAME: Failed to get dir" 1>&2
+	exit 1
+fi
+##endregion######################################## GET PATH, DIR, & NAME ###########################################
+##region########################################### CONSTANTS ###########################################
 readonly C_OUTPUT_ROWS='_0_C_OUTPUT_ROWS'
 readonly C_OUTPUT_MAX_COLS='_1_C_OUTPUT_MAX_COLS'
 readonly C_OUTPUT_MAX_CHARACTERS_IN_A_ROW='_2_C_OUTPUT_MAX_CHARACTERS_IN_A_ROW'
@@ -18,6 +31,7 @@ readonly V_CTRL_STUB=$'\n\v\f'
 # Horizontal Tab, Carriage Return, Backspace, Delete
 readonly H_CTRL_STUB=$'\t\r\b\x7F'
 readonly C_TRAILING_CTRL_OVERRIDERS='^-[mc]$|^--(max_col|col_at)$'
+##endregion######################################## CONSTANTS ###########################################
 # #region show_help
 show_help() {
 	cat << __EOF__
@@ -54,7 +68,7 @@ Output Modifiers:
 
 	--rows_where [PRE] REGEX [POST]: Get the rows whose preceding rows match PRE (if not '*'), succeeding rows match POST (if not '*'), and body matches the given REGEX. If matched, returns each \${BASH_REMATCH[*]} (for REGEX only) and an exit status of true; otherwise, returns nothing with an exit status of false.
 
-	Settings Modifiers:
+Settings Modifiers:
 
 	--edit_mode: Act as though editing text; inverse of display_mode.
 		* Offset column placements on final (typed) row by 1 to account for an invisible cursor.
@@ -87,6 +101,15 @@ __EOF__
 }
 # #endregion show_help
 
+exit_error() {
+	if [[ "$1" =~ ^[[:digit:]]+$ ]]; then local -ir errorCode=$1; shift; else local -ir errorCode=1; fi
+	mapfile -t val < caller 0
+	# echo "$MY_NAME: $line$*" 1>&2
+	t_out="$MY_NAME: $*"$'\n'"${val[0]}"
+	echo "$t_out" # echo "$t_out" 1>&2
+	exit $errorCode
+} 2>&1 # }
+
 readonly ORIG_IFS=$IFS
 # #region PARAMS
 declare -i TERM_COLS=$(tput cols) TERM_ROWS=$(tput lines) INITIAL_ROW_OFFSET=0
@@ -101,10 +124,7 @@ declare -i p_debugLevel=0
 declare -i p_index=0; unset -v p_index
 declare flagMaxCharMode='true'
 shopt -s 'extglob'
-allow_continue='true'
-# while (( $# > 1 )) && eval $allow_continue; do
-# while eval $allow_continue && (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]]; do
-while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_continue; do
+while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]]; do
 	case "$1" in
 		( -h | --help ) show_help; exit 0;;
 		( -v | --version ) show_version; exit 0;;
@@ -303,13 +323,11 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]] && eval $allow_
 			shift
 			;;
 		##endregion############################## Output #################################
-		( -[[:alpha:]] | --+([[:alpha:]_-]) ) shift;;
+		( -[[:alpha:]] | --+([[:alpha:]_-]) ) echo "Unrecognized argument '$1'." 2>&1;; #shift;;
 		( ^--$ )
 			shift
 			;&
-		( * )
-			allow_continue='false'
-			;;
+		( * ) break;;
 	esac
 done
 if [[ -z "${p_output+SET}" ]]; then declare -r p_output=$C_OUTPUT_ROWS; fi
