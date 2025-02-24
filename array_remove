@@ -5,33 +5,50 @@ if [ "$1" = '--help' ]; then
 elif [ "$1" = '--version' ]; then
 	exit 1
 fi
+set -e
 declare -r numericMatcher='^[-+]?[[:digit:]]+$'
-declare f_all='false'
-declare f_at='false'
+declare fInvert='false'
+declare fAll='false'
+declare fAt='false'
+declare fRegex='false'
 # declare toRemove
 declare delim=$'\n' # declare delim=$'\003'
 # declare eot=$'\n' # declare delim=$'\003'
+shopt -s extglob globasciiranges
 while true; do
 	case "$1" in
-		-d | --delim ) shift; declare -r delim="$1";;
-		-s | --single | -o | --one ) declare -r f_all='false';;
-		-a | --all) declare -r f_all='true';;
-		--at) declare -r f_at='true'; [[ "$2" =~ $numericMatcher ]] && shift && declare toRemove="$1";;
-		*) break;;
+		-d | --delim) shift; declare -r delim="$1";;
+		-s | --single | -o | --one) declare -r fAll='false';;
+		-a | --all) declare -r fAll='true';;
+		--invert) declare -r fInvert='true';;
+		-r | --regex) declare -r fRegex='true';;
+		-i | --index | --at | --at[-_]index)
+			declare -r fAt='true'
+			if ! [ -v toRemove ] && [[ "$2" =~ $numericMatcher ]]; then
+				shift
+				declare toRemove="$1"
+			fi
+			;;
+		*)
+			if ! [ -v toRemove ]; then
+				declare toRemove="$1"
+				if ! shift; then
+					echo "No array elements" 2>&1
+					exit 1
+				fi
+			fi
+			break
+			;;
 	esac
 	shift
 done
-declare -r f_all f_at delim
+if ! [ -v toRemove ]; then
+	echo "toRemove Undefined" 2>&1
+	exit 1
+fi
+declare -r toRemove="$toRemove" fAll fAt delim fRegex fInvert
 declare -a result=()
-if eval "$f_at"; then
-	if ! [ -v toRemove ]; then
-		declare toRemove="$1"
-		if ! shift; then
-			echo "No array elements" 2>&1
-			exit 1
-		fi
-	fi
-	declare -r toRemove="$toRemove"
+if eval "$fAt"; then
 	# TODO: account for octal & such https://www.gnu.org/software/bash/manual/bash.html#Shell-Arithmetic
 	if ! [[ "$toRemove" =~ $numericMatcher ]]; then
 		echo "Cannot remove non-numeric index $toRemove" 2>&1
@@ -50,17 +67,13 @@ if eval "$f_at"; then
 	unset "result[$toRemove]"
 	# result=("${result[@]}") # Fixes indices
 else
-	if ! [ -v toRemove ]; then
-		declare toRemove="$1"
-		if (($# == 1)); then
-			echo "No array elements" 2>&1
-			exit 1
-		fi
-	fi
-	declare -r toRemove="$toRemove"
-	while (($# > 1)) && shift; do
-		if [ "$1" = "$toRemove" ]; then
-			if eval "$f_all"; then
+	function _regexMatch() { if eval "$fInvert"; then ! [[ "$1" =~ $toRemove ]] && return 0 || return 1; else [[ "$1" =~ $toRemove ]] && return 0 || return 1; fi }
+	function _literalMatch() { if eval "$fInvert"; then ! [ "$1" = "$toRemove" ] && return 0 || return 1; else [ "$1" = "$toRemove" ] && return 0 || return 1; fi }
+	while (($# > 0)); do
+		if (eval "$fRegex" && _regexMatch "$1") ||
+			(! eval "$fRegex" && _literalMatch "$1"); then
+			if eval "$fAll"; then
+				shift
 				continue
 			fi
 			if shift; then
@@ -69,12 +82,9 @@ else
 			break
 		fi
 		result+=("$1")
+		shift
 	done
 fi
 IFS="$delim"
-# if [ "$delim" = $'\n' ]; then
-# 	echo "${result[*]}"
-# else
-	echo -nE "${result[*]}$delim"
-# fi
+echo -nE "${result[*]}$delim"
 exit
