@@ -108,7 +108,7 @@ exit_error() {
 	t_out="$MY_NAME: $*"$'\n'"${val[0]}"
 	echo "$t_out" # echo "$t_out" 1>&2
 	exit $errorCode
-} 2>&1 # }
+} 1>&2 # }
 
 readonly ORIG_IFS=$IFS
 # #region PARAMS
@@ -323,7 +323,7 @@ while (( $# > 1 )) || [[ "$1" =~ -[[:alpha:]]|--[[:alpha:]_]+ ]]; do
 			shift
 			;;
 		##endregion############################## Output #################################
-		( -[[:alpha:]] | --+([[:alpha:]_-]) ) echo "Unrecognized argument '$1'." 2>&1;; #shift;;
+		( -[[:alpha:]] | --+([[:alpha:]_-]) ) echo "Unrecognized argument '$1'." 1>&2;; #shift;;
 		( ^--$ )
 			shift
 			;&
@@ -540,7 +540,7 @@ case "$p_output" in
 		echo $c_rows
 		;;
 	(*)
-		echo "I forgot to add the output for $p_output" 2>&1
+		echo "I forgot to add the output for $p_output" 1>&2
 		exit 255
 		;;
 esac

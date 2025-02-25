@@ -124,7 +124,7 @@ else
 	err_msg="must be a"
 	if eval $is_signed; then err_msg+=" signed "; else err_msg+="n unsigned "; fi
 	if eval $is_decimal; then err_msg+="decimal number"; else err_msg+="integer"; fi
-	echo "$err_msg; value was '$text'" 2>&1
+	echo "$err_msg; value was '$text'" 1>&2
 	exit 1
 fi
 exit 0

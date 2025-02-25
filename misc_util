@@ -182,7 +182,7 @@ exit_error() {
 	t_out="$MY_NAME: $*"$'\n'"${val[0]}"
 	echo "$t_out" # echo "$t_out" 1>&2
 	exit $errorCode
-} 2>&1 # }
+} 1>&2 # }
 ##endregion############################## NEW EXIT WITH ERROR AND LINE #################################
 
 #########################region GET OPTIONS#########################

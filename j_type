@@ -8,7 +8,7 @@ if [[ "$MY_PATH" =~ ^(.*)/([^/]+)$ ]]; then
 	readonly MY_DIR="${BASH_REMATCH[1]}" MY_NAME="${BASH_REMATCH[2]}"
 else
 	readonly MY_DIR="$HOME" MY_NAME="$0"
-	echo "$MY_NAME: Failed to get dir" 2>&1
+	echo "$MY_NAME: Failed to get dir" 1>&2
 	exit 1
 fi
 ##endregion######################################## GET PATH, DIR, & NAME ###########################################
@@ -117,7 +117,7 @@ function doExit() {
 		tput rmcup
 	else
 		tput rmcup
-		echo "$2" 2>&1
+		echo "$2" 1>&2
 	fi
 	exit "${1:-0}"
 }

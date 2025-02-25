@@ -68,7 +68,7 @@ while [[ "$1" =~ ^- ]]; do
 done
 
 if declare -r value="$1" &>'/dev/null' && ! shift; then
-	echo "No array elements" 2>&1
+	echo "No array elements" 1>&2
 	exit 255
 fi
 declare -a result=()

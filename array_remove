@@ -33,7 +33,7 @@ while true; do
 			if ! [ -v toRemove ]; then
 				declare toRemove="$1"
 				if ! shift; then
-					echo "No array elements" 2>&1
+					echo "No array elements" 1>&2
 					exit 1
 				fi
 			fi
@@ -43,7 +43,7 @@ while true; do
 	shift
 done
 if ! [ -v toRemove ]; then
-	echo "toRemove Undefined" 2>&1
+	echo "toRemove Undefined" 1>&2
 	exit 1
 fi
 declare -r toRemove="$toRemove" fAll fAt delim fRegex fInvert
@@ -51,15 +51,15 @@ declare -a result=()
 if eval "$fAt"; then
 	# TODO: account for octal & such https://www.gnu.org/software/bash/manual/bash.html#Shell-Arithmetic
 	if ! [[ "$toRemove" =~ $numericMatcher ]]; then
-		echo "Cannot remove non-numeric index $toRemove" 2>&1
+		echo "Cannot remove non-numeric index $toRemove" 1>&2
 		exit 1
 	else
 		declare -i toRemove # If octal or whatever, fixes it for upcoming error messages
 		if ((toRemove >= $#)); then
-			echo "Cannot remove index $toRemove that exceeds array length of $#" 2>&1
+			echo "Cannot remove index $toRemove that exceeds array length of $#" 1>&2
 			exit 1
 		elif ((toRemove < 0 && toRemove * 1 >= $#)); then
-			echo "Cannot remove negative index $toRemove that exceeds array length of $#" 2>&1
+			echo "Cannot remove negative index $toRemove that exceeds array length of $#" 1>&2
 			exit 1
 		fi
 	fi
