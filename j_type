@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#! /usr/bin/env bash
 
 ##region########################################### GET PATH, DIR, & NAME ###########################################
 readonly MY_PATH=$(realpath "$0")
@@ -14,11 +14,10 @@ fi
 ##endregion######################################## GET PATH, DIR, & NAME ###########################################
 ##region########################################### SHOW HELP & VERSION ###########################################
 show_help() {
-	# -c, --coarseness COARSENESS: precision. Defaults to $DEFAULT_COARSENESS.
 	cat << __EOF__
 A typing test.
 
-Usage:	$0 [VALID_CHARACTERS]
+Usage:	$0 [-gp] [-w WIDTH] [-l LINES] [VALID_CHARACTERS]
 	or:	$0 --help
 	or:	$0 --version
 
@@ -29,22 +28,22 @@ __EOF__
 }
 show_version() {
 	cat << __EOF__
-$0 1.0.0
+$0 1.1.0
 
 Copyright (C) 2025 Justin Morris
 __EOF__
 }
 ##endregion######################################## SHOW HELP & VERSION ###########################################
-readonly LOGFILE="$MY_DIR/$MY_NAME.log.txt"
+# readonly LOG_FILE="$MY_DIR/$MY_NAME.log.txt"
 readonly WORDS_FILE="$MY_DIR/words.txt"
 # cspell:disable-next-line
 readonly DEFAULT_CHARACTER_LIST='asdfjkl;ghqwertyuiopxczvbnm,.'
 declare -A CTR_SEQ=; declare -A TPUT_COLOR=; declare -i MAX_READ_INT=; declare RESET_COLOR_BACKGROUND=; declare RESET_COLOR_FOREGROUND=
 eval "$(misc_util CTR_SEQ TPUT_COLOR MAX_READ_INT RESET_COLOR_BACKGROUND RESET_COLOR_FOREGROUND)"
 ##region########################################### PARAMETERS ###########################################
-# The time in milliseconds after which an update will be forced.
-# TODO: Implement
-declare -ir FORCE_REFRESH_INTERVAL=5000
+# # The time in milliseconds after which an update will be forced.
+# # TODO: Implement
+# declare -ir FORCE_REFRESH_INTERVAL=5000
 # The time in milliseconds after which an update will be attempted.
 declare -ir REFRESH_INTERVAL=500
 # The maximum # of words to use for test generation.
@@ -76,7 +75,7 @@ while [[ -n "${1+x}" ]]; do
 done
 if [ -z "$characters" ]; then characters="$DEFAULT_CHARACTER_LIST"; fi
 declare -r punctuationCharacters="$(echo -nE "$characters" | sed -E 's/[^[:punct:]]//g')"
-declare -r alnumCharacters="$(echo -nE "$characters" | sed -E 's/[^[:alnum:]]//g')"
+# declare -r alnumCharacters="$(echo -nE "$characters" | sed -E 's/[^[:alnum:]]//g')"
 if ! eval "$fGenWords"; then
 	# match only the words that are short enough & only have valid characters
 	mapfile -t words < <(grep --max-count=$maxDictSize -E --text -e "^[$characters]{1,$maxWordLength}$" "$WORDS_FILE")
@@ -84,27 +83,30 @@ fi
 if ! [[ "$characters" =~ ' ' ]]; then characters+=' '; fi
 declare -r characters
 declare -r ORIG_IFS="$IFS"
-# 1: max length
-# 2: valid chars
-# 3...: invalid indices
-getRandomWord() {
-	local -a validWords
-	if [ -n "${words[*]}" ]; then
-		IFS=$'\n'
-		mapfile -t validWords < <(echo -n "${words[*]}" | grep --max-count=$maxDictSize -E --text -e "^[${2:-$characters}]{1,${1:-$maxWordLength}}$")
-		IFS="$ORIG_IFS"
-	else
-		mapfile -t validWords < <(grep --max-count=$maxDictSize -E --text -e "^[${2:-$characters}]{1,${1:-$maxWordLength}}$" "$WORDS_FILE")
-	fi
-	local -i t_ind=$RANDOM%${#validWords[@]} safety=0
-	# if shift 2 && [ -n "$*" ]; then
-	if shift 2; then
-		while ((safety++ < 100)) && array_includes $t_ind "$@"; do
-			t_ind=$RANDOM%${#validWords[@]}
-		done
-	fi
-	echo -n "${validWords[$t_ind]}"
-}
+##region########################################### Get Random Word ###########################################
+# # 1: max length
+# # 2: valid chars
+# # 3...: invalid indices
+# getRandomWord() {
+# 	local -a validWords
+# 	if [ -n "${words[*]}" ]; then
+# 		IFS=$'\n'
+# 		mapfile -t validWords < <(echo -n "${words[*]}" | grep --max-count=$maxDictSize -E --text -e "^[${2:-$characters}]{1,${1:-$maxWordLength}}$")
+# 		IFS="$ORIG_IFS"
+# 	else
+# 		mapfile -t validWords < <(grep --max-count=$maxDictSize -E --text -e "^[${2:-$characters}]{1,${1:-$maxWordLength}}$" "$WORDS_FILE")
+# 	fi
+# 	local -i t_ind=$RANDOM%${#validWords[@]} safety=0
+# 	# if shift 2 && [ -n "$*" ]; then
+# 	if shift 2; then
+# 		while ((safety++ < 100)) && array_includes $t_ind "$@"; do
+# 			t_ind=$RANDOM%${#validWords[@]}
+# 		done
+# 	fi
+# 	echo -n "${validWords[$t_ind]}"
+# 	return $safety
+# }
+##endregion######################################## Get Random Word ###########################################
 ##endregion######################################## PARAMETERS ###########################################
 # shellcheck disable=SC2317
 function storeStatisticsScreen() { true; }
@@ -211,14 +213,11 @@ function genTestSequence() {
 					if ((newLength > columns)); then
 						# ...and there's another line...
 						if ((j + 1 < rows)); then
-							# TODO: visual but not typed dash
 							((newLength %= columns - 1, l_wordSlice=${#l_current_word} - newLength))
 							newTestLines[j]+="${l_current_word:0:$l_wordSlice}-"
 							((j++))
 							newTestLines[j]+="${l_current_word: -$newLength}"
 							((i = ${#newTestLines[j]}))
-							# l_current_word=
-							# break
 						# ...and there's not another line...
 						else
 							# ...and we've tried too many options...
@@ -343,11 +342,11 @@ getXY() {
 		echo $lRow $lCol
 	fi
 }
-getXYUnbounded() { getXY --unbounded "$@"; }
-isInBounds() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
-	((lRow >= 0 && lCol >= 0 && lRow < rows && lCol < columns))
-}
+# getXYUnbounded() { getXY --unbounded "$@"; }
+# isInBounds() {
+# 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
+# 	((lRow >= 0 && lCol >= 0 && lRow < rows && lCol < columns))
+# }
 getXYNext() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@")
 	# if ((lCol >= columns && lRow < rows)); then
@@ -365,16 +364,16 @@ getXYPrior() {
 	echo $lRow $lCol
 }
 getXYBeforePrior() { read -sr lRow lCol < <(getXYPrior "$@"); getXYPrior "$lRow" "$lCol"; }
-isInBounds() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
-	((lRow >= 0 && lCol >= 0 && lRow < rows && lCol < columns))
-}
-restrictToBounds() {
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY --unbounded "$@")
-	if ((lCol >= columns)) || ((lCol < 0)); then
-		((lRow += lCol / columns, lRow -= lCol >= 0 ? 0 : 1, lCol %= columns, lCol += lCol >= 0 ? 0 : columns))
-	fi
-}
+# isInBounds() {
+# 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
+# 	((lRow >= 0 && lCol >= 0 && lRow < rows && lCol < columns))
+# }
+# restrictToBounds() {
+# 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY --unbounded "$@")
+# 	if ((lCol >= columns)) || ((lCol < 0)); then
+# 		((lRow += lCol / columns, lRow -= lCol >= 0 ? 0 : 1, lCol %= columns, lCol += lCol >= 0 ? 0 : columns))
+# 	fi
+# }
 getCoord() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
 	echo -n "$lRow:$lCol"
@@ -398,34 +397,34 @@ getForBeforePrior() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYPrior "$@"); shift 2
 	getForPrior "$lCommand" $lRow $lCol
 }
-setForBeforePrior() {
-	local lCommand="$1"; shift; local lValue="$1"; shift
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYPrior "$@"); shift 2
-	setForPrior "$lCommand" "$lValue" $lRow $lCol
-}
+# setForBeforePrior() {
+# 	local lCommand="$1"; shift; local lValue="$1"; shift
+# 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYPrior "$@"); shift 2
+# 	setForPrior "$lCommand" "$lValue" $lRow $lCol
+# }
 getForNext() {
 	local lCommand="$1"; shift
 	if ! [ "${lCommand:0:3}" = 'get' ]; then lCommand="get${lCommand@u}"; fi
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYNext "$@"); shift 2
 	$lCommand $lRow $lCol
 }
-setForNext() {
-	local lCommand="$1"; shift
-	local lValue="$1"; shift
-	if ! [ "${lCommand:0:3}" = 'set' ]; then lCommand="set${lCommand@u}"; fi
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYNext "$@"); shift 2
-	$lCommand "$lValue" $lRow $lCol
-}
+# setForNext() {
+# 	local lCommand="$1"; shift
+# 	local lValue="$1"; shift
+# 	if ! [ "${lCommand:0:3}" = 'set' ]; then lCommand="set${lCommand@u}"; fi
+# 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYNext "$@"); shift 2
+# 	$lCommand "$lValue" $lRow $lCol
+# }
 getForAfterNext() {
 	local lCommand="$1"; shift
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYNext "$@"); shift 2
 	getForNext "$lCommand" $lRow $lCol
 }
-setForAfterNext() {
-	local lCommand="$1"; shift; local lValue="$1"; shift
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYNext "$@"); shift 2
-	setForNext "$lCommand" "$lValue" $lRow $lCol
-}
+# setForAfterNext() {
+# 	local lCommand="$1"; shift; local lValue="$1"; shift
+# 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXYNext "$@"); shift 2
+# 	setForNext "$lCommand" "$lValue" $lRow $lCol
+# }
 getTestChar() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol
 	local t="${testLines[$lRow]}"; echo -n "${t: $lCol:1}"
@@ -455,11 +454,11 @@ setInputColor() {
 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol; shift 2
 	inputColors[lRow]="${inputColors[$lRow]:0:$lCol}${val}${inputColors[$lRow]:$((lCol + 1))}"
 }
-setInputColorBg() {
-	local val="$1"; shift
-	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol; shift 2
-	local t="$(getCoord $lRow $lCol)"; inputColorsBg[$t]="$val"
-}
+# setInputColorBg() {
+# 	local val="$1"; shift
+# 	local -i lRow=; local -i lCol=; read -sr lRow lCol < <(getXY "$@"); local -ir lRow lCol; shift 2
+# 	local t="$(getCoord $lRow $lCol)"; inputColorsBg[$t]="$val"
+# }
 ##endregion######################################## ARRAY GETTERS/SETTERS ###########################################
 getCurrInputColNum()  { echo -n ${#inputs[$currRow]}; }
 getInputColNum()  { if [ -z "$1" ]; then getCurrInputColNum; else echo -n ${#inputs[$1]}; fi; }
@@ -490,12 +489,15 @@ removeFromInput() {
 }
 ##region########################################### Line/Word Boundaries ###########################################
 # If character at cursor position is alpha-numeric but the prior one wasn't
+# shellcheck disable=SC2120
 isAtWordStart() { [[ $(getTestChar "$@") =~ ^[[:alnum:]]+$ ]] && ! [[ $(getForPrior TestChar "$@") =~ ^[[:alnum:]]+$ ]]; }
 # If character at cursor position isn't alpha-numeric but the next one is
+# shellcheck disable=SC2120
 isBeforeWordStart() { ! [[ $(getTestChar "$@") =~ ^[[:alnum:]]+$ ]] && [[ $(getForNext TestChar "$@") =~ ^[[:alnum:]]+$ ]]; }
 # If character at cursor position isn't alpha-numeric but the prior one was
 isAtWordEnd() { ! [[ $(getTestChar "$@") =~ ^[[:alnum:]]+$ ]] && [[ $(getForPrior TestChar "$@") =~ ^[[:alnum:]]+$ ]]; }
 # If character at cursor position is alpha-numeric but the next one isn't
+# shellcheck disable=SC2120
 isBeforeWordEnd() { [[ $(getTestChar "$@") =~ ^[[:alnum:]]+$ ]] && ! [[ $(getForNext TestChar "$@") =~ ^[[:alnum:]]+$ ]]; }
 isAboutToEndLine() { (($(getCurrInputColNum) == ${#testLines[$(getCurrInputRowNum)]} - 1)); }
 isAtStartOfLine() { (($(getCurrInputColNum) == 0)); }
@@ -504,61 +506,63 @@ isAtStartOfLine() { (($(getCurrInputColNum) == 0)); }
 # isAtStartPosition() { (($(getCurrInputRowNum) == 0 && $(getCurrInputColNum) == 0)); }
 # isAtEndPosition() { (($(getCurrInputRowNum) + 1 == rows && $(getCurrInputColNum) + 1 == columns)); }
 ##endregion######################################## Line/Word Boundaries ###########################################
-generalTest() {
-	local -r cumulative="$(array_join '' "${testLines[@]}")"
-	local -i i=0
-	local errored='false'
-	for ((i = 2; i + 2 < ${#cumulative}; i++)); do
-		if ! [ "$(getForBeforePrior testChar 0 $i)" = "${cumulative:$((i - 2)):1}" ]; then
-			echo "getForBeforePrior testChar 0 $i failed ($(getForBeforePrior testChar 0 $i) != ${cumulative:$((i - 2)):1})"
-			getXYBeforePrior 0 $i
-			getXYPrior 0 $i
-			getXY 0 $i
-			getXYNext 0 $i
-			getXYAfterNext 0 $i
-			errored='true'
-		fi
-		if ! [ "$(getForPrior testChar 0 $i)" = "${cumulative:$((i - 1)):1}" ]; then
-			echo "getForPrior testChar 0 $i failed ($(getForPrior testChar 0 $i) != ${cumulative:$((i - 1)):1})"
-			getXYBeforePrior 0 $i
-			getXYPrior 0 $i
-			getXY 0 $i
-			getXYNext 0 $i
-			getXYAfterNext 0 $i
-			errored='true'
-		fi
-		if ! [ "$(getTestChar 0 $i)" = "${cumulative:$((i - 0)):1}" ]; then
-			echo "getTestChar 0 $i failed ($(getTestChar 0 $i) != ${cumulative:$((i - 0)):1})"
-			getXYBeforePrior 0 $i
-			getXYPrior 0 $i
-			getXY 0 $i
-			getXYNext 0 $i
-			getXYAfterNext 0 $i
-			errored='true'
-		fi
-		if ! [ "$(getForNext testChar 0 $i)" = "${cumulative:$((i + 1)):1}" ]; then
-			echo "getForNext testChar 0 $i failed ($(getForNext testChar 0 $i) != ${cumulative:$((i + 1)):1})"
-			getXYBeforePrior 0 $i
-			getXYPrior 0 $i
-			getXY 0 $i
-			getXYNext 0 $i
-			getXYAfterNext 0 $i
-			errored='true'
-		fi
-		if ! [ "$(getForAfterNext testChar 0 $i)" = "${cumulative:$((i + 2)):1}" ]; then
-			echo "getForAfterNext testChar 0 $i failed ($(getForAfterNext testChar 0 $i) != ${cumulative:$((i + 2)):1})"
-			getXYBeforePrior 0 $i
-			getXYPrior 0 $i
-			getXY 0 $i
-			getXYNext 0 $i
-			getXYAfterNext 0 $i
-			errored='true'
-		fi
-	done
-	# if eval "$errored"; then doExit; fi
-	if ! eval "$errored"; then echo -n "$(tput setab 2) $(tput cub1)$RESET_COLOR_BACKGROUND"; fi
-}
+##region########################################### General Test ###########################################
+# generalTest() {
+# 	local -r cumulative="$(array_join '' "${testLines[@]}")"
+# 	local -i i=0
+# 	local errored='false'
+# 	for ((i = 2; i + 2 < ${#cumulative}; i++)); do
+# 		if ! [ "$(getForBeforePrior testChar 0 $i)" = "${cumulative:$((i - 2)):1}" ]; then
+# 			echo "getForBeforePrior testChar 0 $i failed ($(getForBeforePrior testChar 0 $i) != ${cumulative:$((i - 2)):1})"
+# 			getXYBeforePrior 0 $i
+# 			getXYPrior 0 $i
+# 			getXY 0 $i
+# 			getXYNext 0 $i
+# 			getXYAfterNext 0 $i
+# 			errored='true'
+# 		fi
+# 		if ! [ "$(getForPrior testChar 0 $i)" = "${cumulative:$((i - 1)):1}" ]; then
+# 			echo "getForPrior testChar 0 $i failed ($(getForPrior testChar 0 $i) != ${cumulative:$((i - 1)):1})"
+# 			getXYBeforePrior 0 $i
+# 			getXYPrior 0 $i
+# 			getXY 0 $i
+# 			getXYNext 0 $i
+# 			getXYAfterNext 0 $i
+# 			errored='true'
+# 		fi
+# 		if ! [ "$(getTestChar 0 $i)" = "${cumulative:$((i - 0)):1}" ]; then
+# 			echo "getTestChar 0 $i failed ($(getTestChar 0 $i) != ${cumulative:$((i - 0)):1})"
+# 			getXYBeforePrior 0 $i
+# 			getXYPrior 0 $i
+# 			getXY 0 $i
+# 			getXYNext 0 $i
+# 			getXYAfterNext 0 $i
+# 			errored='true'
+# 		fi
+# 		if ! [ "$(getForNext testChar 0 $i)" = "${cumulative:$((i + 1)):1}" ]; then
+# 			echo "getForNext testChar 0 $i failed ($(getForNext testChar 0 $i) != ${cumulative:$((i + 1)):1})"
+# 			getXYBeforePrior 0 $i
+# 			getXYPrior 0 $i
+# 			getXY 0 $i
+# 			getXYNext 0 $i
+# 			getXYAfterNext 0 $i
+# 			errored='true'
+# 		fi
+# 		if ! [ "$(getForAfterNext testChar 0 $i)" = "${cumulative:$((i + 2)):1}" ]; then
+# 			echo "getForAfterNext testChar 0 $i failed ($(getForAfterNext testChar 0 $i) != ${cumulative:$((i + 2)):1})"
+# 			getXYBeforePrior 0 $i
+# 			getXYPrior 0 $i
+# 			getXY 0 $i
+# 			getXYNext 0 $i
+# 			getXYAfterNext 0 $i
+# 			errored='true'
+# 		fi
+# 	done
+# 	# if eval "$errored"; then doExit; fi
+# 	if ! eval "$errored"; then echo -n "$(tput setab 2) $(tput cub1)$RESET_COLOR_BACKGROUND"; fi
+# }
 # generalTest
+##endregion######################################## General Test ###########################################
 declare startTime=''
 # The last time the status was updated, in milliseconds since `startTime`.
 declare -i lastStatusUpdateTime=0
@@ -669,7 +673,7 @@ _update() {
 				'--currDeltaTime'
 				'--currUpdateTime'
 				'--lastUpdateTime'
-				--wordData
+				'--wordData'
 			)
 		else
 			local -ar flags=("$@")
@@ -679,7 +683,7 @@ _update() {
 		_show() { array_includes "$1" "${flags[@]}"; }
 		__addLine() { statusLine+="$*$(tput el)"$' \b\n'; }
 		IFS=' '
-		_show '--inputs' && __addLine "inputs: $(array_join $'\n' ${inputs[@]})"
+		_show '--inputs' && __addLine "inputs: $(array_join $'\n' "${inputs[@]}")"
 		_show '--getCurrInputColNum' && __addLine "getCurrInputColNum: $(getCurrInputColNum)"
 		# shellcheck disable=SC2119
 		_show '--xy' && __addLine "getXY: BeforePrior=$(getXYBeforePrior); Prior=$(getXYPrior); curr=$(getXY); Next=$(getXYNext); AfterNext=$(getXYAfterNext)"
@@ -721,7 +725,7 @@ _update() {
 		_show '--wordEndTimes' && __addLine "wordEndTimes (L=${#wordEndTimes[@]}): ${wordEndTimes[*]@Q}"
 		_show '--badInputs' && __addLine "badInputs (L=${#badInputs[@]}): ${badInputs[*]@Q}"
 		_show '--mistakesCount' && __addLine "All mistakes: $allMistakesCount; Unique mistakes: $uniqueMistakesCount"
-		_show '--mistakeFreq' && __addLine "Mistake Frequency: $(array_join ';' ${mistakeFreq[@]@K})"
+		_show '--mistakeFreq' && __addLine "Mistake Frequency: $(array_join ';' "${mistakeFreq[@]@K}")"
 		_show '--calcWordTimes' && { for ((i = 0; i < ${#wordEndTimes[@]}; i++)); do statusLine+="$i: $((wordEndTimes[i] - wordStartTimes[i])) ms; "; done; __addLine " "; }
 		_show '--wordData' && { for item in "${wordStartPositions[@]}"; do statusLine+="$(getWordCompletionData "$item"); "; done; __addLine " "; }
 		_show '--lastDictWord' && ((${#words[@]} > 0)) && __addLine "last word: ${words[-1]}"
@@ -751,15 +755,17 @@ _update() {
 			# * `inputChar` holds 1 character
 		_addToOutput() {
 			echo -n "$preDisplay$inputChar$postDisplay"
+			# shellcheck disable=SC2119
 			if isBeforeWordEnd; then
 				if ((${#wordStartTimes[@]} == ${#wordEndTimes[@]})); then
-					doExit 11 "ending word but start and end times are same length (${#wordEndTimes[@]}) S: ${wordStartTimes[@]} E: ${wordEndTimes[@]}"
+					doExit 11 "ending word but start and end times are same length (${#wordEndTimes[*]}) S: ${wordStartTimes[*]} E: ${wordEndTimes[*]}"
 				fi
 				wordEndTimes+=("$currUpdateTime")
 			fi
+			# shellcheck disable=SC2119
 			if isBeforeWordStart; then
 				if ((${#wordStartTimes[@]} != ${#wordEndTimes[@]})); then
-					doExit 12 "Starting word but start and end times are different lengths (${#wordEndTimes[@]}) S(${#wordStartTimes[@]}): ${wordStartTimes[@]} E(${#wordEndTimes[@]}): ${wordEndTimes[@]}"
+					doExit 12 "Starting word but start and end times are different lengths (${#wordEndTimes[*]}) S(${#wordStartTimes[*]}): ${wordStartTimes[*]} E(${#wordEndTimes[*]}): ${wordEndTimes[*]}"
 				fi
 				wordStartTimes+=("$currUpdateTime")
 				wordStartPositions+=("$(getForNext coord)")
@@ -820,13 +826,14 @@ _update() {
 			if (($(getCurrInputColNum) == 0 && currRow <= 0)); then return; fi
 			if isAtWordEnd; then
 				if ((${#wordStartTimes[@]} != ${#wordEndTimes[@]})); then
-					doExit 13 "Undoing word end but start and end times are different lengths (${#wordEndTimes[@]}) S(${#wordStartTimes[@]}): ${wordStartTimes[@]} E(${#wordEndTimes[@]}): ${wordEndTimes[@]}"
+					doExit 13 "Undoing word end but start and end times are different lengths (${#wordEndTimes[*]}) S(${#wordStartTimes[*]}): ${wordStartTimes[*]} E(${#wordEndTimes[*]}): ${wordEndTimes[*]}"
 				fi
 				unset 'wordEndTimes[-1]'
 			fi
+			# shellcheck disable=SC2119
 			if isAtWordStart; then
 				if ((${#wordStartTimes[@]} == ${#wordEndTimes[@]})); then
-					doExit 14 "Undoing word start but start and end times are same length (${#wordEndTimes[@]}) S: ${wordStartTimes[@]} E: ${wordEndTimes[@]}"
+					doExit 14 "Undoing word start but start and end times are same length (${#wordEndTimes[*]}) S: ${wordStartTimes[*]} E: ${wordEndTimes[*]}"
 				fi
 				unset 'wordStartTimes[-1]'
 				unset 'wordStartPositions[-1]'

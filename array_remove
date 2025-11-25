@@ -1,35 +1,81 @@
 #!/usr/bin/env bash
 
-if [ "$1" = '--help' ]; then
-	exit 1
-elif [ "$1" = '--version' ]; then
-	exit 1
-fi
+##region########################################### HELP & VERSION ###########################################
+_show_help() {
+	# -f, --first, --forward[s]: Search from the beginning of the list. Mutually exclusive with -l. Default.
+	# -l, --last, -b, --backward[s]: Search from the end of the list. Mutually exclusive with -f.
+	cat << __EOF__
+Removes the specified values from the list.
+
+Usage:	$0 [-sar] [--] VALUE ENTRY1 ENTRY2...
+	or:	$0 --value VALUE [-sar] [--] ENTRY1 ENTRY2...
+	or:	$0 --index VALUE [-sar] [--] ENTRY1 ENTRY2...
+	or:	$0 --index [-sar] [--] VALUE ENTRY1 ENTRY2...
+	or:	$0 [--last|first] [--] VALUE ENTRY1 ENTRY2...
+	or:	$0 --help
+	or:	$0 --version
+
+Options:
+	-h, --help: Shows this help text.
+	--version: Shows version info.
+	-i, --index[-at/_at], --at[-index/_index] [VALUE]: The index of the value to remove. If value wasn't assigned by a preceding option & the following token is an integer, that token will be used as 'VALUE'. If value wasn't assigned by a preceding option & the following token is not an integer, value will be assigned by a later '--value' option, the first argument after a terminating --, or the first argument to not match a parameter nor follow a named parameter.
+	-v, --value VALUE: The value to remove. Can be an empty string.
+	-r, --regex: Treat 'VALUE' as an extended regex.
+	-I, --invert: Instead of searching for matching values, searches for non-matching values. Mainly useful for filtering a list into matching and non-matching members.
+	-a, --all: Remove all matching values.
+	-d, --delim, --delimiter DELIMITER: A string literal to be placed in between each element in the returned list & after the last element. If the input may contain spaces and/or newlines, use a value like \$'\\003' (ASCII ETX) & mapfile to break the output back into an array.
+	-c, --count [DELIMITER]: Print the number of elements in the returned list before the list itself. Separated from the first element by DELIMITER. If the token after the flag doesn't match any options, it will be used as the count delimiter. Defaults to a single newline.
+	--: Stop processing arguments. If 'VALUE' isn't assigned to yet, the next token will be used.
+
+Exit Status:
+	0 if found, 1 if not found, 255 for undefined execution error.
+__EOF__
+}
+_show_version() {
+	cat << __EOF__
+$0 3.0.0
+
+Copyright (C) 2025 Justin Morris
+__EOF__
+}
+##endregion######################################## HELP & VERSION ###########################################
 set -e
 declare -r numericMatcher='^[-+]?[[:digit:]]+$'
 declare fInvert='false'
 declare fAll='false'
 declare fAt='false'
 declare fRegex='false'
-# declare toRemove
+declare fCount='false'
+# declare countDelim=
 declare delim=$'\n' # declare delim=$'\003'
-# declare eot=$'\n' # declare delim=$'\003'
 shopt -s extglob globasciiranges
+# TODO: Forwards & Backwards options?
+# while (($# > 0)); do
 while true; do
 	case "$1" in
-		-d | --delim) shift; declare -r delim="$1";;
+		-c | --count) declare -r fCount='true'; shift; continue;;
+		-d | --delim | --delimiter) shift; declare -r delim="$1";;
 		-s | --single | -o | --one) declare -r fAll='false';;
 		-a | --all) declare -r fAll='true';;
-		--invert) declare -r fInvert='true';;
+		-I | --invert) declare -r fInvert='true';;
 		-r | --regex) declare -r fRegex='true';;
-		-i | --index | --at | --at[-_]index)
+		-i | --index | --index[-_]at | --at | --at[-_]index)
 			declare -r fAt='true'
 			if ! [ -v toRemove ] && [[ "$2" =~ $numericMatcher ]]; then
 				shift
 				declare toRemove="$1"
 			fi
 			;;
+		# TODO: Warn if value overwritten?
+		-v | --value) shift; declare toRemove="$1";;
+		-h | --help) _show_help; exit 0;;
+		--version) _show_version; exit 0;;
 		*)
+			if eval "$fCount" && ! [ -v countDelim ]; then
+				declare -r countDelim="$1"
+				shift
+				continue
+			fi
 			if ! [ -v toRemove ]; then
 				declare toRemove="$1"
 				if ! shift; then
@@ -41,9 +87,14 @@ while true; do
 			;;
 	esac
 	shift
+	if eval "$fCount" && ! [ -v countDelim ]; then declare -r countDelim=$'\n'; fi
 done
 if ! [ -v toRemove ]; then
 	echo "toRemove Undefined" 1>&2
+	exit 1
+fi
+if eval "$fCount" && ! [ -v countDelim ]; then
+	echo "countDelim Undefined" 1>&2
 	exit 1
 fi
 declare -r toRemove="$toRemove" fAll fAt delim fRegex fInvert
@@ -86,5 +137,9 @@ else
 	done
 fi
 IFS="$delim"
-echo -nE "${result[*]}$delim"
+if eval "$fCount"; then
+	echo -nE "${#result[*]}$countDelim${result[*]}$delim"
+else
+	echo -nE "${result[*]}$delim"
+fi
 exit

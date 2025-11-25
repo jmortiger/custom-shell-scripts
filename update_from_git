@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+_show_help() {
+	cat <<-EOF
+		For stuff like rbenv.
+	EOF
+}
+if [ "$1" = '--version' ]; then
+	exit 1
+fi
+
+declare repoOwner repo installPath
+declare forceCreateNew="false" # noPrompt="true"
+declare -n opt1=installPath opt2=repoOwner opt3=repo
+while [[ -n "${1+x}" ]]; do
+	case "$1" in
+		(-h | --help) _show_help; exit;;
+		# (-v | --version) _show_version; exit;;
+		(-p | --path)
+			shift
+			installPath="$1"
+			shift
+			;;
+		(-o | --owner | --organization)
+			shift
+			repoOwner="$1"
+			shift
+			;;
+		(-r | --repo)
+			shift
+			repo="$1"
+			shift
+			;;
+		(-n | --new-folder | --create-new-folder)
+			shift
+			forceCreateNew="true"
+			;;
+		(*)
+			if [[ -n "${opt1+x}" ]]; then
+				if [[ -n "${opt2+x}" ]]; then
+					if [[ -n "${opt3+x}" ]]; then
+						exit 1
+					else
+						opt3="$1"
+					fi
+				else
+					opt2="$1"
+				fi
+			else
+				opt1="$1"
+			fi
+			shift
+			;;
+	esac
+done
+# Remove trailing `/` from path
+if [[ "$installPath" =~ ^(.+)/$ ]]; then installPath="${BASH_REMATCH[1]}"; fi
+declare -r tag="$(curl -s "https://api.github.com/repos/$repoOwner/$repo/releases/latest" | jq -r '.tag_name')" repo repoOwner
+backupAndPullTag() {
+	pushd "$1" || exit
+	# Get the current tag's name for the backup
+	declare -r currentRef="$(git describe --exact-match --tags)" # declare -r currentRef="$(git branch --show-current)"
+	# Stash any changes https://git-scm.com/docs/git-stash
+	git stash push --include-untracked --message "Backup of state before updating from \"$currentRef\" to \"$tag\"" 
+	# Get it
+	git switch "$tag" # git checkout "$tag"
+	popd || exit
+}
+if [[ -d "$installPath/.git" ]]; then
+	echo "Updating repo found in $installPath"
+	# pushd "${installPath}"
+	# # Get the current tag's name for the backup
+	# declare -r currentRef="$(git describe --exact-match --tags)" # declare -r currentRef="$(git branch --show-current)"
+	# # Stash any changes https://git-scm.com/docs/git-stash
+	# git stash push --include-untracked --message "Backup of state before updating from \"$currentRef\" to \"$tag\"" 
+	# # Get it
+	# git switch "$tag" # git checkout "$tag"
+	# popd
+	backupAndPullTag "$installPath"
+elif [[ -d "$installPath/$repo/.git" ]]; then
+	echo "Updating repo found in $installPath/$repo"
+	backupAndPullTag "$installPath/$repo"
+else
+	echo "No local repository; overwriting folder contents with $repoOwner/$repo $tag..."
+	# If the folder doesn't exist...
+	if ! [[ -d "$installPath" ]]; then
+		echo "Creating folder at $installPath..."
+		mkdir "$installPath/$repo"
+	# If the folder does exist & we're creating a new one...
+	elif eval "$forceCreateNew"; then
+		echo "Path exists, but is not a git repository; creating new folder at $installPath/$repo"
+		mkdir "$installPath/$repo"
+	# # If the folder does exist & we're creating a new one...
+	# elif eval "$forceCreateNew"; then
+	# 	if  [[ "$installPath" =~ ^(.*)/$repo$ ]]; then
+	# 		echo "Folder exists; overwriting contents..."
+	# 	fi
+	# 	declare -r installPath="$installPath/"
+	# 	echo "Path exists, but is not a git repository; creating new folder at"
+	else
+		echo "???; creating new folder at $installPath/$repo"
+		mkdir "$installPath/$repo"
+	fi
+
+	pushd "$installPath/$repo" || exit
+	git clone --branch "$tag"
+	popd || exit
+fi

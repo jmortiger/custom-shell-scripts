@@ -75,7 +75,7 @@ row() {
     local COL
     local ROW
 	if [[ -n "${p_timeout+x}" ]]; then
-    	IFS=';' read -t $p_timeout -sdR -p $'\E[6n' ROW COL
+    	IFS=';' read -t "$p_timeout" -sdR -p $'\E[6n' ROW COL
 	else
     	IFS=';' read -sdR -p $'\E[6n' ROW COL
 	fi
@@ -88,7 +88,7 @@ col() {
     local COL
     local ROW
 	if [[ -n "${p_timeout+x}" ]]; then
-    	IFS=';' read -t $p_timeout -sdR -p $'\E[6n' ROW COL
+    	IFS=';' read -t "$p_timeout" -sdR -p $'\E[6n' ROW COL
 	else
     	IFS=';' read -sdR -p $'\E[6n' ROW COL
 	fi

@@ -1,0 +1,14 @@
+#! /usr/bin/env bash
+
+tput smcup
+cat <<EOF
+History:
+	history: Outputs history (w/ index numbers)
+	https://www.man7.org/linux/man-pages/man3/history.3.html
+	https://www.gnu.org/software/bash/manual/bash.html#Searching
+	Ctrl-R: Searches through history in reverse
+		Tab/Esc: inputs currently selected history item.
+		Ctrl-G: Abort search & restore prior line contents
+EOF
+read -rsN 1 -p 'Press any key to exit...'
+tput rmcup

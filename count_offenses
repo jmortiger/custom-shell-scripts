@@ -1,0 +1,16 @@
+#! /usr/bin/env bash
+
+if [ "$1" = '--help' ] || [ "$1" = '--version' ] || ! [ -f "$PWD/.rubocop_todo.yml" ]; then
+	exit 1
+fi
+
+# if ! [ -f "$PWD/.rubocop_todo.yml" ]; then
+# fi
+
+mapfile -t count < <(grep -o -P -e '(?<=^# Offense count: ).+$' "$PWD/.rubocop_todo.yml")
+declare -i sum=0
+for item in "${count[@]}"; do
+	((sum += item))
+done
+echo $sum
+exit

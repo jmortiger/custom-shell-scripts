@@ -12,7 +12,7 @@ OPipe:
 	✔ Make new time start for estimation after start_int initialized @done(25-01-12 16:13)
 	✔ Increase decimal precision (average is useless as is) @done(25-01-12 17:40)
 	✔ Force Refresh every x seconds @done(25-01-17 12:57)
-	- Get estimated test count from working directory
+	- Get estimated test count from working directory @done
 	- Start in Character Read Mode and switch to Flush Read Mode once the 1st character comes in to prevent/minimize wheel-spinning at the start of the run.
 	- Add support for dynamic window resizing.
 		- Add variable that stops multiple calls to display text from firing at once
@@ -23,6 +23,7 @@ OPipe:
 	- Read and write statistics to a file (e.g. Avg. Start Time, Avg. Run Time, etc.)
 	- If fixing a parsing mistake in the prior update, support redrawing w/ the correct color
 	- Beep on error
+	- Optionally log prior output to file
 
 Count Ruby Tests:
 	✔ Analyze the files in the given directory tree to determine how many tests there are. @done
@@ -86,22 +87,29 @@ Check Number:
 	- Add fraction support?
 
 Test Runner:
-	- Test groups
-	- Multiline test inputs
-	- Improve test file path detection (reduce redundancy)
-	- Add assertions
-		- equals
-		- not equals
-		- error
-		- not_error
+	- Finish Migration to BATS
 
-Type Test:
-	- Basic implementation
+Typing Test:
+	- Basic implementation @done
 		✔ Uses randomly generated words @done
 		✔ displays the typed characters beneath the prompted characters @done
-		- shows status line of current stats
-	- Uses a resource list of words
+		- shows status line of current stats @done
+	✔ Uses a resource list of words @done
 	- Option to use generated words or valid words
+
+Predictive Completion From History:
+	- Basic Implementation
+		- Collect prior x commands
+		- Create 2 collections, 1 sorted by frequency, 1 alphabetically
+		- Initialize the expected command & its index to the most popular one
+		- Make the following loop:
+			- Intercept input (same way my typing test does)
+			- Print the new input
+			- Check if new input still matches expected command
+			- If so, return to start of loop; else...
+			- Find the 1st case where the input matches the start of a prior command
+			- Print the remainder of the new projected command in grey
+			- Return cursor to where user input left off
 
 Caser:
 	- Basic implementation

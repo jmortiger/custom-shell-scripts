@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#! /usr/bin/env bash
 
 # cspell:ignore jmor automount jmort
 
@@ -6,6 +6,7 @@ readonly AUTO_BINDS_PATH="/home/jmor/reposLocal/custom-shell-scripts/automount_b
 readonly WINDOWS_PATH='/mnt/win10'
 readonly WINDOWS_PARTITION='/dev/sda3'
 readonly DEFAULT_BIND_OPTIONS='defaults,nofail,x-systemd.device-timeout=2,windows_names,noatime'
+readonly LOG_FILE='/home/jmor/Desktop/autoLog.txt'
 ##region########################################### SHOW HELP & VERSION ###########################################
 show_help() {
 	cat << __EOF__
@@ -22,7 +23,7 @@ __EOF__
 }
 show_version() {
 	cat << __EOF__
-$0 2.0.0
+$0 3.0.0
 
 Copyright (C) 2025 Justin Morris
 __EOF__
@@ -30,13 +31,18 @@ __EOF__
 ##endregion######################################## SHOW HELP & VERSION ###########################################
 { [ "$1" = '--help' ] || [ "$1" = '-h' ]; } && { show_help; exit; }
 { [ "$1" = '--version' ] || [ "$1" = '-v' ]; } && { show_version; exit; }
+date +%c > "$LOG_FILE"
 declare -i ec=0
 if cd '/mnt/win10/Users/' &>"/dev/null"; then
-	read -r -N 1 -p 'Already mounted. Proceed with binds? (y/n)'
-	if [ "$REPLY" = 'y' ] || [ "$REPLY" = 'Y' ]; then
-		echo $'\nProceeding...'
+	if [ "$1" = '-y' ] || [ "$1" = '-b' ] || [ "$1" = '--bind' ]; then
+		echo 'Already mounted. Proceeding with binds...'
 	else
-		exit
+		read -r -N 1 -p 'Already mounted. Proceed with binds? (y/n)'
+		if [ "$REPLY" = 'y' ] || [ "$REPLY" = 'Y' ]; then
+			echo $'\nProceeding...'
+		else
+			exit
+		fi
 	fi
 else
 	sudo mount -t ntfs-3g -o defaults,uid=jmor,nofail,x-systemd.device-timeout=2,windows_names,noatime "$WINDOWS_PARTITION" "$WINDOWS_PATH" || exit $?

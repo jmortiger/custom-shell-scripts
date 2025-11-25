@@ -319,3 +319,21 @@ Copyright (C) 2025 Justin Morris
 __EOF__
 }
 ##endregion################ SHOW_HELP/VERSION TEMPLATE ###################
+
+##region########################################### SETUP FD W/ NAMED PIPE ###########################################
+declare -ri INPUT_FD=3
+declare streamFile="$(mktemp --dry-run "$HOME/Desktop/j_type_inputStream_XXXX")"
+if ! [[ "$streamFile" =~ ^$HOME/Desktop/j_type_inputStream_ ]]; then doExit 1 "Cannot safely rm -f $streamFile"; fi
+mkfifo "$streamFile"
+exec 3<>"$streamFile"
+rm -f "$streamFile"
+unset streamFile
+# shellcheck disable=SC2064
+trap "exec $INPUT_FD>&- $INPUT_FD<&-" EXIT
+exec 3<&0
+##endregion######################################## SETUP FD W/ NAMED PIPE ###########################################
+
+# Check for super user
+if sudo --stdin --validate 0<&- &>/dev/null; then echo "You are a Super User"; else echo "You are not a Super User"; fi
+# Remove trailing `/` from path
+if [[ "$path" =~ ^(.+)/$ ]]; then path="${BASH_REMATCH[1]}"; fi

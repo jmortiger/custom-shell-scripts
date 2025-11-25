@@ -15,9 +15,12 @@ Options:
 	-h, --help: Shows this help text.
 	--version: Shows version info.
 	-v, --value VALUE: The value to find the index of. Can be an empty string.
-	-f, --first: Find the first occurrence of the value. Mutually exclusive with -l. Default.
-	-l, --last: Find the last occurrence of the value. Mutually exclusive with -f.
-	--: Stop processing parameters. If 
+	-f, --first, --forward[s]: Search from the beginning of the list. Mutually exclusive with -l. Default.
+	-l, --last, -b, --backward[s]: Search from the end of the list. Mutually exclusive with -f.
+	-r, --regex: Treat 'VALUE' as an extended regex.
+	-i, --invert: Instead of searching for matching values, searches for non-matching values. Mainly useful for filtering a list into matching and non-matching members.
+	-a, --all: Find all matching indexes. Indices will be listed forwards unless '--last' is used; this will print from last to first. The output will be space-separated and end w/ a newline.
+	--: Stop processing arguments. If 'VALUE' isn't assigned to yet, the next token will be used.
 
 Exit Status:
 	0 if found, 1 if not found, 255 for undefined execution error.
@@ -39,6 +42,7 @@ declare fAll='false'
 declare fLast='false'
 declare fInvert='false'
 declare value=''; unset value
+shopt -s extglob
 while [[ "$1" =~ ^- ]]; do
 	case "$1" in
 		(-h | --help) _show_help; exit 0;;
@@ -48,8 +52,8 @@ while [[ "$1" =~ ^- ]]; do
 			declare -r value="$1"
 			;;
 		(-r | --regex) declare -r fRegex='true';;
-		(-l | --last) declare -r fLast='true';;
-		(-f | --first) declare -r fLast='false';;
+		(-l | --last | -b | --backward | --backwards) declare -r fLast='true';;
+		(-f | --first | --forward | --forwards) declare -r fLast='false';;
 		(-a | --all) declare -r fAll='true';;
 		(-i | --invert) declare -r fInvert='true';;
 		(--)
@@ -67,6 +71,7 @@ while [[ "$1" =~ ^- ]]; do
 	shift
 done
 
+# If value isn't readonly, assign to it and try to shift; if that fails...
 if declare -r value="$1" &>'/dev/null' && ! shift; then
 	echo "No array elements" 1>&2
 	exit 255

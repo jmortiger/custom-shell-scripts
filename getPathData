@@ -1,0 +1,69 @@
+#! /usr/bin/env bash
+
+if [ "$1" = '--help' ]; then
+	exit 1
+elif [ "$1" = '--version' ]; then
+	exit 1
+fi
+
+# indexOf --delim 
+declare -a retVal=('--name')
+# declare -i i=0
+# while [[ "$1" =~ ^-([pdna]|-(path|dir|directory|name|all))$ ]]; do
+# 	retVal[i]="-$1"
+# 	shift
+# 	((++i))
+# done
+mapfile -d $'\003' -t < <(array_remove -d $'\003' --all --invert --regex '^-([pdna]|-(path|dir|directory|name|all))$' "$@")
+if ((${#MAPFILE[@]} > 0)); then
+	retVal=("${MAPFILE[@]}")
+fi
+declare -a FILE_PATH_CHUNKS=()
+mapfile -d $'\003' -t FILE_PATH_CHUNKS < <(array_remove -d $'\003' --all --regex '^-([pdna]|-(path|dir|directory|name|all))$' "$@")
+declare -r ORIG_IFS="$IFS"
+IFS=
+declare FILE_PATH=
+until ((${#FILE_PATH_CHUNKS[@]} <= 0)) || FILE_PATH="$(realpath "${FILE_PATH_CHUNKS[*]}")"; do
+	unset -v 'FILE_PATH_CHUNKS[-1]'
+done
+# if [ -e "${FILE_PATH_CHUNKS[*]}" ]; then
+# 	readonly FILE_PATH="$1"
+# else
+# 	readonly FILE_PATH=$(realpath "$0")
+# fi
+declare -r retVal FILE_PATH
+FILE_DIR=''
+FILE_NAME=''
+if [[ "$FILE_PATH" =~ ^(.*)/([^/]+)$ ]]; then
+	readonly FILE_DIR="${BASH_REMATCH[1]}" FILE_NAME="${BASH_REMATCH[2]}"
+	for item in "${retVal[@]}"; do
+		case "$item" in
+			(-p | --path)
+				echo "$FILE_PATH"
+				exit
+				;;
+			(-d | --dir | --directory)
+				echo "$FILE_DIR"
+				exit
+				;;
+			(-n | --name)
+				echo "$FILE_NAME"
+				exit
+				;;
+			# (-a | --all)
+			# 	declare -A MY=(
+			# 		[PATH]="$FILE_PATH"
+			# 		[DIR]="$FILE_DIR"
+			# 		[NAME]="$FILE_NAME"
+			# 	)
+			# 	declare -p MY
+			# 	exit
+			# 	;;
+			(*) ;;
+		esac
+	done
+else
+	readonly FILE_NAME="$0"
+	echo "$FILE_NAME: Failed to get dir" 1>&2
+	exit 1
+fi

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#! /usr/bin/env bash
 
 # cspell:ignore logfile jmor FEWC exitcode ABDG SIGCHLD SIGWINCH infocmp
 
@@ -31,7 +31,7 @@ declare -r STATUS_MODE_OUT='rmso'
 declare -ir DEFAULT_COLOR_FOREGROUND=7
 # The # of empty lines between the end of the output and the status line.
 declare -ir DEFAULT_STATUS_SPACING=2
-declare -ir ASSUMED_TEST_COUNT=1479
+declare -ir ASSUMED_TEST_COUNT=1519
 declare -r TIMEOUT_INTERVAL='.3'
 # The time in seconds after which an update will be forced.
 declare -ir FORCE_REFRESH_INTERVAL=5

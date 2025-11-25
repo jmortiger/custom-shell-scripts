@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#! /usr/bin/env bash
 
 # cspell:ignore icos OVERRIDERS
 ##region########################################### GET PATH, DIR, & NAME ###########################################

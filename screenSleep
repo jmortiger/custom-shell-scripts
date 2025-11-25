@@ -1,0 +1,6 @@
+#! /usr/bin/env bash
+
+# https://superuser.com/questions/374637/how-to-turn-off-screen-with-shortcut-in-linux
+# Stop inputs from immediately turning screen on
+sleep 1
+xset dpms force off

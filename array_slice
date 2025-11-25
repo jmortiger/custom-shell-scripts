@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+declare -i start=0; unset start; declare -i start
+declare -i end=0; unset end; declare -i end
+declare f_isLength='false'
+# Is end of range exclusive?
+declare f_isExclusive='true'
+declare -n opt1=start opt2=end
+while [[ -n "${1+x}" ]]; do
+	case "$1" in
+		(-h | --help)
+			# show_help
+			exit 1
+			;;
+		(-v | --version)
+			# show_version
+			exit 1
+			;;
+		(-e | --exclusive)
+			declare -r f_isExclusive='true'
+			shift
+			;;
+		(-i | --inclusive)
+			declare -r f_isExclusive='false'
+			shift
+			;;
+		(-l | --length)
+			declare -r f_isLength='true'
+			if [[ "$1" =~ ^--length=(-?[[:digit:]]+)$ ]]; then
+				declare -i end="${BASH_REMATCH[1]}"
+			elif [[ "$2" =~ ^-?[[:digit:]]+$ ]] && [[ -z "${end+x}" ]]; then
+				declare -i end="$2"
+				shift
+			fi
+			shift
+			;;
+		(--)
+			shift
+			break
+			;;
+		([-+]?[[:digit:]]+)
+			if [[ -n "${opt1+x}" ]]; then
+				if [[ -n "${opt2+x}" ]]; then
+					break
+				else
+					opt2="$1"
+				fi
+			else
+				opt1="$1"
+			fi
+			shift
+			;;
+		(*) break ;;
+	esac
+done
+declare -ri totalLength=$#
+if eval "$f_isLength" && ((end < 0)); then
+	# TODO: Length out of bounds
+	exit 1
+fi
+# Convert negative indices
+((start += start < 0 ? totalLength : 0, end += end < 0 ? totalLength : 0))
+# Force exclusive end
+if ! eval "$f_isLength" && ! eval "$f_isExclusive"; then ((end++)); fi
+declare -ri start end
+if ((start >= totalLength)); then
+	# TODO: Start out of bounds
+	exit 1
+elif eval "$f_isLength" && ((end > totalLength)); then
+	# TODO: Length/end out of bounds
+	exit 1
+elif ! eval "$f_isLength" && ((end > totalLength)); then
+	# TODO: End out of bounds
+	exit 1
+fi
+if ((start = 0 && end ))
+declare -a inputArray=("$@")
+for ((i = 1; i <= start; i++)); do
+	
+done
+while (($# > 0)) && shift; do
+	if [ "$1" = "$toRemove" ]; then
+		if eval "$f_all"; then
+			continue
+		elif shift; then
+			result+=("$@")
+		fi
+		break
+	fi
+	result+=("$1")
+done
+echo "${result[@]}"
+exit
